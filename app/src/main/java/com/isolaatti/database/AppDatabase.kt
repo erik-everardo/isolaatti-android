@@ -11,7 +11,7 @@ import com.isolaatti.search.data.SearchHistoryEntity
 import com.isolaatti.settings.data.KeyValueDao
 import com.isolaatti.settings.data.KeyValueEntity
 
-@Database(entities = [KeyValueEntity::class, UserInfoEntity::class, AudioDraftEntity::class, SearchHistoryEntity::class], version = 6)
+@Database(entities = [KeyValueEntity::class, UserInfoEntity::class, AudioDraftEntity::class, SearchHistoryEntity::class], version = 7)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun keyValueDao(): KeyValueDao
     abstract fun userInfoDao(): UserInfoDao

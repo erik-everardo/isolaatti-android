@@ -7,15 +7,32 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 
 @Dao
 interface SearchDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertTerm(searchTerm: SearchHistoryEntity)
 
-    @Delete
-    fun deleteTerm(searchTerm: SearchHistoryEntity)
+    @Query("SELECT COUNT(*) FROM search_history WHERE `query` = :query")
+    fun itemCount(query: String): Int
 
-    @Query("SELECT * FROM search_history ORDER BY time DESC")
-    fun getTerms(): LiveData<List<SearchHistoryEntity>>
+    @Transaction
+    fun insertTermTransaction(searchTerm: SearchHistoryEntity) {
+        if(itemCount(searchTerm.query) > 0) {
+            deleteTerm(searchTerm.query)
+        }
+        insertTerm(searchTerm)
+    }
+
+    @Query("DELETE FROM search_history WHERE `query` = :searchTerm")
+    fun deleteTerm(searchTerm: String)
+
+    @Query("SELECT *, `rowid` FROM search_history ORDER BY time DESC")
+    fun getTerms(): List<SearchHistoryEntity>
+
+    @Query("""
+        SELECT *, `rowid` FROM search_history WHERE `query` MATCH :searchQuery
+    """)
+    fun getTermsForQuery(searchQuery: String): List<SearchHistoryEntity>
 }

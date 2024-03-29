@@ -198,4 +198,7 @@
     <string name="delete_notification">Delete notification</string>
     <string name="delete_notification_dialog_message">Remove this notification?</string>
     <string name="error_making_request">An error ocurred</string>
+    <string name="hashtags">Hashtags</string>
+    <string name="newest_profiles">Newest profiles</string>
+    <string name="see_all">See all</string>
 </resources>
