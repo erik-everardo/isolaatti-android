@@ -201,4 +201,6 @@
     <string name="hashtags">Hashtags</string>
     <string name="newest_profiles">Newest profiles</string>
     <string name="see_all">See all</string>
+    <string name="go_to_hashtags">Go to hashtags</string>
+    <string name="browse_profiles">Browse profiles</string>
 </resources>

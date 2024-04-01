@@ -10,18 +10,21 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
+import androidx.navigation.findNavController
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.carousel.CarouselLayoutManager
 import com.google.android.material.carousel.UncontainedCarouselStrategy
 import com.google.android.material.chip.Chip
 import com.isolaatti.R
 import com.isolaatti.databinding.FragmentSearchBinding
-import com.isolaatti.hashtags.ui.HashtagsActivity
 import com.isolaatti.profile.ui.ProfileActivity
 import com.isolaatti.search.data.HashtagsDto
 import com.isolaatti.search.data.NewestUsersDto
 import com.isolaatti.search.data.SearchDto
 import com.isolaatti.search.data.SearchHistoryEntity
+import com.isolaatti.search.data.SearchResultType
+import com.isolaatti.search.presentation.SearchResultsAdapter
 import com.isolaatti.search.presentation.SearchSuggestionsAdapter
 import com.isolaatti.search.presentation.SearchViewModel
 import com.isolaatti.search.presentation.UserCarouselAdapter
@@ -38,6 +41,7 @@ class SearchFragment : Fragment() {
     private val viewModel: SearchViewModel by viewModels()
     private var searchSuggestionsAdapter: SearchSuggestionsAdapter? = null
     private var newestUsersAdapter: UserCarouselAdapter? = null
+    private var searchResultsAdapter: SearchResultsAdapter? = null
 
     private val searchSuggestionsObserver: Observer<List<SearchHistoryEntity>> = Observer {
         searchSuggestionsAdapter?.submitList(it)
@@ -45,6 +49,7 @@ class SearchFragment : Fragment() {
 
     private val searchResultsObserver: Observer<SearchDto> = Observer {
         Log.d(LOG_TAG, it.toString())
+        searchResultsAdapter?.submitList(it.result)
     }
 
     private val trendingHashtagsObserver: Observer<HashtagsDto> = Observer {
@@ -55,7 +60,7 @@ class SearchFragment : Fragment() {
             viewBinding.chipGroup.addView(Chip(requireContext()).apply {
                 text = "#$hashtag"
                 setOnClickListener {
-                    requireContext().startActivity(Intent(requireContext(), HashtagsActivity::class.java))
+                    findNavController().navigate(SearchFragmentDirections.actionSearchFragmentToHashtagPostsFragment(hashtag))
                 }
             })
         }
@@ -123,7 +128,18 @@ class SearchFragment : Fragment() {
             layoutManager = CarouselLayoutManager(UncontainedCarouselStrategy())
         }
 
-
+        searchResultsAdapter = SearchResultsAdapter(
+            onItemClick = {
+                when(it.type) {
+                    SearchResultType.Profile -> {}
+                    SearchResultType.Post -> {}
+                    SearchResultType.Hashtag -> {}
+                    SearchResultType.Unknown -> {}
+                }
+            }
+        )
+        viewBinding.recyclerViewSearchResults.adapter = searchResultsAdapter
+        viewBinding.recyclerViewSearchResults.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
     }
 
     private fun setupListeners() {
@@ -147,11 +163,19 @@ class SearchFragment : Fragment() {
             if(it.itemId == R.id.close_button) {
                 showResults(false)
                 true
+            } else {
+                false
             }
-            false
+
         }
-        
-        viewBinding.searchView.addTransitionListener { searchView, transitionState, transitionState2 ->  }
+
+        viewBinding.openHashtagsButton.setOnClickListener {
+            findNavController().navigate(SearchFragmentDirections.actionSearchFragmentToHashtagsFragment())
+        }
+
+        viewBinding.browseProfilesButton.setOnClickListener {
+            findNavController().navigate(SearchFragmentDirections.actionSearchFragmentToBrowseProfilesFragment())
+        }
     }
 
     private fun setupObservers() {

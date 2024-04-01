@@ -5,8 +5,8 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 
 interface SearchApi {
-    @GET("Search/Quick")
-    fun quickSearch(@Query("q") query: String): Call<SearchDto>
+    @GET("Search/v2")
+    fun quickSearch(@Query("query") query: String): Call<SearchDto>
 
     @GET("hashtags/trending")
     fun getTrendingHashtags(): Call<HashtagsDto>
