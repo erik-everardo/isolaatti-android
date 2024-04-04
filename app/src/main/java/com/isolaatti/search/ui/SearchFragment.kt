@@ -18,6 +18,7 @@ import com.google.android.material.carousel.UncontainedCarouselStrategy
 import com.google.android.material.chip.Chip
 import com.isolaatti.R
 import com.isolaatti.databinding.FragmentSearchBinding
+import com.isolaatti.posting.posts.viewer.ui.PostViewerActivity
 import com.isolaatti.profile.ui.ProfileActivity
 import com.isolaatti.search.data.HashtagsDto
 import com.isolaatti.search.data.NewestUsersDto
@@ -131,9 +132,15 @@ class SearchFragment : Fragment() {
         searchResultsAdapter = SearchResultsAdapter(
             onItemClick = {
                 when(it.type) {
-                    SearchResultType.Profile -> {}
-                    SearchResultType.Post -> {}
-                    SearchResultType.Hashtag -> {}
+                    SearchResultType.Profile -> {
+                        it.resourceId.toIntOrNull()?.also { ProfileActivity.startActivity(requireContext(), it) }
+                    }
+                    SearchResultType.Post -> {
+                        it.resourceId.toLongOrNull()?.also { PostViewerActivity.startActivity(requireContext(), it) }
+                    }
+                    SearchResultType.Hashtag -> {
+                        findNavController().navigate(SearchFragmentDirections.actionSearchFragmentToHashtagPostsFragment(it.resourceId))
+                    }
                     SearchResultType.Unknown -> {}
                 }
             }
