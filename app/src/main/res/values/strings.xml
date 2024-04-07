@@ -203,4 +203,5 @@
     <string name="see_all">See all</string>
     <string name="go_to_hashtags">Go to hashtags</string>
     <string name="browse_profiles">Browse profiles</string>
+    <string name="app_version">v%s</string>
 </resources>
