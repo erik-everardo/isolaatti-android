@@ -6,11 +6,11 @@
         android:icon="@drawable/baseline_home_24"
         android:title="@string/home" />
     <item
-        android:id="@+id/notificationsFragment"
-        android:icon="@drawable/baseline_notifications_24"
-        android:title="@string/notifications" />
-    <item
         android:id="@+id/searchFragment"
         android:icon="@drawable/baseline_search_24"
         android:title="@string/search" />
+    <item
+        android:id="@+id/notificationsFragment"
+        android:icon="@drawable/baseline_notifications_24"
+        android:title="@string/notifications" />
 </menu>
