@@ -1,4 +1,4 @@
-package com.isolaatti.home
+package com.isolaatti.home.ui
 
 import android.Manifest
 import android.content.SharedPreferences
@@ -44,10 +44,6 @@ class HomeActivity : IsolaattiBaseActivity() {
         viewBinding.navigationRail?.setupWithNavController(navHostFragment.navController)
 
         askNotificationPermission()
-
-        if(savedInstanceState == null) {
-            feedViewModel.getFeed(false)
-        }
 
     }
 

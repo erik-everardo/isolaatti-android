@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/post_listing_navigation"
+    app:startDestination="@id/postListingFragment">
+
+    <fragment
+        android:id="@+id/postListingFragment"
+        android:name="com.isolaatti.posting.posts.ui.PostListingFragment"
+        android:label="PostListingFragment" >
+        <argument
+            android:name="hashtag"
+            app:argType="string"
+            app:nullable="true" />
+    </fragment>
+</navigation>

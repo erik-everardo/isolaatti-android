@@ -44,7 +44,7 @@ abstract class PostListingViewModelBase : ViewModel() {
     fun getLastId(): Long = try { posts.value?.first?.last()?.id ?: 0 } catch (e: NoSuchElementException) { 0 }
 
 
-    abstract fun getFeed(refresh: Boolean)
+    abstract fun getFeed(refresh: Boolean, hashtag: String?)
 
     fun likePost(postId: Long) {
         viewModelScope.launch {

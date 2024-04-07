@@ -50,6 +50,8 @@ class SearchResultsAdapter(
                     }
 
                 }
+                SearchResultType.Hashtag -> R.drawable.hashtag_solid
+                SearchResultType.Post -> R.drawable.baseline_search_24
                 else -> R.drawable.baseline_search_24
             }
 

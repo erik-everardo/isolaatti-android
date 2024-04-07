@@ -26,15 +26,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".home.HomeActivity" android:theme="@style/Theme.Isolaatti" />
+        <activity android:name=".home.ui.HomeActivity" android:theme="@style/Theme.Isolaatti" />
         <activity android:name=".login.LogInActivity" android:theme="@style/Theme.Isolaatti" />
         <activity android:name=".profile.ui.ProfileActivity"
             android:theme="@style/Theme.Isolaatti"
-            android:parentActivityName=".home.HomeActivity"/>
+            android:parentActivityName=".home.ui.HomeActivity"/>
         <activity android:name=".settings.ui.SettingsActivity" android:theme="@style/Theme.Isolaatti"/>
         <activity android:name=".posting.posts.ui.CreatePostActivity" android:theme="@style/Theme.Isolaatti" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".posting.posts.viewer.ui.PostViewerActivity" android:theme="@style/Theme.Isolaatti"
-            android:parentActivityName=".home.HomeActivity"/>
+            android:parentActivityName=".home.ui.HomeActivity"/>
         <activity android:name=".drafts.ui.DraftsActivity" android:theme="@style/Theme.Isolaatti"/>
         <activity android:name=".about.AboutActivity" android:theme="@style/Theme.Isolaatti"/>
         <activity android:name=".images.picture_viewer.ui.PictureViewerActivity"  android:theme="@style/Theme.Isolaatti"/>

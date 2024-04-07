@@ -7,7 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.isolaatti.auth.data.AuthRepositoryImpl
-import com.isolaatti.home.HomeActivity
+import com.isolaatti.home.ui.HomeActivity
 import com.isolaatti.login.LogInActivity
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject

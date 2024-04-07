@@ -6,7 +6,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -14,9 +13,7 @@ import androidx.lifecycle.Observer
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.isolaatti.R
-import com.isolaatti.connectivity.ConnectivityCallbackImpl
 import com.isolaatti.connectivity.NetworkStatus
-import com.isolaatti.home.HomeActivity
 import com.isolaatti.login.LogInActivity
 import com.isolaatti.utils.Resource
 import dagger.hilt.android.AndroidEntryPoint

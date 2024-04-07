@@ -111,7 +111,7 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    override fun getFeed(refresh: Boolean) {
+    override fun getFeed(refresh: Boolean, hashtag: String?) {
         viewModelScope.launch {
             if(refresh) {
                 posts.value = Pair(null, UpdateEvent(UpdateEvent.UpdateType.REFRESH, null))
@@ -132,7 +132,7 @@ class ProfileViewModel @Inject constructor(
                     is Resource.Error -> {
                         errorLoading.postValue(feedDtoResource.errorType)
                         toRetry.add {
-                            getFeed(refresh)
+                            getFeed(refresh, hashtag)
                         }
                     }
                 }

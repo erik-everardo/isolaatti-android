@@ -358,7 +358,7 @@ class ProfileMainFragment : Fragment() {
         viewBinding.feedRecyclerView.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
 
         viewBinding.swipeToRefresh.setOnRefreshListener {
-            viewModel.getFeed(true)
+            viewModel.getFeed(true, null)
         }
         viewBinding.playButton.setOnClickListener {
             audioDescriptionAudio?.let { audio ->
@@ -396,7 +396,7 @@ class ProfileMainFragment : Fragment() {
         userId?.let { profileId ->
             viewModel.profileId = profileId
             viewModel.getProfile()
-            viewModel.getFeed(true)
+            viewModel.getFeed(true, null)
         }
     }
 
@@ -466,7 +466,7 @@ class ProfileMainFragment : Fragment() {
             }
 
             override fun onLoadMore() {
-                viewModel.getFeed(false)
+                viewModel.getFeed(false, null)
             }
         }
     }
