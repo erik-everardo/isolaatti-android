@@ -361,7 +361,9 @@ class PostsRecyclerViewAdapter (
         if(totalItems != null && totalItems > 0 && !requestedNewContent) {
             if(position == totalItems - 1) {
                 requestedNewContent = true
-                callback.onLoadMore()
+                if(payloads.isEmpty()) {
+                    callback.onLoadMore()
+                }
             }
         }
 
