@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface PostsRepository {
 
-    fun getFeed(lastId: Long): Flow<Resource<MutableList<Post>>>
+    fun getFeed(lastId: Long, hashtag: String?): Flow<Resource<MutableList<Post>>>
 
     fun getProfilePosts(userId: Int, lastId: Long, olderFirst: Boolean, filter: FeedFilterDto?): Flow<Resource<MutableList<Post>>>
 

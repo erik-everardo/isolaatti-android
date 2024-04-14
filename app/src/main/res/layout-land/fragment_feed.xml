@@ -17,11 +17,11 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/home_drawer"
             app:layout_constraintTop_toTopOf="parent"
-            tools:context=".home.FeedFragment">
+            tools:context=".home.ui.FeedFragment">
 
             <com.google.android.material.appbar.AppBarLayout
                 android:id="@+id/topAppBar_layout"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -46,26 +46,11 @@
 
             </com.google.android.material.appbar.AppBarLayout>
 
-            <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-                android:id="@+id/swipe_to_refresh"
+            <androidx.fragment.app.FragmentContainerView
+                android:id="@+id/post_list_fragment_container"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/topAppBar_layout">
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/feed_recycler_view"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
-
-            </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
-            <com.google.android.material.progressindicator.LinearProgressIndicator
-                android:id="@+id/loading_indicator"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:indeterminate="true"
-                android:layout_gravity="bottom"/>
+                app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior" />
         </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
         <com.google.android.material.navigation.NavigationView

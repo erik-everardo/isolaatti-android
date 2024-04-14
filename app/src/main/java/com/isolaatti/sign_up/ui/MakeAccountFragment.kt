@@ -17,7 +17,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.isolaatti.BuildConfig
 import com.isolaatti.R
 import com.isolaatti.databinding.FragmentMakeAccountBinding
-import com.isolaatti.home.HomeActivity
+import com.isolaatti.home.ui.HomeActivity
 import com.isolaatti.sign_up.domain.entity.SignUpResultCode
 import com.isolaatti.sign_up.presentation.MakeAccountViewModel
 import com.isolaatti.sign_up.presentation.SignUpViewModel

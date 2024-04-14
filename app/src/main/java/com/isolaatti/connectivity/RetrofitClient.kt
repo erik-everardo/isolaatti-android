@@ -26,6 +26,12 @@ class RetrofitClient @Inject constructor(private val authenticationInterceptor: 
 
     private val okHttpClient get() = OkHttpClient.Builder()
         .addInterceptor(authenticationInterceptor)
+        .addInterceptor { chain ->
+            chain.proceed(chain.request()
+                .newBuilder()
+                .header("User-Agent", "Isolaatti Android ${BuildConfig.VERSION_NAME}")
+                .build())
+        }
         .connectTimeout(5, TimeUnit.MINUTES)
         .writeTimeout(5, TimeUnit.MINUTES)
         .readTimeout(5, TimeUnit.MINUTES)

@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/feedFragment"
-        android:name="com.isolaatti.home.FeedFragment"
+        android:name="com.isolaatti.home.ui.FeedFragment"
         android:label="fragment_feed"
         tools:layout="@layout/fragment_feed" >
         <action
@@ -30,5 +30,35 @@
     <fragment
         android:id="@+id/searchFragment"
         android:name="com.isolaatti.search.ui.SearchFragment"
-        android:label="@string/search" />
+        android:label="@string/search" >
+        <action
+            android:id="@+id/action_searchFragment_to_hashtagsFragment"
+            app:destination="@id/hashtagsFragment" />
+        <action
+            android:id="@+id/action_searchFragment_to_hashtagPostsFragment"
+            app:destination="@id/hashtagPostsFragment2" />
+        <action
+            android:id="@+id/action_searchFragment_to_browseProfilesFragment"
+            app:destination="@id/browseProfilesFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/hashtagsFragment"
+        android:name="com.isolaatti.hashtags.ui.HashtagsFragment"
+        android:label="HashtagsFragment" >
+        <action
+            android:id="@+id/action_hashtagsFragment2_to_hashtagPostsFragment2"
+            app:destination="@id/hashtagPostsFragment2" />
+    </fragment>
+    <fragment
+        android:id="@+id/hashtagPostsFragment2"
+        android:name="com.isolaatti.hashtags.ui.HashtagPostsFragment"
+        android:label="HashtagPostsFragment">
+        <argument
+            android:name="hashtag"
+            app:argType="string" />
+    </fragment>
+    <fragment
+        android:id="@+id/browseProfilesFragment"
+        android:name="com.isolaatti.profile.ui.BrowseProfilesFragment"
+        android:label="BrowseProfilesFragment" />
 </navigation>

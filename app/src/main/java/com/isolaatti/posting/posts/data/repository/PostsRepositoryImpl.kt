@@ -1,5 +1,6 @@
 package com.isolaatti.posting.posts.data.repository
 
+import android.util.Log
 import com.google.gson.Gson
 import com.isolaatti.posting.posts.data.remote.CreatePostDto
 import com.isolaatti.posting.posts.data.remote.DeletePostDto
@@ -18,10 +19,18 @@ import retrofit2.awaitResponse
 import javax.inject.Inject
 
 class PostsRepositoryImpl @Inject constructor(private val feedsApi: FeedsApi, private val postApi: PostApi) : PostsRepository {
-    override fun getFeed(lastId: Long): Flow<Resource<MutableList<Post>>> = flow {
+    companion object {
+        const val LOG_TAG = "PostsRepositoryImpl"
+    }
+    override fun getFeed(lastId: Long, hashtag: String?): Flow<Resource<MutableList<Post>>> = flow {
         emit(Resource.Loading())
         try {
-            val result = feedsApi.getChronology(lastId, 20).execute()
+
+            val result = if(hashtag == null) {
+                feedsApi.getChronology(lastId, 20).awaitResponse()
+            } else {
+                feedsApi.getHashtagPosts(hashtag, lastId).awaitResponse()
+            }
             if(result.isSuccessful) {
                 emit(Resource.Success(result.body()?.let { Post.fromFeedDto(it) }))
                 return@flow
@@ -32,7 +41,8 @@ class PostsRepositoryImpl @Inject constructor(private val feedsApi: FeedsApi, pr
                 500 -> emit(Resource.Error(Resource.Error.ErrorType.ServerError))
                 else -> emit(Resource.Error(Resource.Error.ErrorType.OtherError))
             }
-        } catch(_: Exception) {
+        } catch(e: Exception) {
+            Log.e(LOG_TAG, "Error $e")
             emit(Resource.Error(Resource.Error.ErrorType.NetworkError))
         }
     }

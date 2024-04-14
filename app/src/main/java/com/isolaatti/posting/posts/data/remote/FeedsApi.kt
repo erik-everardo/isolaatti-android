@@ -1,5 +1,6 @@
 package com.isolaatti.posting.posts.data.remote
 
+import com.isolaatti.common.ResultDto
 import com.isolaatti.profile.data.remote.ProfileListItemDto
 import retrofit2.Call
 import retrofit2.http.GET
@@ -22,4 +23,7 @@ interface FeedsApi {
 
     @GET("Feed")
     fun getChronology(@Query("lastId") lastId: Long, @Query("length") length: Int): Call<FeedDto>
+
+    @GET("hashtags/hashtag/{hashtag}")
+    fun getHashtagPosts(@Path("hashtag") hashtag: String, @Query("after") afterPost: Long? = null): Call<FeedDto>
 }
