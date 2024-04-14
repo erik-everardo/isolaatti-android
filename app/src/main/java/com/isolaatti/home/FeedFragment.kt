@@ -45,6 +45,7 @@ import com.isolaatti.posting.posts.presentation.CreatePostContract
 import com.isolaatti.posting.posts.presentation.EditPostContract
 import com.isolaatti.posting.posts.presentation.PostsRecyclerViewAdapter
 import com.isolaatti.profile.ui.ProfileActivity
+import com.isolaatti.reports.ui.NewReportBottomSheetDialogFragment
 import com.isolaatti.settings.ui.SettingsActivity
 import com.isolaatti.utils.UrlGen
 import dagger.hilt.android.AndroidEntryPoint
@@ -113,6 +114,7 @@ class FeedFragment : Fragment(), OnUserInteractedWithPostCallback {
                 }
                 Options.Option.OPTION_REPORT -> {
                     optionsViewModel.handle()
+                    NewReportBottomSheetDialogFragment.newInstance().show(childFragmentManager, NewReportBottomSheetDialogFragment.LOG_TAG)
                 }
             }
         }

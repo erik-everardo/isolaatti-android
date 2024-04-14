@@ -49,6 +49,7 @@ import com.isolaatti.posting.posts.viewer.ui.PostViewerActivity
 import com.isolaatti.profile.domain.entity.UserProfile
 import com.isolaatti.profile.presentation.EditProfileContract
 import com.isolaatti.profile.presentation.ProfileViewModel
+import com.isolaatti.reports.ui.NewReportBottomSheetDialogFragment
 import com.isolaatti.utils.UrlGen
 import dagger.hilt.android.AndroidEntryPoint
 import io.noties.markwon.AbstractMarkwonPlugin
@@ -265,6 +266,7 @@ class ProfileMainFragment : Fragment() {
                         }
                         Options.Option.OPTION_REPORT -> {
                             optionsViewModel.handle()
+                            NewReportBottomSheetDialogFragment.newInstance().show(childFragmentManager, NewReportBottomSheetDialogFragment.LOG_TAG)
                         }
                     }
                 }

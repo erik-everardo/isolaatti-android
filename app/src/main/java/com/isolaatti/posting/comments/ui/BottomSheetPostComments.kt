@@ -36,6 +36,7 @@ import com.isolaatti.images.image_chooser.ui.ImageChooserContract
 import com.isolaatti.posting.link_creator.presentation.LinkCreatorViewModel
 import com.isolaatti.posting.link_creator.ui.LinkCreatorFragment
 import com.isolaatti.profile.ui.ProfileActivity
+import com.isolaatti.reports.ui.NewReportBottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import io.noties.markwon.AbstractMarkwonPlugin
 import io.noties.markwon.Markwon
@@ -74,6 +75,7 @@ class BottomSheetPostComments() : BottomSheetDialogFragment(), OnUserInteractedC
                 }
                 Options.Option.OPTION_REPORT -> {
                     optionsViewModel.handle()
+                    NewReportBottomSheetDialogFragment.newInstance().show(childFragmentManager, NewReportBottomSheetDialogFragment.LOG_TAG)
                 }
             }
         }
