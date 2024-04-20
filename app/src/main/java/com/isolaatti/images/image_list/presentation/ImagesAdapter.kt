@@ -86,12 +86,12 @@ class ImagesAdapter(
             holder.imageItemBinding.root.setOnClickListener {
                 holder.imageItemBinding.imageCheckbox.isChecked = !holder.imageItemBinding.imageCheckbox.isChecked
             }
-            holder.imageItemBinding.imageCheckbox.isChecked = image.delete
             holder.imageItemBinding.imageCheckbox.setOnCheckedChangeListener { buttonView, isChecked ->
                 image.delete = isChecked
 
                 onImageSelectedCountUpdate?.invoke(currentList.count { it.delete })
             }
+            holder.imageItemBinding.imageCheckbox.isChecked = image.delete
             holder.imageItemBinding.root.setOnLongClickListener(null)
         } else {
             holder.imageItemBinding.imageCheckbox.visibility = View.GONE
