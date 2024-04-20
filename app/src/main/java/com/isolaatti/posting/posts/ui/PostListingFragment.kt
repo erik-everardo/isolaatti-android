@@ -33,6 +33,8 @@ import com.isolaatti.posting.posts.presentation.PostListingViewModel
 import com.isolaatti.posting.posts.presentation.PostsRecyclerViewAdapter
 import com.isolaatti.posting.posts.viewer.ui.PostViewerActivity
 import com.isolaatti.profile.ui.ProfileActivity
+import com.isolaatti.reports.data.ContentType
+import com.isolaatti.reports.ui.NewReportBottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import io.noties.markwon.AbstractMarkwonPlugin
 import io.noties.markwon.Markwon
@@ -209,6 +211,8 @@ class PostListingFragment : Fragment(), OnUserInteractedWithPostCallback {
                 }
                 Options.Option.OPTION_REPORT -> {
                     optionsViewModel.handle()
+                    NewReportBottomSheetDialogFragment.newInstance(ContentType.Post, post.id.toString())
+                        .show(childFragmentManager, NewReportBottomSheetDialogFragment.LOG_TAG)
                 }
             }
         }

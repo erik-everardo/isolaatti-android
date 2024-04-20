@@ -205,4 +205,16 @@
     <string name="browse_profiles">Browse profiles</string>
     <string name="app_version">v%s</string>
     <string name="new_report">New report</string>
+    <string name="report_submitted_successfully">Report submitted successfully</string>
+    <string-array name="report_reasons">
+        <item>Spam</item>
+        <item>Explicit content</item>
+        <item>Children at risk</item>
+        <item>Piracy</item>
+        <item>Copyright protected content</item>
+        <item>Hate and/or discrimination</item>
+        <item>Identity fraud</item>
+        <item>Fraudulent IA generated content</item>
+        <item>People in danger</item>
+    </string-array>
 </resources>

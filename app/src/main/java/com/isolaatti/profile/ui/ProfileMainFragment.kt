@@ -49,6 +49,7 @@ import com.isolaatti.posting.posts.viewer.ui.PostViewerActivity
 import com.isolaatti.profile.domain.entity.UserProfile
 import com.isolaatti.profile.presentation.EditProfileContract
 import com.isolaatti.profile.presentation.ProfileViewModel
+import com.isolaatti.reports.data.ContentType
 import com.isolaatti.reports.ui.NewReportBottomSheetDialogFragment
 import com.isolaatti.utils.UrlGen
 import dagger.hilt.android.AndroidEntryPoint
@@ -266,7 +267,7 @@ class ProfileMainFragment : Fragment() {
                         }
                         Options.Option.OPTION_REPORT -> {
                             optionsViewModel.handle()
-                            NewReportBottomSheetDialogFragment.newInstance().show(childFragmentManager, NewReportBottomSheetDialogFragment.LOG_TAG)
+                            NewReportBottomSheetDialogFragment.newInstance(ContentType.Post, post.id.toString()).show(childFragmentManager, NewReportBottomSheetDialogFragment.LOG_TAG)
                         }
                     }
                 }
@@ -329,6 +330,7 @@ class ProfileMainFragment : Fragment() {
                     true
                 }
                 R.id.report_profile_menu_item -> {
+                    NewReportBottomSheetDialogFragment.newInstance(ContentType.Profile, viewModel.profileId.toString()).show(childFragmentManager, NewReportBottomSheetDialogFragment.LOG_TAG)
                     true
                 }
                 R.id.block_profile_menu_item -> {
