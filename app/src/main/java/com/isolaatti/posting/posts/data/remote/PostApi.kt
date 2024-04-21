@@ -1,10 +1,12 @@
 package com.isolaatti.posting.posts.data.remote
 
+import com.isolaatti.common.ResultDto
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface PostApi  {
     @POST("Posting/Make")
@@ -18,5 +20,8 @@ interface PostApi  {
 
     @GET("Fetch/Post/{postId}")
     fun getPost(@Path("postId") postId: Long): Call<FeedDto.PostDto>
+
+    @GET("Posting/Post/{postId}/Versions")
+    fun getVersions(@Path("postId") postId: Long): Call<ResultDto<List<VersionDto>>>
 
 }

@@ -206,6 +206,10 @@
     <string name="app_version">v%s</string>
     <string name="new_report">New report</string>
     <string name="report_submitted_successfully">Report submitted successfully</string>
+    <string name="share_post">Share post</string>
+    <string name="people_who_clapped">People who clapped</string>
+    <string name="post_history">History</string>
+    <string name="edited_at">Edited at %s</string>
     <string-array name="report_reasons">
         <item>Spam</item>
         <item>Explicit content</item>

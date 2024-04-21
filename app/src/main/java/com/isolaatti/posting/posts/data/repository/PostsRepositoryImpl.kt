@@ -10,8 +10,10 @@ import com.isolaatti.posting.posts.data.remote.FeedFilterDto
 import com.isolaatti.posting.posts.data.remote.FeedsApi
 import com.isolaatti.posting.posts.data.remote.PostApi
 import com.isolaatti.posting.posts.data.remote.PostDeletedDto
+import com.isolaatti.posting.posts.data.remote.VersionDto
 import com.isolaatti.posting.posts.domain.PostsRepository
 import com.isolaatti.posting.posts.domain.entity.Post
+import com.isolaatti.profile.domain.entity.ProfileListItem
 import com.isolaatti.utils.Resource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -118,6 +120,42 @@ class PostsRepositoryImpl @Inject constructor(private val feedsApi: FeedsApi, pr
             emit(Resource.Error(Resource.Error.mapErrorCode(result.code())))
         } catch(_: Exception) {
             emit(Resource.Error(Resource.Error.ErrorType.NetworkError))
+        }
+    }
+
+    override fun getUsersLikedPost(postId: Long): Flow<Resource<List<ProfileListItem>>> = flow {
+        emit(Resource.Loading())
+        try {
+            val response = feedsApi.getLikedBy(postId).awaitResponse()
+            if(response.isSuccessful) {
+                val dto = response.body()
+                if(dto != null) {
+                    emit(Resource.Success(dto.result.map { ProfileListItem.fromDto(it) }))
+                    return@flow
+                }
+            }
+            emit(Resource.Error(Resource.Error.mapErrorCode(response.code())))
+        } catch(_: Exception) {
+            emit(Resource.Error(Resource.Error.ErrorType.OtherError))
+        }
+    }
+
+    override fun getPostVersions(postId: Long): Flow<Resource<List<VersionDto>>> = flow {
+        emit(Resource.Loading())
+        try {
+            val response = postApi.getVersions(postId).awaitResponse()
+            if(response.isSuccessful) {
+                val dto = response.body()
+                if(dto != null) {
+                    emit(Resource.Success(dto.result))
+                }
+                return@flow
+            }
+
+            emit(Resource.Error(Resource.Error.mapErrorCode(response.code())))
+        } catch(e: Exception) {
+            Log.e(LOG_TAG, "Error getting post versions. postId: $postId. \n ${e.message}")
+            emit(Resource.Error(Resource.Error.ErrorType.OtherError))
         }
     }
 }

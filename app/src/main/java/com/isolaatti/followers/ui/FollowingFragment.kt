@@ -10,13 +10,13 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.isolaatti.common.UserItemCallback
 import com.isolaatti.common.UserListRecyclerViewAdapter
-import com.isolaatti.databinding.FragmentFollowersBinding
+import com.isolaatti.databinding.FragmentUserListBinding
 import com.isolaatti.followers.presentation.FollowersViewModel
 import com.isolaatti.profile.domain.entity.ProfileListItem
 import com.isolaatti.profile.ui.ProfileActivity
 
 class FollowingFragment : Fragment(), UserItemCallback {
-    private lateinit var binding: FragmentFollowersBinding
+    private lateinit var binding: FragmentUserListBinding
     private val viewModel: FollowersViewModel by viewModels({ requireParentFragment() })
     private lateinit var adapter: UserListRecyclerViewAdapter
 
@@ -27,7 +27,7 @@ class FollowingFragment : Fragment(), UserItemCallback {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = FragmentFollowersBinding.inflate(inflater)
+        binding = FragmentUserListBinding.inflate(inflater)
         return binding.root
     }
 

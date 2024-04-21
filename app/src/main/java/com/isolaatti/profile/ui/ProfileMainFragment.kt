@@ -1,6 +1,7 @@
 package com.isolaatti.profile.ui
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -37,7 +38,6 @@ import com.isolaatti.databinding.FragmentDiscussionsBinding
 import com.isolaatti.followers.domain.FollowingState
 import com.isolaatti.images.image_chooser.ui.ImageChooserContract
 import com.isolaatti.images.image_list.ui.ImagesFragment
-import com.isolaatti.images.picture_viewer.ui.PictureViewerActivity
 import com.isolaatti.posting.comments.ui.BottomSheetPostComments
 import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.posting.posts.presentation.CreatePostContract
@@ -45,6 +45,7 @@ import com.isolaatti.posting.posts.presentation.EditPostContract
 import com.isolaatti.posting.posts.presentation.PostListingRecyclerViewAdapterWiring
 import com.isolaatti.posting.posts.presentation.PostsRecyclerViewAdapter
 import com.isolaatti.posting.posts.presentation.UpdateEvent
+import com.isolaatti.posting.posts.ui.PostInfoActivity
 import com.isolaatti.posting.posts.viewer.ui.PostViewerActivity
 import com.isolaatti.profile.domain.entity.UserProfile
 import com.isolaatti.profile.presentation.EditProfileContract
@@ -471,6 +472,19 @@ class ProfileMainFragment : Fragment() {
 
             override fun onLoadMore() {
                 viewModel.getFeed(false, null)
+            }
+
+            override fun onMoreInfo(postId: Long) {
+                PostInfoActivity.startActivity(requireContext(), postId)
+            }
+
+            override fun onShare(postId: Long) {
+                val intent = Intent.createChooser(Intent().apply {
+                    action = Intent.ACTION_SEND
+                    putExtra(Intent.EXTRA_TEXT, "${BuildConfig.backend}/pub/${postId}")
+                    type = "text/plain"
+                }, getString(R.string.share_post))
+                startActivity(intent)
             }
         }
     }

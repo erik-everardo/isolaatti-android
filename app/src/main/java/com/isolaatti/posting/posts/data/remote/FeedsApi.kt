@@ -15,11 +15,9 @@ interface FeedsApi {
                     @Query("olderFirst") olderFirst: Boolean,
                     @Query(value = "filterJson", encoded = false) filter: String): Call<FeedDto>
 
-    @GET("Fetch/Post/{postId}")
-    fun getPost(@Path("postId") postId: Long): Call<FeedDto>
 
     @GET("Fetch/Post/{postId}/LikedBy")
-    fun getLikedBy(@Path("postId") postId: Long): Call<List<ProfileListItemDto>>
+    fun getLikedBy(@Path("postId") postId: Long): Call<ResultDto<List<ProfileListItemDto>>>
 
     @GET("Feed")
     fun getChronology(@Query("lastId") lastId: Long, @Query("length") length: Int): Call<FeedDto>

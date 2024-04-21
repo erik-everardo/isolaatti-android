@@ -1,5 +1,7 @@
 package com.isolaatti.posting.posts.ui
 
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -11,6 +13,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.isolaatti.BuildConfig
+import com.isolaatti.R
 import com.isolaatti.audio.common.domain.Audio
 import com.isolaatti.audio.common.domain.Playable
 import com.isolaatti.audio.player.AudioPlayerConnector
@@ -24,7 +27,6 @@ import com.isolaatti.common.options_bottom_sheet.domain.Options
 import com.isolaatti.common.options_bottom_sheet.presentation.BottomSheetPostOptionsViewModel
 import com.isolaatti.common.options_bottom_sheet.ui.BottomSheetPostOptionsFragment
 import com.isolaatti.databinding.FragmentPostListingBinding
-import com.isolaatti.home.presentation.FeedViewModel
 import com.isolaatti.home.ui.FeedFragment
 import com.isolaatti.posting.comments.ui.BottomSheetPostComments
 import com.isolaatti.posting.posts.domain.entity.Post
@@ -175,6 +177,19 @@ class PostListingFragment : Fragment(), OnUserInteractedWithPostCallback {
 
     override fun onPlay(audio: Audio) {
         audioPlayerConnector.playPauseAudio(audio)
+    }
+
+    override fun onMoreInfo(postId: Long) {
+        PostInfoActivity.startActivity(requireContext(), postId)
+    }
+
+    override fun onShare(postId: Long) {
+        val intent = Intent.createChooser(Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_TEXT, "${BuildConfig.backend}/pub/${postId}")
+            type = "text/plain"
+        }, getString(R.string.share_post))
+        startActivity(intent)
     }
 
     override fun onProfileClick(userId: Int) {

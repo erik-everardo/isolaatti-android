@@ -87,6 +87,19 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     app:icon="@drawable/comments_solid" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/share_button"
+                    style="?attr/materialIconButtonFilledTonalStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:icon="@drawable/baseline_share_24"
+                    android:gravity="end"/>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/info_button"
+                    style="?attr/materialIconButtonFilledTonalStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:icon="@drawable/baseline_info_24" />
             </LinearLayout>
         </LinearLayout>
 

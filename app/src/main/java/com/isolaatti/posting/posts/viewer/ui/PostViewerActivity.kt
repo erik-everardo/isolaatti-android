@@ -15,6 +15,7 @@ import com.isolaatti.R
 import com.isolaatti.common.IsolaattiBaseActivity
 import com.isolaatti.databinding.ActivityPostViewerBinding
 import com.isolaatti.posting.comments.ui.BottomSheetPostComments
+import com.isolaatti.posting.posts.ui.PostInfoActivity
 import com.isolaatti.posting.posts.viewer.presentation.PostViewerViewModel
 import com.isolaatti.profile.ui.ProfileActivity
 import com.isolaatti.utils.UrlGen
@@ -119,6 +120,10 @@ class PostViewerActivity : IsolaattiBaseActivity() {
 
         binding.toolbar.setNavigationOnClickListener {
             finish()
+        }
+
+        binding.likesInfo.setOnClickListener {
+            PostInfoActivity.startActivity(this, postId)
         }
 
     }

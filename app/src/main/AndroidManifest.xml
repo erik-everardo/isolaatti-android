@@ -44,6 +44,7 @@
         <activity android:name=".profile.ui.EditProfileActivity" android:theme="@style/Theme.Isolaatti" />
         <activity android:name=".audio.recorder.ui.AudioRecorderActivity" android:theme="@style/Theme.Isolaatti" />
         <activity android:name=".audio.audio_selector.ui.AudioSelectorActivity" android:theme="@style/Theme.Isolaatti" />
+        <activity android:name=".posting.posts.ui.PostInfoActivity" android:theme="@style/Theme.Isolaatti"/>
         <provider
             android:authorities="com.isolaatti.provider"
             android:name="androidx.core.content.FileProvider"

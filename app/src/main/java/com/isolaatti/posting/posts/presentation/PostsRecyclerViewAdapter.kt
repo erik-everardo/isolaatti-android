@@ -150,6 +150,12 @@ class PostsRecyclerViewAdapter (
                     itemBinding.audio.root.visibility = View.GONE
                     itemBinding.audio.playButton.setOnClickListener(null)
                 }
+                itemBinding.shareButton.setOnClickListener {
+                    callback.onShare(post.id)
+                }
+                itemBinding.infoButton.setOnClickListener {
+                    callback.onMoreInfo(post.id)
+                }
             }
         }
     }

@@ -8,4 +8,6 @@ interface OnUserInteractedWithPostCallback : OnUserInteractedCallback {
     fun onComment(postId: Long)
     fun onOpenPost(postId: Long)
     fun onPlay(audio: Audio)
+    fun onMoreInfo(postId: Long)
+    fun onShare(postId: Long)
 }
