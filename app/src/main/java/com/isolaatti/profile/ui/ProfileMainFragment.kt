@@ -36,8 +36,10 @@ import com.isolaatti.common.options_bottom_sheet.presentation.BottomSheetPostOpt
 import com.isolaatti.common.options_bottom_sheet.ui.BottomSheetPostOptionsFragment
 import com.isolaatti.databinding.FragmentDiscussionsBinding
 import com.isolaatti.followers.domain.FollowingState
+import com.isolaatti.images.common.domain.entity.Image
 import com.isolaatti.images.image_chooser.ui.ImageChooserContract
 import com.isolaatti.images.image_list.ui.ImagesFragment
+import com.isolaatti.images.picture_viewer.ui.PictureViewerActivity
 import com.isolaatti.posting.comments.ui.BottomSheetPostComments
 import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.posting.posts.presentation.CreatePostContract
@@ -243,7 +245,13 @@ class ProfileMainFragment : Fragment() {
                         Options.Option.OPTION_PROFILE_PHOTO_VIEW_PHOTO -> {
                             val profilePictureUrl = profile?.profilePictureUrl
                             if(profilePictureUrl != null) {
-                                // TODO show image
+                                PictureViewerActivity.startActivityWithImages(requireContext(), arrayOf(
+                                    Image(
+                                        profile.profileImageId ?: "",
+                                        profile.userId,
+                                        getString(R.string.user_profile_picture, profile.name),
+                                        profile.uniqueUsername)
+                                ))
                             }
                         }
                     }
@@ -284,7 +292,7 @@ class ProfileMainFragment : Fragment() {
             .setTitle(R.string.remove_photo)
             .setNegativeButton(R.string.cancel, null)
             .setPositiveButton(R.string.yes_continue) { _, _ ->
-                // remove image here
+                // TODO remove image here
             }
             .show()
     }
@@ -303,6 +311,18 @@ class ProfileMainFragment : Fragment() {
                 viewBinding.collapsingToolbarLayout.title = " "
             }
         }
+    }
+
+    private fun showBlockUserDialog() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.block_profile)
+            .setMessage(getString(R.string.block_profile_dialog_message, viewModel.profile.value?.name ?: ""))
+            .setPositiveButton(R.string.yes_continue) {_, _ ->
+                // TODO implement
+            }
+            .setNegativeButton(R.string.no, null)
+            .show()
+
     }
 
     private fun bind() {
@@ -335,6 +355,7 @@ class ProfileMainFragment : Fragment() {
                     true
                 }
                 R.id.block_profile_menu_item -> {
+                    showBlockUserDialog()
                     true
                 }
                 else -> false

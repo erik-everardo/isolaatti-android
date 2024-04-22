@@ -210,6 +210,8 @@
     <string name="people_who_clapped">People who clapped</string>
     <string name="post_history">History</string>
     <string name="edited_at">Edited at %s</string>
+    <string name="block_profile_dialog_message">Do you really want to block %s?</string>
+    <string name="user_profile_picture">%s\'s profile picture</string>
     <string-array name="report_reasons">
         <item>Spam</item>
         <item>Explicit content</item>
