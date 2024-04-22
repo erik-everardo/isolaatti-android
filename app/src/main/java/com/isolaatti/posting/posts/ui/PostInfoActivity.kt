@@ -31,6 +31,9 @@ class PostInfoActivity : IsolaattiBaseActivity() {
         } else {
             finish()
         }
+        binding.toolbar.setNavigationOnClickListener {
+            finish()
+        }
 
     }
 
