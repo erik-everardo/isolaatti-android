@@ -11,6 +11,7 @@ import com.isolaatti.profile.domain.entity.UserProfile
 import com.isolaatti.profile.domain.use_case.FollowUser
 import com.isolaatti.profile.domain.use_case.GetProfile
 import com.isolaatti.profile.domain.use_case.GetProfilePosts
+import com.isolaatti.profile.domain.use_case.RemoveProfilePicture
 import com.isolaatti.profile.domain.use_case.SetProfileImage
 import com.isolaatti.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,7 +27,8 @@ class ProfileViewModel @Inject constructor(
     private val getProfileUseCase: GetProfile,
     private val getProfilePostsUseCase: GetProfilePosts,
     private val setProfileImageUC: SetProfileImage,
-    private val followUserUC: FollowUser
+    private val followUserUC: FollowUser,
+    private val removeProfilePictureUC: RemoveProfilePicture
 ) : PostListingViewModelBase() {
     private val _profile = MutableLiveData<UserProfile>()
     val profile: LiveData<UserProfile> get() = _profile
@@ -142,5 +144,19 @@ class ProfileViewModel @Inject constructor(
 
     fun setProfile(profile: UserProfile) {
         _profile.value = profile
+    }
+
+    fun removeCurrentProfileImage() {
+        viewModelScope.launch {
+            removeProfilePictureUC().onEach {
+                when(it) {
+                    is Resource.Error -> {}
+                    is Resource.Loading -> {}
+                    is Resource.Success -> {
+                        _profile.postValue(_profile.value?.copy(profileImageId = null))
+                    }
+                }
+            }.flowOn(Dispatchers.IO).launchIn(this)
+        }
     }
 }

@@ -12,4 +12,6 @@ interface ProfileRepository {
     fun setProfileImage(image: Image): Flow<Resource<Boolean>>
 
     fun updateProfile(newDisplayName: String, newDescription: String): Flow<Resource<Boolean>>
+
+    fun removeProfileImage(): Flow<Resource<Boolean>>
 }

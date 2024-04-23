@@ -18,4 +18,7 @@ interface ProfileApi {
     @POST("EditProfile/UpdateProfile")
     fun updateProfile(@Body updateProfileDto: UpdateProfileDto): Call<UserProfileDto>
 
+    @POST("EditProfile/RemoveProfileImage")
+    fun removeCurrentProfilePicture(): Call<Void>
+
 }

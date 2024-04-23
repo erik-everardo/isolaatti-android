@@ -292,18 +292,25 @@ class ProfileMainFragment : Fragment() {
             .setTitle(R.string.remove_photo)
             .setNegativeButton(R.string.cancel, null)
             .setPositiveButton(R.string.yes_continue) { _, _ ->
-                // TODO remove image here
+                viewModel.removeCurrentProfileImage()
             }
             .show()
     }
 
     private lateinit var postListingRecyclerViewAdapterWiring: PostListingRecyclerViewAdapterWiring
 
-
+    // counter variable to prevent calling appBarLayout.totalScrollRange many times
+    private var i = 0
     private fun setupCollapsingBar() {
-
         viewBinding.topAppBarLayout.addOnOffsetChangedListener { appBarLayout, verticalOffset ->
-            if (scrollRange == -1) scrollRange = appBarLayout.totalScrollRange
+            // prevent calling appBarLayout.totalScrollRange many times
+            if (i == 30) {
+                scrollRange = appBarLayout.totalScrollRange
+                i = 0
+            } else {
+                i++
+            }
+
             if (scrollRange + verticalOffset == 0) {
                 viewBinding.collapsingToolbarLayout.title = viewModel.profile.value?.name
                 isShow = true
