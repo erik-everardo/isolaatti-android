@@ -19,7 +19,6 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainFollowersFragment : Fragment() {
 
     private lateinit var binding: FragmentFollowersMainBinding
-    private val viewModel: FollowersViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -33,12 +32,9 @@ class MainFollowersFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val userId = arguments?.getInt(ARGUMENT_USER_ID) ?: 0
 
-        arguments?.getInt(ARGUMENT_USER_ID)?.let {
-            viewModel.userId = it
-        }
-
-        binding.viewPagerFollowersMain.adapter = FollowersViewPagerAdapter(this)
+        binding.viewPagerFollowersMain.adapter = FollowersViewPagerAdapter(this, userId)
         TabLayoutMediator(binding.tabLayoutFollowers, binding.viewPagerFollowersMain) { tab, position ->
             when(position) {
                 0 -> tab.text = getText(R.string.followers)

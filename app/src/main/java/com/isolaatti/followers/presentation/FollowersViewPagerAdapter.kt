@@ -4,15 +4,16 @@ import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.isolaatti.followers.ui.FollowersFragment
 import com.isolaatti.followers.ui.FollowingFragment
+import com.isolaatti.profile.profile_listing.ui.ProfileListingFragment
 
-class FollowersViewPagerAdapter(fragment: Fragment) : FragmentStateAdapter(fragment) {
+class FollowersViewPagerAdapter(fragment: Fragment, private val userId: Int) : FragmentStateAdapter(fragment) {
     override fun getItemCount(): Int = 2
 
     override fun createFragment(position: Int): Fragment {
         if(position == 0) {
-            return FollowersFragment()
+            return ProfileListingFragment.getInstanceForFollowers(userId)
         }
 
-        return FollowingFragment()
+        return ProfileListingFragment.getInstanceForFollowing(userId)
     }
 }
