@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.isolaatti.profile.domain.entity.ProfileListItem
 import com.isolaatti.search.data.HashtagsDto
 import com.isolaatti.search.data.NewestUsersDto
 import com.isolaatti.search.data.SearchDto
@@ -27,7 +28,7 @@ class SearchViewModel @Inject constructor(private val searchRepository: SearchRe
     val searchSuggestions: MutableLiveData<List<SearchHistoryEntity>> = MutableLiveData()
     val searchResults: MutableLiveData<SearchDto> = MutableLiveData()
     val trendingHashtags: MutableLiveData<HashtagsDto> = MutableLiveData()
-    val newestUsers: MutableLiveData<NewestUsersDto> = MutableLiveData()
+    val newestUsers: MutableLiveData<List<ProfileListItem>> = MutableLiveData()
 
     var searchQuery = ""
 
@@ -95,7 +96,7 @@ class SearchViewModel @Inject constructor(private val searchRepository: SearchRe
 
     fun loadNewestUsers() {
         viewModelScope.launch {
-            searchRepository.getNewestUsers().onEach { resource ->
+            searchRepository.getNewestUsers(null).onEach { resource ->
                 when(resource) {
                     is Resource.Error -> {}
                     is Resource.Loading -> {}

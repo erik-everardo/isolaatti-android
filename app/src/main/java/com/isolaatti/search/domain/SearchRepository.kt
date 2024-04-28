@@ -1,7 +1,7 @@
 package com.isolaatti.search.domain
 
+import com.isolaatti.profile.domain.entity.ProfileListItem
 import com.isolaatti.search.data.HashtagsDto
-import com.isolaatti.search.data.NewestUsersDto
 import com.isolaatti.search.data.SearchDto
 import com.isolaatti.search.data.SearchHistoryEntity
 import com.isolaatti.utils.Resource
@@ -15,5 +15,5 @@ interface SearchRepository {
     fun removeSuggestion(query: String): Flow<Resource<Boolean>>
 
     fun getTrendingHashtags(): Flow<Resource<HashtagsDto>>
-    fun getNewestUsers(): Flow<Resource<NewestUsersDto>>
+    fun getNewestUsers(after: Int?): Flow<Resource<List<ProfileListItem>>>
 }

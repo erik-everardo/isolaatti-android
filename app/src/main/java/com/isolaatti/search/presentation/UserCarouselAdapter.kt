@@ -8,25 +8,26 @@ import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import coil.load
 import com.isolaatti.R
 import com.isolaatti.databinding.UsersCarouselItemBinding
+import com.isolaatti.profile.domain.entity.ProfileListItem
 import com.isolaatti.search.data.ProfileSearchDto
 import com.isolaatti.utils.UrlGen
 
 class UserCarouselAdapter(
     private val onProfileClick: (profileId: Int) -> Unit = {}
-) : ListAdapter<ProfileSearchDto, UserCarouselAdapter.UserCarouselItemViewHolder>(itemCallback) {
+) : ListAdapter<ProfileListItem, UserCarouselAdapter.UserCarouselItemViewHolder>(itemCallback) {
 
     companion object {
-        val itemCallback = object: DiffUtil.ItemCallback<ProfileSearchDto>() {
+        val itemCallback = object: DiffUtil.ItemCallback<ProfileListItem>() {
             override fun areItemsTheSame(
-                oldItem: ProfileSearchDto,
-                newItem: ProfileSearchDto
+                oldItem: ProfileListItem,
+                newItem: ProfileListItem
             ): Boolean {
                 return oldItem.id == newItem.id
             }
 
             override fun areContentsTheSame(
-                oldItem: ProfileSearchDto,
-                newItem: ProfileSearchDto
+                oldItem: ProfileListItem,
+                newItem: ProfileListItem
             ): Boolean {
                 return oldItem == newItem
             }
@@ -44,8 +45,8 @@ class UserCarouselAdapter(
         val user = getItem(position)
 
         holder.usersCarouselItemBinding.userCarouselName.text = user.name
-        if(user.imageId != null) {
-            holder.usersCarouselItemBinding.userCarouselImageView.load(UrlGen.imageUrl(user.imageId))
+        if(user.profileImageId != null) {
+            holder.usersCarouselItemBinding.userCarouselImageView.load(UrlGen.imageUrl(user.profileImageId))
         } else {
             holder.usersCarouselItemBinding.userCarouselImageView.load(R.drawable.avatar)
         }

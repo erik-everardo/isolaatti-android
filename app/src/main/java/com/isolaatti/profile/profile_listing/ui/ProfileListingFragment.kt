@@ -49,7 +49,7 @@ class ProfileListingFragment : Fragment(), UserItemCallback {
             FOLLOWING -> viewModel.fetchFollowings(refresh)
             FOLLOWERS -> viewModel.fetchFollowers(refresh)
             POST_LIKES -> viewModel.fetchPostLikedBy(refresh)
-            BROWSE_PROFILES -> {}
+            BROWSE_PROFILES -> viewModel.fetchProfiles(refresh)
         }
     }
 
@@ -70,7 +70,7 @@ class ProfileListingFragment : Fragment(), UserItemCallback {
     }
 
     companion object {
-        private const val ARG_MODE = "mode"
+        const val ARG_MODE = "mode"
         private const val ARG_USER_ID = "userId"
         private const val ARG_POST_ID = "postId"
         const val FOLLOWERS = 1

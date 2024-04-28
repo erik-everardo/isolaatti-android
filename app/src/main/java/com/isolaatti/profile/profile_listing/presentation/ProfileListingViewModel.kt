@@ -9,6 +9,7 @@ import com.isolaatti.common.UpdateEvent
 import com.isolaatti.followers.domain.FollowersRepository
 import com.isolaatti.posting.posts.domain.PostsRepository
 import com.isolaatti.profile.domain.entity.ProfileListItem
+import com.isolaatti.search.domain.SearchRepository
 import com.isolaatti.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +22,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ProfileListingViewModel @Inject constructor(
     private val followersRepository: FollowersRepository,
-    private val postsRepository: PostsRepository
+    private val postsRepository: PostsRepository,
+    private val searchRepository: SearchRepository
 ): ViewModel() {
     // one of these values must be set from fragment, depending on what action will be performed
     var userId: Int = 0 // for followers and followings
@@ -145,7 +147,7 @@ class ProfileListingViewModel @Inject constructor(
                 when(resource) {
                     is Resource.Error ->  {
                         toRetry.add {
-                            fetchFollowings()
+                            fetchPostLikedBy(refresh)
                         }
                     }
                     is Resource.Loading -> {}
@@ -159,6 +161,34 @@ class ProfileListingViewModel @Inject constructor(
                 }
             }.flowOn(Dispatchers.IO).launchIn(this)
         }
+    }
+
+    fun fetchProfiles(refresh: Boolean = false) {
+        if(refresh) {
+            usersList = mutableListOf()
+        }
+        val updateListEvent = if(refresh) ListUpdateEvent.Refresh else ListUpdateEvent.ItemsAdded
+
+        viewModelScope.launch {
+            searchRepository.getNewestUsers(getUsersLastId()).onEach { resource ->
+                when(resource) {
+                    is Resource.Error ->  {
+                        toRetry.add {
+                            fetchProfiles(refresh)
+                        }
+                    }
+                    is Resource.Loading -> {}
+                    is Resource.Success -> {
+                        if(resource.data != null) {
+                            val prevCount = usersList.count()
+                            usersList += resource.data
+                            _users.postValue(Pair(usersList, UpdateEvent(updateListEvent, arrayOf(prevCount))))
+                        }
+                    }
+                }
+            }.flowOn(Dispatchers.IO).launchIn(this)
+        }
+
     }
 
     private fun replaceOnLists(user: ProfileListItem) {

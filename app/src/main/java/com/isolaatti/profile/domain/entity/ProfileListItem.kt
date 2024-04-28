@@ -1,6 +1,7 @@
 package com.isolaatti.profile.domain.entity
 
 import com.isolaatti.profile.data.remote.ProfileListItemDto
+import com.isolaatti.search.data.ProfileSearchDto
 
 class ProfileListItem(
     val id: Int,
@@ -14,6 +15,10 @@ class ProfileListItem(
     companion object {
         fun fromDto(dto: ProfileListItemDto) = ProfileListItem(
             dto.id,dto.name, dto.profileImageId, dto.following
+        )
+
+        fun fromDto(dto: ProfileSearchDto) = ProfileListItem(
+            dto.id, dto.name, dto.imageId, dto.following
         )
     }
 

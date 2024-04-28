@@ -1,6 +1,7 @@
 package com.isolaatti.search.data
 
 import android.util.Log
+import com.isolaatti.profile.domain.entity.ProfileListItem
 import com.isolaatti.search.domain.SearchRepository
 import com.isolaatti.utils.Resource
 import kotlinx.coroutines.flow.Flow
@@ -66,16 +67,16 @@ class SearchRepositoryImpl(private val searchApi: SearchApi, private val searchD
         }
     }
 
-    override fun getNewestUsers(): Flow<Resource<NewestUsersDto>> = flow {
+    override fun getNewestUsers(after: Int?): Flow<Resource<List<ProfileListItem>>> = flow {
         emit(Resource.Loading())
 
         try {
-            val result = searchApi.getNewestUsers(10, null).awaitResponse()
+            val result = searchApi.getNewestUsers(10, after).awaitResponse()
 
             if(result.isSuccessful) {
                 val dto = result.body()
                 if(dto != null) {
-                    emit(Resource.Success(dto))
+                    emit(Resource.Success(dto.result.map { ProfileListItem.fromDto(it) }))
                 }
 
             } else {

@@ -19,6 +19,8 @@ import com.google.android.material.chip.Chip
 import com.isolaatti.R
 import com.isolaatti.databinding.FragmentSearchBinding
 import com.isolaatti.posting.posts.viewer.ui.PostViewerActivity
+import com.isolaatti.profile.domain.entity.ProfileListItem
+import com.isolaatti.profile.profile_listing.ui.ProfileListingFragment
 import com.isolaatti.profile.ui.ProfileActivity
 import com.isolaatti.search.data.HashtagsDto
 import com.isolaatti.search.data.NewestUsersDto
@@ -67,8 +69,8 @@ class SearchFragment : Fragment() {
         }
     }
 
-    private val newestUsersObserver: Observer<NewestUsersDto> = Observer {
-        newestUsersAdapter?.submitList(it.result)
+    private val newestUsersObserver: Observer<List<ProfileListItem>> = Observer {
+        newestUsersAdapter?.submitList(it)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
