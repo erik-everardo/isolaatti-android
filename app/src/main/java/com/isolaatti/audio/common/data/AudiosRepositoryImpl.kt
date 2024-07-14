@@ -5,6 +5,7 @@ import com.isolaatti.MyApplication
 import com.isolaatti.audio.common.domain.Audio
 import com.isolaatti.audio.common.domain.AudiosRepository
 import com.isolaatti.audio.drafts.data.AudiosDraftsDao
+import com.isolaatti.settings.domain.UserIdSetting
 import com.isolaatti.utils.Resource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -15,28 +16,45 @@ import retrofit2.awaitResponse
 import java.io.File
 import javax.inject.Inject
 
-class AudiosRepositoryImpl @Inject constructor(private val audiosApi: AudiosApi, private val audiosDraftsDao: AudiosDraftsDao) : AudiosRepository {
+class AudiosRepositoryImpl @Inject constructor(
+    private val audiosApi: AudiosApi,
+    private val audiosDraftsDao: AudiosDraftsDao,
+    private val userIdSetting: UserIdSetting
+) : AudiosRepository {
     companion object {
         const val LOG_TAG = "AudiosRepositoryImpl"
     }
-    override fun getAudiosOfUser(userId: Int, lastId: String?): Flow<Resource<List<Audio>>> = flow {
-        emit(Resource.Loading())
+
+    private suspend fun _getAudiosOfUser(userId: Int, lastId: String?): Resource<List<Audio>> {
         try {
             val response = audiosApi.getAudiosOfUser(userId, lastId).awaitResponse()
 
             if(response.isSuccessful) {
-                val body = response.body()
-                if(body == null) {
-                    emit(Resource.Error(Resource.Error.ErrorType.ServerError))
-                    return@flow
-                }
+                val body = response.body() ?: return Resource.Error(Resource.Error.ErrorType.ServerError)
 
-                emit(Resource.Success(body.data.map { Audio.fromDto(it) }))
+                return Resource.Success(body.data.map { Audio.fromDto(it) })
+            } else {
+                return Resource.Error(Resource.Error.ErrorType.ServerError)
             }
         } catch(e: Exception) {
             Log.e("AudiosRepositoryImpl", e.message.toString())
-            emit(Resource.Error(Resource.Error.ErrorType.NetworkError))
+            return Resource.Error(Resource.Error.ErrorType.NetworkError)
         }
+    }
+    override fun getAudiosOfUser(userId: Int, lastId: String?): Flow<Resource<List<Audio>>> = flow {
+        emit(Resource.Loading())
+        emit(_getAudiosOfUser(userId, lastId))
+    }
+
+    override fun getMyAudios(lastId: String?): Flow<Resource<List<Audio>>> = flow {
+        emit(Resource.Loading())
+        val userId = userIdSetting.getUserIdAsync()
+        if(userId == null) {
+            emit(Resource.Error(Resource.Error.ErrorType.OtherError))
+            return@flow
+        }
+
+        emit(_getAudiosOfUser(userId, lastId))
     }
 
     override fun uploadAudio(draftId: Long): Flow<Resource<Audio>> = flow {

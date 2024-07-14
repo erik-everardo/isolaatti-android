@@ -26,10 +26,12 @@ class AudiosListSelectorFragment : Fragment() {
 
         arguments?.getInt(ARG_MODE)?.let { mode = it }
         arguments?.getString(ARG_SQUAD_ID)?.let { squadId = it }
-
+        viewModel.squadId = squadId
 
         when(mode) {
-            ARG_VAL_MODE_AUDIOS -> {}
+            ARG_VAL_MODE_AUDIOS -> {
+                viewModel.getAudios()
+            }
             ARG_VAL_MODE_DRAFTS -> {
                 viewModel.getAudioDrafts()
             }
@@ -61,7 +63,7 @@ class AudiosListSelectorFragment : Fragment() {
         when(mode) {
             ARG_VAL_MODE_AUDIOS -> {
                 viewModel.audios.observe(viewLifecycleOwner) {
-
+                    adapter.setData(it)
                 }
             }
             ARG_VAL_MODE_DRAFTS -> {

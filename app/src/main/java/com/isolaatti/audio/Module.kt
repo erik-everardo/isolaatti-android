@@ -9,6 +9,7 @@ import com.isolaatti.audio.drafts.data.AudiosDraftsDao
 import com.isolaatti.audio.drafts.domain.repository.AudioDraftsRepository
 import com.isolaatti.connectivity.RetrofitClient
 import com.isolaatti.database.AppDatabase
+import com.isolaatti.settings.domain.UserIdSetting
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -23,8 +24,8 @@ class Module {
     }
 
     @Provides
-    fun provideAudiosRepository(audiosApi: AudiosApi, audiosDraftsDao: AudiosDraftsDao): AudiosRepository {
-        return AudiosRepositoryImpl(audiosApi, audiosDraftsDao)
+    fun provideAudiosRepository(audiosApi: AudiosApi, audiosDraftsDao: AudiosDraftsDao, userIdSetting: UserIdSetting): AudiosRepository {
+        return AudiosRepositoryImpl(audiosApi, audiosDraftsDao, userIdSetting)
     }
 
     @Provides

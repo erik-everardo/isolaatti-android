@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface AudiosRepository {
     fun getAudiosOfUser(userId: Int, lastId: String?): Flow<Resource<List<Audio>>>
+    fun getMyAudios(lastId: String?): Flow<Resource<List<Audio>>>
 
     fun uploadAudio(draftId: Long): Flow<Resource<Audio>>
 
