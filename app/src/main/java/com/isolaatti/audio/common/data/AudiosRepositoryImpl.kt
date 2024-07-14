@@ -70,6 +70,7 @@ class AudiosRepositoryImpl @Inject constructor(private val audiosApi: AudiosApi,
                 val audioDto = response.body()
                 if(audioDto != null) {
                     Log.d(LOG_TAG, "emit audio dto")
+                    audiosDraftsDao.deleteDrafts(arrayOf(audioDraftEntity))
                     emit(Resource.Success(Audio.fromDto(audioDto)))
                 }
 

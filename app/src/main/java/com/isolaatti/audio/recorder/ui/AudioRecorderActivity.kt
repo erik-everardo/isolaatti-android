@@ -49,7 +49,7 @@ class AudioRecorderActivity : AppCompatActivity() {
         const val LOG_TAG = "AudioRecorderActivity"
 
         const val IN_EXTRA_DRAFT_ID = "in_draft_id"
-        const val OUT_EXTRA_DRAFT_ID = "out_draft_id"
+        const val OUT_EXTRA_DRAFT = "out_draft"
     }
 
     private lateinit var binding: ActivityAudioRecorderBinding
@@ -204,6 +204,10 @@ class AudioRecorderActivity : AppCompatActivity() {
                 else -> false
             }
         }
+
+        binding.toolbar.setNavigationOnClickListener {
+            finish()
+        }
     }
 
     private fun setupObservers() {
@@ -214,7 +218,7 @@ class AudioRecorderActivity : AppCompatActivity() {
         // audio draft is saved!
         viewModel.audioDraft.observe(this) {
             val result = Intent().apply {
-                putExtra(OUT_EXTRA_DRAFT_ID, it.id)
+                putExtra(OUT_EXTRA_DRAFT, it)
             }
             setResult(RESULT_OK, result)
             finish()

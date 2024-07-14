@@ -230,7 +230,9 @@ class BottomSheetPostComments() : BottomSheetDialogFragment(), OnUserInteractedC
             .usePlugin(LinkifyPlugin.create())
             .build()
 
-        adapter = CommentsRecyclerViewAdapter(listOf(), markwon, this)
+        adapter = CommentsRecyclerViewAdapter(listOf(), markwon, this, onCommentClick = {
+
+        })
         viewBinding.recyclerComments.adapter = adapter
         viewBinding.recyclerComments.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
 

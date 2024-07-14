@@ -4,8 +4,9 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import androidx.activity.result.contract.ActivityResultContract
+import com.isolaatti.audio.drafts.domain.AudioDraft
 
-class AudioRecorderContract : ActivityResultContract<Long?, Long?>() {
+class AudioRecorderContract : ActivityResultContract<Long?, AudioDraft?>() {
 
     override fun createIntent(context: Context, input: Long?): Intent {
         val intent = Intent(context, AudioRecorderActivity::class.java).apply {
@@ -17,10 +18,10 @@ class AudioRecorderContract : ActivityResultContract<Long?, Long?>() {
         return intent
     }
 
-    override fun parseResult(resultCode: Int, intent: Intent?): Long? {
+    override fun parseResult(resultCode: Int, intent: Intent?): AudioDraft? {
         return when(resultCode){
             Activity.RESULT_OK -> {
-                intent?.getLongExtra(AudioRecorderActivity.OUT_EXTRA_DRAFT_ID, 0)?.takeUnless { it == 0L }
+                intent?.getSerializableExtra(AudioRecorderActivity.OUT_EXTRA_DRAFT) as? AudioDraft
             }
             else -> null
         }

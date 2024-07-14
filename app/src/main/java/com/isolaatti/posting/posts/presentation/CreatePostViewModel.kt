@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.isolaatti.audio.common.domain.Audio
 import com.isolaatti.audio.common.domain.Playable
 import com.isolaatti.audio.common.domain.UploadAudioUC
+import com.isolaatti.audio.drafts.domain.AudioDraft
 import com.isolaatti.audio.drafts.domain.repository.AudioDraftsRepository
 import com.isolaatti.posting.posts.data.remote.CreatePostDto
 import com.isolaatti.posting.posts.data.remote.EditPostDto
@@ -161,15 +162,15 @@ class CreatePostViewModel @Inject constructor(
     }
 
     // call this when user has recorded or selected a draft
-    fun putAudioDraft(draftId: Long) {
+    fun putAudioDraft(draft: AudioDraft) {
         viewModelScope.launch {
-            audioDraftsRepository.getAudioDraftById(draftId).onEach { draft ->
+            audioDraftsRepository.getAudioDraftById(draft.id).onEach { draft ->
                 when(draft) {
                     is Resource.Error -> {}
                     is Resource.Loading -> {}
                     is Resource.Success -> {
                         audioAttachment.postValue(draft.data)
-                        this@CreatePostViewModel.audioDraft = draftId
+                        this@CreatePostViewModel.audioDraft = draft.data!!.id
                     }
                 }
 

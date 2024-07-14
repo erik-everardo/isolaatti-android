@@ -14,6 +14,10 @@ import java.io.Serializable
  */
 class AudioSelectorContract : ActivityResultContract<AudioSelectorContract.SelectorConfig, Playable?>() {
 
+    /**
+     * @param forSquad audios source will be a specified squad in the id param
+     * @param id squad id, should be non null if forSquad is true
+     */
     data class SelectorConfig(val forSquad: Boolean, val id: String?): Serializable
 
     override fun createIntent(context: Context, input: SelectorConfig): Intent {

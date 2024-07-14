@@ -12,7 +12,12 @@ import com.isolaatti.common.OnUserInteractedCallback
 import com.isolaatti.utils.UrlGen
 import io.noties.markwon.Markwon
 
-class CommentsRecyclerViewAdapter(private var list: List<Comment>, private val markwon: Markwon, private val callback: OnUserInteractedCallback) : RecyclerView.Adapter<CommentsRecyclerViewAdapter.CommentViewHolder>() {
+class CommentsRecyclerViewAdapter(
+    private var list: List<Comment>,
+    private val markwon: Markwon,
+    private val callback: OnUserInteractedCallback,
+    private val onCommentClick: (Comment) -> Unit
+) : RecyclerView.Adapter<CommentsRecyclerViewAdapter.CommentViewHolder>() {
 
     private var previousSize = 0
     var blockInfiniteScroll = false

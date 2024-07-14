@@ -22,6 +22,7 @@ import coil.load
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.isolaatti.BuildConfig
 import com.isolaatti.R
+import com.isolaatti.audio.audio_selector.ui.AudioSelectorContract
 import com.isolaatti.audio.audios_list.ui.AudiosFragment
 import com.isolaatti.audio.common.domain.Audio
 import com.isolaatti.audio.common.domain.Playable
@@ -109,6 +110,10 @@ class ProfileMainFragment : Fragment() {
         if(updatedProfile != null) {
             viewModel.setProfile(updatedProfile)
         }
+    }
+
+    private val audioSelectorLauncher = registerForActivityResult(AudioSelectorContract()) {
+
     }
 
 
@@ -279,6 +284,10 @@ class ProfileMainFragment : Fragment() {
                             NewReportBottomSheetDialogFragment.newInstance(ContentType.Post, post.id.toString()).show(childFragmentManager, NewReportBottomSheetDialogFragment.LOG_TAG)
                         }
                     }
+                }
+                Options.PROFILE_DESCRIPTION_OPTIONS -> {
+                    optionsViewModel.handle()
+                    audioSelectorLauncher.launch(AudioSelectorContract.SelectorConfig(false, null))
                 }
             }
 
@@ -457,6 +466,11 @@ class ProfileMainFragment : Fragment() {
             viewBinding.topAppBar.menu?.run {
                 removeItem(R.id.block_profile_menu_item)
                 removeItem(R.id.report_profile_menu_item)
+            }
+            viewBinding.descriptionCard.setOnClickListener {
+                optionsViewModel.setOptions(Options.PROFILE_DESCRIPTION_OPTIONS, CALLER_ID, null)
+                val fragment = BottomSheetPostOptionsFragment()
+                fragment.show(parentFragmentManager, BottomSheetPostOptionsFragment.TAG)
             }
         } else {
             viewBinding.createPostButton.visibility = View.GONE

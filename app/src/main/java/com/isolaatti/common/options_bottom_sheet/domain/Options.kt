@@ -23,6 +23,7 @@ data class Options(
             const val OPTION_PROFILE_PHOTO_VIEW_PHOTO = 6
             const val OPTION_PROFILE_PHOTO_CHANGE_PHOTO = 7
             const val OPTION_PROFILE_PHOTO_REMOVE_PHOTO = 8
+            const val OPTION_PROFILE_DESCRIPTION_SET_AUDIO = 9
         }
     }
 
@@ -30,6 +31,7 @@ data class Options(
         const val POST_OPTIONS = 1
         const val COMMENT_OPTIONS = 2
         const val PROFILE_PHOTO_OPTIONS = 3
+        const val PROFILE_DESCRIPTION_OPTIONS = 4
 
         val noOptions = Options(0, 0, listOf())
 
@@ -92,6 +94,11 @@ data class Options(
             }
 
             return Options(R.string.profile_photo,PROFILE_PHOTO_OPTIONS, list)
+        }
+
+        fun getProfileDescriptionOptions(): Options {
+            val list = listOf(Option(R.string.set_audio_description, R.drawable.baseline_audio_file_24, Option.OPTION_PROFILE_DESCRIPTION_SET_AUDIO))
+            return Options(R.string.description, PROFILE_DESCRIPTION_OPTIONS, list)
         }
     }
 }

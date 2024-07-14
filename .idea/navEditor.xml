@@ -25,6 +25,37 @@
             </LayoutPositions>
           </value>
         </entry>
+        <entry key="comment_thread_navigation.xml">
+          <value>
+            <LayoutPositions>
+              <option name="myPositions">
+                <map>
+                  <entry key="commentThreadFragment">
+                    <value>
+                      <LayoutPositions>
+                        <option name="myPosition">
+                          <Point>
+                            <option name="x" value="-258" />
+                            <option name="y" value="8" />
+                          </Point>
+                        </option>
+                        <option name="myPositions">
+                          <map>
+                            <entry key="action_commentThreadFragment_self">
+                              <value>
+                                <LayoutPositions />
+                              </value>
+                            </entry>
+                          </map>
+                        </option>
+                      </LayoutPositions>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </LayoutPositions>
+          </value>
+        </entry>
         <entry key="followers_navigation.xml">
           <value>
             <LayoutPositions>
@@ -206,6 +237,18 @@
                       </LayoutPositions>
                     </value>
                   </entry>
+                  <entry key="profileListingFragment">
+                    <value>
+                      <LayoutPositions>
+                        <option name="myPosition">
+                          <Point>
+                            <option name="x" value="-277" />
+                            <option name="y" value="154" />
+                          </Point>
+                        </option>
+                      </LayoutPositions>
+                    </value>
+                  </entry>
                   <entry key="searchFragment">
                     <value>
                       <LayoutPositions>
@@ -217,11 +260,6 @@
                         </option>
                         <option name="myPositions">
                           <map>
-                            <entry key="action_searchFragment_to_browseProfilesFragment">
-                              <value>
-                                <LayoutPositions />
-                              </value>
-                            </entry>
                             <entry key="action_searchFragment_to_hashtagPostsFragment">
                               <value>
                                 <LayoutPositions />
@@ -347,6 +385,28 @@
               <option name="myPositions">
                 <map>
                   <entry key="postListingFragment">
+                    <value>
+                      <LayoutPositions>
+                        <option name="myPosition">
+                          <Point>
+                            <option name="x" value="40" />
+                            <option name="y" value="40" />
+                          </Point>
+                        </option>
+                      </LayoutPositions>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </LayoutPositions>
+          </value>
+        </entry>
+        <entry key="profile_listing_navigation.xml">
+          <value>
+            <LayoutPositions>
+              <option name="myPositions">
+                <map>
+                  <entry key="profileListingFragment">
                     <value>
                       <LayoutPositions>
                         <option name="myPosition">

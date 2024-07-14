@@ -212,6 +212,12 @@
     <string name="edited_at">Edited at %s</string>
     <string name="block_profile_dialog_message">Do you really want to block %s?</string>
     <string name="user_profile_picture">%s\'s profile picture</string>
+    <string name="set_audio_description">Set audio description</string>
+    <string name="ascending_by_name">Z-A</string>
+    <string name="descending_by_name">A-Z</string>
+    <string name="ascending_by_creation_date">older-newer</string>
+    <string name="descending_by_creation_date">newer-older</string>
+    <string name="invalid_arg">Invalid value passed</string>
     <string-array name="report_reasons">
         <item>Spam</item>
         <item>Explicit content</item>

@@ -40,9 +40,9 @@ class MarkdownEditingFragment : Fragment(){
 
     private var audioPlayerConnector: AudioPlayerConnector? = null
 
-    private val audioRecorderLauncher = registerForActivityResult(AudioRecorderContract()) { draftId ->
-        if(draftId != null) {
-            viewModel.putAudioDraft(draftId)
+    private val audioRecorderLauncher = registerForActivityResult(AudioRecorderContract()) { audioDraft ->
+        if(audioDraft != null) {
+            viewModel.putAudioDraft(audioDraft)
             binding.viewAnimator.displayedChild = 1
         }
     }

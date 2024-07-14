@@ -79,7 +79,7 @@
                                             <option name="values">
                                               <map>
                                                 <entry key="color" value="000000" />
-                                                <entry key="imagePath" value="C:\Users\erike\Downloads\path1-3.svg" />
+                                                <entry key="imagePath" value="C:\Users\erike\isolaatti-icon.png" />
                                                 <entry key="scalingPercent" value="74" />
                                                 <entry key="trimmed" value="true" />
                                               </map>
@@ -181,6 +181,19 @@
                                           </PersistentState>
                                         </value>
                                       </entry>
+                                      <entry key="image">
+                                        <value>
+                                          <PersistentState>
+                                            <option name="values">
+                                              <map>
+                                                <entry key="color" value="000000" />
+                                                <entry key="imagePath" value="C:\Users\erike\isolaatti-notification-icon.png" />
+                                                <entry key="paddingPercent" value="-10" />
+                                              </map>
+                                            </option>
+                                          </PersistentState>
+                                        </value>
+                                      </entry>
                                       <entry key="text">
                                         <value>
                                           <PersistentState>
@@ -203,6 +216,13 @@
                                           </PersistentState>
                                         </value>
                                       </entry>
+                                    </map>
+                                  </option>
+                                  <option name="values">
+                                    <map>
+                                      <entry key="assetType" value="IMAGE" />
+                                      <entry key="imageAsset" value="C:\Users\erike\isolaatti-notification-icon.png" />
+                                      <entry key="outputName" value="ic_notification" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -308,7 +328,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="file:/$USER_HOME$/AppData/Local/Android/Sdk/icons/material/materialicons/play_arrow/baseline_play_arrow_24.xml" />
+                                      <entry key="url" value="file:/$USER_HOME$/AppData/Local/Android/Sdk/icons/material/materialicons/article/baseline_article_24.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -318,8 +338,8 @@
                         </option>
                         <option name="values">
                           <map>
-                            <entry key="outputName" value="baseline_play_arrow_24" />
-                            <entry key="sourceFile" value="C:\Users\erike\Downloads\face-kiss-wink-heart-solid.svg" />
+                            <entry key="outputName" value="baseline_article_24" />
+                            <entry key="sourceFile" value="C:\Users\erike\Downloads\hashtag-solid.svg" />
                           </map>
                         </option>
                       </PersistentState>

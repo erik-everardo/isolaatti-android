@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/comment_thread_navigation"
+    app:startDestination="@id/commentThreadFragment">
+
+    <fragment
+        android:id="@+id/commentThreadFragment"
+        android:name="com.isolaatti.posting.comments.ui.CommentThreadFragment"
+        android:label="CommentThreadFragment" >
+        <action
+            android:id="@+id/action_commentThreadFragment_self"
+            app:destination="@id/commentThreadFragment" />
+        <argument
+            android:name="commentId"
+            app:argType="long" />
+    </fragment>
+</navigation>

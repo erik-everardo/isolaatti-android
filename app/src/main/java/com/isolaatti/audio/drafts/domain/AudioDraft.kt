@@ -6,8 +6,9 @@ import com.isolaatti.MyApplication
 import com.isolaatti.audio.common.domain.Playable
 import com.isolaatti.audio.drafts.data.AudioDraftEntity
 import java.io.File
+import java.io.Serializable
 
-data class AudioDraft(val id: Long, val name: String, val localStorageRelativePath: String, val size: Long) : Playable() {
+data class AudioDraft(val id: Long, val name: String, val localStorageRelativePath: String, val size: Long) : Playable(), Serializable {
     override val thumbnail: String?
         get() = null
 
