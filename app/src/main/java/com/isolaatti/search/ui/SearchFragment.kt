@@ -1,6 +1,6 @@
 package com.isolaatti.search.ui
 
-import android.content.Intent
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -10,7 +10,6 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
-import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.carousel.CarouselLayoutManager
@@ -18,12 +17,11 @@ import com.google.android.material.carousel.UncontainedCarouselStrategy
 import com.google.android.material.chip.Chip
 import com.isolaatti.R
 import com.isolaatti.databinding.FragmentSearchBinding
+import com.isolaatti.hashtags.ui.HashtagsPostsActivity
 import com.isolaatti.posting.posts.viewer.ui.PostViewerActivity
 import com.isolaatti.profile.domain.entity.ProfileListItem
-import com.isolaatti.profile.profile_listing.ui.ProfileListingFragment
 import com.isolaatti.profile.ui.ProfileActivity
 import com.isolaatti.search.data.HashtagsDto
-import com.isolaatti.search.data.NewestUsersDto
 import com.isolaatti.search.data.SearchDto
 import com.isolaatti.search.data.SearchHistoryEntity
 import com.isolaatti.search.data.SearchResultType
@@ -63,7 +61,7 @@ class SearchFragment : Fragment() {
             viewBinding.chipGroup.addView(Chip(requireContext()).apply {
                 text = "#$hashtag"
                 setOnClickListener {
-                    findNavController().navigate(SearchFragmentDirections.actionSearchFragmentToHashtagPostsFragment(hashtag))
+                    HashtagsPostsActivity.startActivity(requireContext(), hashtag)
                 }
             })
         }
@@ -100,6 +98,7 @@ class SearchFragment : Fragment() {
             viewBinding.searchBar.menu.findItem(R.id.close_button)?.setVisible(false)
         }
     }
+    @SuppressLint("RestrictedApi")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupListeners()
@@ -141,7 +140,7 @@ class SearchFragment : Fragment() {
                         it.resourceId.toLongOrNull()?.also { PostViewerActivity.startActivity(requireContext(), it) }
                     }
                     SearchResultType.Hashtag -> {
-                        findNavController().navigate(SearchFragmentDirections.actionSearchFragmentToHashtagPostsFragment(it.resourceId))
+                        HashtagsPostsActivity.startActivity(requireContext(), it.resourceId)
                     }
                     SearchResultType.Unknown -> {}
                 }

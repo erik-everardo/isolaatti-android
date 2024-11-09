@@ -88,7 +88,7 @@ class CreatePostActivity : IsolaattiBaseActivity() {
 
         TabLayoutMediator(binding.tabs, binding.pager) { tab, position ->
             when(position) {
-                0 -> tab.setText(R.string.markdown)
+                0 -> tab.setText(R.string.create_a_new_discussion)
                 1 -> tab.setText(R.string.preview)
             }
         }.attach()

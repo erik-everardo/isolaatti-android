@@ -51,9 +51,6 @@ class ImageMakerActivity : IsolaattiBaseActivity() {
         binding.uploadPhotoFab.setOnClickListener {
             viewModel.uploadPicture()
         }
-        binding.textImageName.editText?.doOnTextChanged { text, _, _, _ ->
-            viewModel.name = text.toString()
-        }
         binding.toolbar.setNavigationOnClickListener {
             showExitConfirmationDialog()
         }
@@ -66,12 +63,10 @@ class ImageMakerActivity : IsolaattiBaseActivity() {
                     errorViewModel.error.value = it.errorType
                     binding.progressBarLoading.visibility = View.GONE
                     binding.uploadPhotoFab.visibility = View.VISIBLE
-                    binding.textImageName.isEnabled = true
                 }
                 is Resource.Loading -> {
                     binding.progressBarLoading.visibility = View.VISIBLE
                     binding.uploadPhotoFab.visibility = View.INVISIBLE
-                    binding.textImageName.isEnabled = false
                 }
                 is Resource.Success -> {
                     binding.progressBarLoading.visibility = View.GONE

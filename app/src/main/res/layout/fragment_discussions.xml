@@ -10,7 +10,8 @@
         android:id="@+id/topAppBar_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:liftOnScrollColor="@color/on_surface">
+        app:liftOnScrollColor="@color/on_surface"
+        android:fitsSystemWindows="true">
         <com.google.android.material.appbar.CollapsingToolbarLayout
             android:id="@+id/collapsing_toolbar_layout"
             android:layout_width="match_parent"
@@ -156,23 +157,7 @@
                             android:text="@string/new_post"
                             app:icon="@drawable/baseline_post_add_24"/>
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/images_button"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            style="@style/Widget.Material3.Button.IconButton.Filled.Tonal"
-                            android:layout_marginStart="16dp"
-                            android:text="@string/images"
-                            app:icon="@drawable/baseline_image_24"/>
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/audios_button"
-                            style="@style/Widget.Material3.Button.IconButton.Filled.Tonal"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="4dp"
-                            android:text="@string/audios"
-                            app:icon="@drawable/baseline_audio_file_24" />
                     </LinearLayout>
                 </HorizontalScrollView>
 
@@ -194,7 +179,8 @@
         android:id="@+id/swipe_to_refresh"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
+        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
+        android:clipToPadding="false">
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/feed_recycler_view"
             android:layout_width="match_parent"

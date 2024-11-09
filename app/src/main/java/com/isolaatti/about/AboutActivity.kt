@@ -1,9 +1,11 @@
 package com.isolaatti.about
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.net.toUri
+import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
 import com.isolaatti.BuildConfig
 import com.isolaatti.R
 import com.isolaatti.databinding.ActivityAboutBinding
@@ -36,9 +38,8 @@ class AboutActivity : AppCompatActivity() {
         }
 
         binding.openSourceLicences.setOnClickListener {
-            CustomTabsIntent.Builder()
-                .build()
-                .launchUrl(this, BuildConfig.openSourceLicences.toUri())
+            startActivity(Intent(this, OssLicensesMenuActivity::class.java))
+
         }
 
         binding.privacyPolicyButton.setOnClickListener {

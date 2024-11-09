@@ -37,6 +37,7 @@ import com.isolaatti.common.options_bottom_sheet.presentation.BottomSheetPostOpt
 import com.isolaatti.common.options_bottom_sheet.ui.BottomSheetPostOptionsFragment
 import com.isolaatti.databinding.FragmentDiscussionsBinding
 import com.isolaatti.followers.domain.FollowingState
+import com.isolaatti.hashtags.ui.HashtagsPostsActivity
 import com.isolaatti.images.common.domain.entity.Image
 import com.isolaatti.images.image_chooser.ui.ImageChooserContract
 import com.isolaatti.images.image_list.ui.ImagesFragment
@@ -378,16 +379,6 @@ class ProfileMainFragment : Fragment() {
             }
         }
 
-        viewBinding.audiosButton.setOnClickListener {
-            findNavController().navigate(ProfileMainFragmentDirections.actionDiscussionsFragmentToAudiosFragment(AudiosFragment.SOURCE_PROFILE, userId.toString()))
-        }
-
-        viewBinding.imagesButton.setOnClickListener {
-            findNavController().navigate(
-                ProfileMainFragmentDirections.actionDiscussionsFragmentToImagesFragment(ImagesFragment.SOURCE_PROFILE, userId.toString())
-            )
-        }
-
         viewBinding.createPostButton.setOnClickListener {
             createDiscussion.launch(Unit)
         }
@@ -456,7 +447,7 @@ class ProfileMainFragment : Fragment() {
             .usePlugin(LinkifyPlugin.create())
             .build()
 
-        postsAdapter = PostsRecyclerViewAdapter(markwon,postListingRecyclerViewAdapterWiring )
+        postsAdapter = PostsRecyclerViewAdapter(postListingRecyclerViewAdapterWiring )
 
     }
 
@@ -527,6 +518,10 @@ class ProfileMainFragment : Fragment() {
                     type = "text/plain"
                 }, getString(R.string.share_post))
                 startActivity(intent)
+            }
+
+            override fun hashtagClicked(hashtag: String) {
+                HashtagsPostsActivity.startActivity(requireContext(), hashtag)
             }
         }
     }

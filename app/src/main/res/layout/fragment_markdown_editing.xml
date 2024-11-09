@@ -20,7 +20,7 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/what_do_you_want_to_talk_about_markdown_is_compatible_you_can_record_an_audio_if_you_want"/>
+                android:hint="@string/what_do_you_want_to_talk_about_you_can_record_an_audio_if_you_want"/>
 
         </com.google.android.material.textfield.TextInputLayout>
         <LinearLayout

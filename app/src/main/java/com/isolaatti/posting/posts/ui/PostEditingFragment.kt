@@ -15,7 +15,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import com.isolaatti.R
-import com.isolaatti.audio.audio_selector.ui.AudioSelectorActivity
 import com.isolaatti.audio.audio_selector.ui.AudioSelectorContract
 import com.isolaatti.audio.common.domain.Audio
 import com.isolaatti.audio.common.domain.Playable
@@ -28,9 +27,9 @@ import com.isolaatti.posting.link_creator.presentation.LinkCreatorViewModel
 import com.isolaatti.posting.link_creator.ui.LinkCreatorFragment
 import com.isolaatti.posting.posts.presentation.CreatePostViewModel
 
-class MarkdownEditingFragment : Fragment(){
+class PostEditingFragment : Fragment(){
     companion object {
-        const val LOG_TAG = "MarkdownEditingFragment"
+        const val LOG_TAG = "PostEditingFragment"
     }
 
 
@@ -48,7 +47,7 @@ class MarkdownEditingFragment : Fragment(){
     }
 
     private val imageChooserLauncher = registerForActivityResult(ImageChooserContract()) { image ->
-        Log.d("MarkdownEditingFragment", "${image?.markdown}")
+        Log.d(LOG_TAG, "${image?.markdown}")
 
         if(image != null) {
             viewModel.content += "\n\n ${image.markdown}"

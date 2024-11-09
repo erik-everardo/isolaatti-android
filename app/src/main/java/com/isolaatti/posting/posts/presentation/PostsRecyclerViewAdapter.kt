@@ -1,6 +1,9 @@
 package com.isolaatti.posting.posts.presentation
 
 import android.annotation.SuppressLint
+import android.text.SpannableString
+import android.text.method.LinkMovementMethod
+import android.text.style.ClickableSpan
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -8,7 +11,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.core.content.res.ResourcesCompat
+import androidx.core.text.set
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import coil.load
@@ -21,10 +24,9 @@ import com.isolaatti.common.OnUserInteractedWithPostCallback
 import com.isolaatti.databinding.PostLayoutBinding
 import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.utils.UrlGen.userProfileImage
-import io.noties.markwon.Markwon
+
 
 class PostsRecyclerViewAdapter (
-    private val markwon: Markwon,
     private val callback: OnUserInteractedWithPostCallback
 ) : RecyclerView.Adapter<PostsRecyclerViewAdapter.FeedViewHolder>(){
     private var postList: List<Post>? = null
@@ -102,7 +104,17 @@ class PostsRecyclerViewAdapter (
                 dateTextView.text = post.date
 
                 val content: TextView = itemView.findViewById(R.id.post_content)
-                markwon.setMarkdown(content, post.textContent)
+                content.movementMethod = LinkMovementMethod.getInstance()
+                val spannableString = SpannableString(post.textContent).apply {
+                    post.hashtagsSpans.forEach {
+                        set(it.first, it.last + 1, object: ClickableSpan() {
+                            override fun onClick(widget: View) {
+                                callback.hashtagClicked(post.textContent.substring(it.first + 1, it.last + 1))
+                            }
+                        })
+                    }
+                }
+                content.text = spannableString
 
                 itemBinding.likeButton.isEnabled = true
 

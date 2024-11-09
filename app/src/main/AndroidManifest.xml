@@ -16,6 +16,15 @@
         android:theme="@style/Theme.Isolaatti"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
+
+        <activity
+            android:name="com.google.android.gms.oss.licenses.OssLicensesMenuActivity"
+            android:theme="@style/Theme.Isolaatti.OSS" />
+        <activity
+            android:name="com.google.android.gms.oss.licenses.OssLicensesActivity"
+            android:theme="@style/Theme.Isolaatti.OSS" />
+
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -45,6 +54,7 @@
         <activity android:name=".audio.recorder.ui.AudioRecorderActivity" android:theme="@style/Theme.Isolaatti" />
         <activity android:name=".audio.audio_selector.ui.AudioSelectorActivity" android:theme="@style/Theme.Isolaatti" />
         <activity android:name=".posting.posts.ui.PostInfoActivity" android:theme="@style/Theme.Isolaatti"/>
+        <activity android:name=".hashtags.ui.HashtagsPostsActivity" android:theme="@style/Theme.Isolaatti" />
         <provider
             android:authorities="com.isolaatti.provider"
             android:name="androidx.core.content.FileProvider"

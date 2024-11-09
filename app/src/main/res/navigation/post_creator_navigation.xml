@@ -10,6 +10,6 @@
         android:label="MarkdownPreviewFragment" />
     <fragment
         android:id="@+id/markdownEditingFragment"
-        android:name="com.isolaatti.posting.posts.ui.MarkdownEditingFragment"
+        android:name="com.isolaatti.posting.posts.ui.PostEditingFragment"
         android:label="MarkdownEditingFragment" />
 </navigation>

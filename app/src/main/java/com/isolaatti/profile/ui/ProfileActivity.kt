@@ -4,6 +4,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.enableEdgeToEdge
 import androidx.core.app.TaskStackBuilder
 import com.isolaatti.common.IsolaattiBaseActivity
 import com.isolaatti.databinding.ActivityProfileBinding
@@ -15,6 +16,7 @@ class ProfileActivity : IsolaattiBaseActivity() {
     lateinit var viewBinding: ActivityProfileBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         viewBinding = ActivityProfileBinding.inflate(layoutInflater)
         setContentView(viewBinding.root)

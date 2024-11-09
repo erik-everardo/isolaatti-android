@@ -27,6 +27,7 @@ import com.isolaatti.common.options_bottom_sheet.domain.Options
 import com.isolaatti.common.options_bottom_sheet.presentation.BottomSheetPostOptionsViewModel
 import com.isolaatti.common.options_bottom_sheet.ui.BottomSheetPostOptionsFragment
 import com.isolaatti.databinding.FragmentPostListingBinding
+import com.isolaatti.hashtags.ui.HashtagsPostsActivity
 import com.isolaatti.home.ui.FeedFragment
 import com.isolaatti.posting.comments.ui.BottomSheetPostComments
 import com.isolaatti.posting.posts.domain.entity.Post
@@ -124,7 +125,7 @@ class PostListingFragment : Fragment(), OnUserInteractedWithPostCallback {
             .usePlugin(CoilImagesPlugin.create(requireContext(), CoilImageLoader.imageLoader))
             .usePlugin(LinkifyPlugin.create())
             .build()
-        adapter = PostsRecyclerViewAdapter(markwon, this)
+        adapter = PostsRecyclerViewAdapter(this)
         viewBinding.feedRecyclerView.adapter = adapter
         viewBinding.feedRecyclerView.setItemViewCacheSize(7)
         viewBinding.feedRecyclerView.layoutManager = LinearLayoutManager(requireContext())
@@ -190,6 +191,10 @@ class PostListingFragment : Fragment(), OnUserInteractedWithPostCallback {
             type = "text/plain"
         }, getString(R.string.share_post))
         startActivity(intent)
+    }
+
+    override fun hashtagClicked(hashtag: String) {
+        HashtagsPostsActivity.startActivity(requireContext(), hashtag)
     }
 
     override fun onProfileClick(userId: Int) {

@@ -75,7 +75,7 @@ class PostViewerActivity : IsolaattiBaseActivity() {
         }
 
         viewModel.post.observe(this) {
-            markwon.setMarkdown(binding.markwonContainer, it.textContent)
+            binding.markwonContainer.text = it.textContent
             binding.author.text = it.userName
             binding.profileImageView.load(UrlGen.userProfileImage(it.userId), imageLoader)
             binding.commentsInfo.text = getString(R.string.comments_info, it.numberOfComments)

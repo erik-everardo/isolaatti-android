@@ -10,6 +10,9 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -135,6 +138,12 @@ class FeedFragment : Fragment() {
                     errorViewModel.handleRetry()
                 }
             }
+        }
+
+        ViewCompat.setOnApplyWindowInsetsListener(viewBinding.root) {_, insets ->
+            val systemBarsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            viewBinding.homeDrawer.getHeaderView(0).updatePadding(top = systemBarsInsets.top)
+            insets
         }
     }
 }

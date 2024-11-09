@@ -4,8 +4,8 @@ import android.os.Parcel
 import android.os.Parcelable
 import com.isolaatti.audio.common.domain.Audio
 import com.isolaatti.common.Ownable
+import com.isolaatti.common.hashtagRegex
 import com.isolaatti.posting.posts.data.remote.FeedDto
-import java.io.Serializable
 
 data class Post(
     val id: Long,
@@ -107,5 +107,9 @@ data class Post(
 
     override fun describeContents(): Int {
         return 0
+    }
+
+    val hashtagsSpans by lazy {
+        hashtagRegex.findAll(textContent).map { it.range }.toList()
     }
 }

@@ -33,4 +33,13 @@
         <item name="android:windowFullscreen">false</item>
         <item name="android:windowBackground">#D9000000</item>
     </style>
+
+    <style name="Theme.Isolaatti.OSS" parent="Theme.Material3.DayNight">
+        <item name="android:colorPrimary">@color/purple</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/on_surface</item>
+        <item name="android:statusBarColor">@color/purple</item>
+        <item name="windowActionModeOverlay">true</item>
+        <item name="actionModeCloseDrawable">@drawable/baseline_close_24</item>
+    </style>
 </resources>

@@ -10,4 +10,5 @@ interface OnUserInteractedWithPostCallback : OnUserInteractedCallback {
     fun onPlay(audio: Audio)
     fun onMoreInfo(postId: Long)
     fun onShare(postId: Long)
+    fun hashtagClicked(hashtag: String)
 }
