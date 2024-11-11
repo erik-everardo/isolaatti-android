@@ -128,7 +128,7 @@ class PostViewerActivity : IsolaattiBaseActivity() {
 
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
 
         intent?.getLongExtra(POST_ID, 0)?.let {

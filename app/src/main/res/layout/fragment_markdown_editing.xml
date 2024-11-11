@@ -23,23 +23,11 @@
                 android:hint="@string/what_do_you_want_to_talk_about_you_can_record_an_audio_if_you_want"/>
 
         </com.google.android.material.textfield.TextInputLayout>
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/add_image_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                style="@style/Widget.Material3.Button.IconButton"
-                app:icon="@drawable/baseline_image_24" />
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/add_link_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                style="@style/Widget.Material3.Button.IconButton"
-                app:icon="@drawable/baseline_add_link_24" />
-        </LinearLayout>
+        <androidx.compose.ui.platform.ComposeView
+            android:id="@+id/images_row_compose"
+            android:layout_width="match_parent"
+            android:layout_height="160dp"/>
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"

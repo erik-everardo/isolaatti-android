@@ -38,7 +38,6 @@ class ImageChooserPreview : Fragment() {
         }
 
         binding.image.load(viewModel.selectedImage?.imageUrl)
-        binding.imageDescription.text = viewModel.selectedImage?.name
 
         binding.chooseImageButton.setOnClickListener {
             showLoading(true)

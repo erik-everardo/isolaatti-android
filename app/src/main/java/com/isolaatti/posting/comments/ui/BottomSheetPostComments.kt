@@ -123,10 +123,10 @@ class BottomSheetPostComments() : BottomSheetDialogFragment(), OnUserInteractedC
     }
 
     private val imageChooserLauncher = registerForActivityResult(ImageChooserContract()) { image ->
-        Log.d("BottomSheetPostComment", "${image?.markdown}")
+
 
         if(image != null) {
-            viewBinding.newCommentTextField.editText?.setText("${viewBinding.newCommentTextField.editText?.text}\n\n${image.markdown}")
+
         }
     }
 

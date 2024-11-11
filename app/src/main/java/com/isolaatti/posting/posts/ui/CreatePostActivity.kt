@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.MediatorLiveData
@@ -41,6 +42,7 @@ class CreatePostActivity : IsolaattiBaseActivity() {
     var postId: Long = 0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         intent.extras?.let {
@@ -84,14 +86,6 @@ class CreatePostActivity : IsolaattiBaseActivity() {
         binding.toolbar.setTitle(if(mode == EXTRA_MODE_EDIT && postId != 0L) R.string.edit else R.string.new_post)
 
         binding.pager.adapter = CreatePostFragmentStateAdapter(this)
-
-
-        TabLayoutMediator(binding.tabs, binding.pager) { tab, position ->
-            when(position) {
-                0 -> tab.setText(R.string.create_a_new_discussion)
-                1 -> tab.setText(R.string.preview)
-            }
-        }.attach()
 
     }
 

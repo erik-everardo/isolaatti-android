@@ -20,7 +20,6 @@ class PictureViewerMainFragment : Fragment() {
         override fun onPageSelected(position: Int) {
             super.onPageSelected(position)
             binding.imageAuthor.text = images[position].username
-            binding.imageDescription.text = images[position].name
         }
     }
 
@@ -43,7 +42,6 @@ class PictureViewerMainFragment : Fragment() {
         binding.viewpager.adapter = adapter
         binding.viewpager.setCurrentItem(position, false)
         binding.viewpager.registerOnPageChangeCallback(onPageChangeCallback)
-        binding.imageDescription.text = images[position].name
         binding.imageAuthor.text = images[position].username
     }
 

@@ -1,10 +1,10 @@
 package com.isolaatti.images
 
-import android.app.Application
 import android.content.ContentResolver
 import android.content.Context
-import com.isolaatti.MyApplication
 import com.isolaatti.connectivity.RetrofitClient
+import com.isolaatti.database.AppDatabase
+import com.isolaatti.images.common.data.dao.ImagesDraftsDao
 import com.isolaatti.images.common.data.remote.ImagesApi
 import com.isolaatti.images.common.data.repository.ImagesRepositoryImpl
 import com.isolaatti.images.common.domain.repository.ImagesRepository
@@ -28,7 +28,12 @@ class Module {
     }
 
     @Provides
-    fun provideImagesRepository(imagesApi: ImagesApi, contentResolver: ContentResolver): ImagesRepository {
-        return ImagesRepositoryImpl(imagesApi, contentResolver)
+    fun provideImagesDraftDao(database: AppDatabase): ImagesDraftsDao {
+        return database.imagesDraftsDao()
+    }
+
+    @Provides
+    fun provideImagesRepository(imagesApi: ImagesApi, imagesDraftsDao: ImagesDraftsDao, contentResolver: ContentResolver): ImagesRepository {
+        return ImagesRepositoryImpl(imagesApi, imagesDraftsDao, contentResolver)
     }
 }

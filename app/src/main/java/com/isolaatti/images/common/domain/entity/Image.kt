@@ -9,7 +9,6 @@ import java.io.Serializable
 data class Image(
     val id: String,
     val userId: Int,
-    val name: String,
     val username: String
 ): Deletable(), Serializable {
     val imageUrl: String get() = UrlGen.imageUrl(id)
@@ -19,7 +18,7 @@ data class Image(
     val markdown: String get() = Generators.generateImage(imageUrl)
 
     companion object {
-        fun fromDto(imageDto: ImageDto) = Image(imageDto.id, imageDto.userId, imageDto.name, imageDto.username)
+        fun fromDto(imageDto: ImageDto) = Image(imageDto.id, imageDto.userId, imageDto.username)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -30,7 +29,6 @@ data class Image(
 
         if (id != other.id) return false
         if (userId != other.userId) return false
-        if (name != other.name) return false
         if (username != other.username) return false
 
         return true
@@ -39,7 +37,6 @@ data class Image(
     override fun hashCode(): Int {
         var result = id.hashCode()
         result = 31 * result + userId
-        result = 31 * result + name.hashCode()
         result = 31 * result + username.hashCode()
         return result
     }

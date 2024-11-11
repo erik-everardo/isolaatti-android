@@ -1,5 +1,6 @@
 package com.isolaatti.posting.posts.presentation
 
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -21,6 +22,8 @@ import com.isolaatti.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -48,6 +51,8 @@ class CreatePostViewModel @Inject constructor(
     val liveContent: MutableLiveData<String> = MutableLiveData()
     var content: String = ""
         set(value) {field = value; liveContent.value = value} // TODO remove this and use only liveContent
+    private val _photos: MutableStateFlow<List<Uri>> = MutableStateFlow(emptyList())
+    val photos: StateFlow<List<Uri>> get() = _photos
 
     val audioAttachment: MutableLiveData<Playable?> = MutableLiveData()
 
@@ -188,4 +193,13 @@ class CreatePostViewModel @Inject constructor(
         audioAttachment.value = null
     }
 
+    fun addPicture(uri: Uri) {
+        _photos.value = listOf(uri) + _photos.value
+    }
+
+    fun removePicture(index: Int) {
+        _photos.value = _photos.value.toMutableList().apply {
+            removeAt(index)
+        }
+    }
 }

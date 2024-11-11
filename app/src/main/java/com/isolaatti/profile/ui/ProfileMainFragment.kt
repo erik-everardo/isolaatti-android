@@ -97,7 +97,7 @@ class ProfileMainFragment : Fragment() {
     private val chooseImageLauncher = registerForActivityResult(ImageChooserContract()) { image ->
         // here change profile picture
         if(image != null) {
-            viewModel.setProfileImage(image)
+
         }
     }
 
@@ -255,7 +255,6 @@ class ProfileMainFragment : Fragment() {
                                     Image(
                                         profile.profileImageId ?: "",
                                         profile.userId,
-                                        getString(R.string.user_profile_picture, profile.name),
                                         profile.uniqueUsername)
                                 ))
                             }

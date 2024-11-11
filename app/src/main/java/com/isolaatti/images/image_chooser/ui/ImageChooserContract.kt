@@ -5,9 +5,11 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContract
+import androidx.core.content.IntentCompat
+import com.isolaatti.images.common.data.entity.ImageDraftEntity
 import com.isolaatti.images.common.domain.entity.Image
 
-class ImageChooserContract : ActivityResultContract<ImageChooserContract.Requester, Image?>() {
+class ImageChooserContract : ActivityResultContract<ImageChooserContract.Requester, ImageDraftEntity?>() {
 
     enum class Requester {
         UserPost, SquadPost
@@ -18,13 +20,13 @@ class ImageChooserContract : ActivityResultContract<ImageChooserContract.Request
         }
     }
 
-    override fun parseResult(resultCode: Int, intent: Intent?): Image? {
+    override fun parseResult(resultCode: Int, intent: Intent?): ImageDraftEntity? {
         if(resultCode != Activity.RESULT_OK) { return null }
 
-        return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-            intent?.getSerializableExtra(ImageChooserActivity.OUTPUT_EXTRA_IMAGE) as Image?
-        } else {
-            intent?.getSerializableExtra(ImageChooserActivity.OUTPUT_EXTRA_IMAGE, Image::class.java)
+        if(intent == null) {
+            return null
         }
+
+        return IntentCompat.getSerializableExtra(intent, ImageChooserActivity.OUTPUT_EXTRA_IMAGE, ImageDraftEntity::class.java)
     }
 }

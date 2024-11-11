@@ -1,12 +1,22 @@
 package com.isolaatti.posting.posts.ui
 
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.PopupMenu
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -14,6 +24,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
+import com.isolaatti.MyApplication
 import com.isolaatti.R
 import com.isolaatti.audio.audio_selector.ui.AudioSelectorContract
 import com.isolaatti.audio.common.domain.Audio
@@ -21,11 +32,15 @@ import com.isolaatti.audio.common.domain.Playable
 import com.isolaatti.audio.drafts.domain.AudioDraft
 import com.isolaatti.audio.player.AudioPlayerConnector
 import com.isolaatti.audio.recorder.ui.AudioRecorderContract
+import com.isolaatti.common.IsolaattiTheme
 import com.isolaatti.databinding.FragmentMarkdownEditingBinding
+import com.isolaatti.images.common.components.ImagesRow
 import com.isolaatti.images.image_chooser.ui.ImageChooserContract
 import com.isolaatti.posting.link_creator.presentation.LinkCreatorViewModel
 import com.isolaatti.posting.link_creator.ui.LinkCreatorFragment
 import com.isolaatti.posting.posts.presentation.CreatePostViewModel
+import java.io.File
+import java.util.Calendar
 
 class PostEditingFragment : Fragment(){
     companion object {
@@ -47,11 +62,10 @@ class PostEditingFragment : Fragment(){
     }
 
     private val imageChooserLauncher = registerForActivityResult(ImageChooserContract()) { image ->
-        Log.d(LOG_TAG, "${image?.markdown}")
+
 
         if(image != null) {
-            viewModel.content += "\n\n ${image.markdown}"
-            binding.filledTextField.editText?.setText(viewModel.content)
+            
         }
 
 
@@ -61,6 +75,25 @@ class PostEditingFragment : Fragment(){
 
     }
 
+    private val choosePictureLauncher = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) {
+        if(it != null) {
+            viewModel.addPicture(it)
+        }
+    }
+
+    private fun makePhotoUri(): Uri {
+        val cacheFile = File(requireContext().filesDir, "temp_picture_${Calendar.getInstance().timeInMillis}")
+        return FileProvider.getUriForFile(requireContext(), "${MyApplication.myApp.packageName}.provider", cacheFile)
+    }
+
+    private var cameraPhotoUri: Uri? = null
+
+    private val takePhotoLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) {
+        if(it && cameraPhotoUri != null) {
+            viewModel.addPicture(cameraPhotoUri!!)
+        }
+
+    }
     private val audioListener = object: AudioPlayerConnector.Listener {
         override fun durationChanged(duration: Int, audio: Playable) {
             binding.audioItem.audioProgress.max = duration
@@ -112,6 +145,32 @@ class PostEditingFragment : Fragment(){
 
         setupListeners()
         setupObservers()
+        
+        binding.imagesRowCompose.apply { 
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                val pictures by viewModel.photos.collectAsState()
+                IsolaattiTheme {
+                    ImagesRow(
+                        modifier = Modifier.padding(16.dp),
+                        images = pictures,
+                        deletable = true,
+                        addable = true,
+                        onClick = {},
+                        onDeleteClick = {
+                            viewModel.removePicture(it)
+                        },
+                        onTakePicture = {
+                            cameraPhotoUri = makePhotoUri()
+                            takePhotoLauncher.launch(cameraPhotoUri)
+                        },
+                        onUploadPicture = {
+                            choosePictureLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                        }
+                    )
+                }
+            }
+        }
     }
 
     override fun onDestroyView() {
@@ -126,12 +185,6 @@ class PostEditingFragment : Fragment(){
             // make better validation :)
             viewModel.validation.postValue(!text.isNullOrEmpty())
             viewModel.content = text.toString()
-        }
-        binding.addImageButton.setOnClickListener {
-            insertImage()
-        }
-        binding.addLinkButton.setOnClickListener {
-            insertLink()
         }
 
         binding.addAudioButton.setOnClickListener {

@@ -6,6 +6,8 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.util.Log
+import com.isolaatti.images.common.data.dao.ImagesDraftsDao
+import com.isolaatti.images.common.data.entity.ImageDraftEntity
 import com.isolaatti.images.common.data.remote.DeleteImagesDto
 import com.isolaatti.images.common.data.remote.ImagesApi
 import com.isolaatti.images.common.domain.entity.Image
@@ -20,7 +22,7 @@ import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import javax.inject.Inject
 
-class ImagesRepositoryImpl @Inject constructor(private val imagesApi: ImagesApi, private val contentResolver: ContentResolver) :
+class ImagesRepositoryImpl @Inject constructor(private val imagesApi: ImagesApi, private val imagesDraftsDao: ImagesDraftsDao, private val contentResolver: ContentResolver) :
     ImagesRepository {
 
         companion object {
@@ -103,5 +105,13 @@ class ImagesRepositoryImpl @Inject constructor(private val imagesApi: ImagesApi,
         } finally {
             imageInputStream?.close()
         }
+    }
+
+    override fun getDetachedDraftImages(): Flow<Resource<List<ImageDraftEntity>>> {
+        TODO("Not yet implemented")
+    }
+
+    override fun getDraftImagesOfPost(postId: Long): Flow<Resource<List<ImageDraftEntity>>> {
+        TODO("Not yet implemented")
     }
 }
