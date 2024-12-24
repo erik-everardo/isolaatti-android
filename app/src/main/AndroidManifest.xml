@@ -49,10 +49,7 @@
         <activity android:name=".images.picture_viewer.ui.PictureViewerActivity"  android:theme="@style/Theme.Isolaatti"/>
         <activity android:name=".sign_up.ui.SignUpActivity" android:theme="@style/Theme.Isolaatti"/>
         <activity android:name=".images.image_maker.ui.ImageMakerActivity" android:theme="@style/Theme.Isolaatti"/>
-        <activity android:name=".images.image_chooser.ui.ImageChooserActivity" android:theme="@style/Theme.Isolaatti"/>
         <activity android:name=".profile.ui.EditProfileActivity" android:theme="@style/Theme.Isolaatti" />
-        <activity android:name=".audio.recorder.ui.AudioRecorderActivity" android:theme="@style/Theme.Isolaatti" />
-        <activity android:name=".audio.audio_selector.ui.AudioSelectorActivity" android:theme="@style/Theme.Isolaatti" />
         <activity android:name=".posting.posts.ui.PostInfoActivity" android:theme="@style/Theme.Isolaatti"/>
         <activity android:name=".hashtags.ui.HashtagsPostsActivity" android:theme="@style/Theme.Isolaatti" />
         <provider

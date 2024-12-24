@@ -91,17 +91,23 @@ fun ImagesRow(
 
             Card(modifier = Modifier
                 .padding(horizontal = 4.dp)
-                .size(120.dp)) {
+                .size(120.dp),
+                onClick = {
+                    onClick(index)
+                }) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
 
                 ) {
-                    FilledTonalIconButton(
-                        onClick = { onDeleteClick(index) },
-                        modifier = Modifier.zIndex(2f)
-                    ) {
-                        Icon(imageVector = Icons.Default.Close, contentDescription = null)
+                    if(deletable) {
+                        FilledTonalIconButton(
+                            onClick = { onDeleteClick(index) },
+                            modifier = Modifier.zIndex(2f)
+                        ) {
+                            Icon(imageVector = Icons.Default.Close, contentDescription = null)
+                        }
                     }
+
 
                     AsyncImage(
                         model = images[index],
@@ -118,5 +124,5 @@ fun ImagesRow(
 @Preview(device = Devices.PIXEL_5)
 @Composable
 fun ImagesRowPreview() {
-    ImagesRow(images = emptyList(), deletable = false, addable = true, onClick = {})
+    ImagesRow(images = emptyList(), deletable = true, addable = true, onClick = {})
 }

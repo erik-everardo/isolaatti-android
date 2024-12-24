@@ -9,12 +9,6 @@
         android:name="com.isolaatti.profile.ui.ProfileMainFragment"
         android:label="DiscussionsFragment" >
         <action
-            android:id="@+id/action_discussionsFragment_to_audiosFragment"
-            app:destination="@id/audiosFragment" />
-        <action
-            android:id="@+id/action_discussionsFragment_to_imagesFragment"
-            app:destination="@id/imagesFragment" />
-        <action
             android:id="@+id/action_discussionsFragment_to_blockProfileFragment"
             app:destination="@id/blockProfileFragment" />
         <action
@@ -32,27 +26,6 @@
             android:id="@+id/action_mainFragment_to_qrCodeFragment"
             app:destination="@id/qrCodeFragment"
             app:popExitAnim="@android:anim/slide_out_right" />
-    </fragment>
-    <fragment
-        android:id="@+id/audiosFragment"
-        android:name="com.isolaatti.audio.audios_list.ui.AudiosFragment"
-        android:label="AudiosFragment" >
-        <argument
-            android:name="source"
-            app:argType="string" />
-        <argument android:name="sourceId"
-            app:argType="string" />
-    </fragment>
-    <fragment
-        android:id="@+id/imagesFragment"
-        android:name="com.isolaatti.images.image_list.ui.ImagesFragment"
-        android:label="ImagesFragment" >
-        <argument
-            android:name="source"
-            app:argType="string" />
-        <argument
-            android:name="sourceId"
-            app:argType="string" />
     </fragment>
     <fragment
         android:id="@+id/blockProfileFragment"

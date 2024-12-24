@@ -328,7 +328,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="file:/$USER_HOME$/AppData/Local/Android/Sdk/icons/material/materialicons/article/baseline_article_24.xml" />
+                                      <entry key="url" value="file:/$USER_HOME$/AppData/Local/Android/Sdk/icons/material/materialicons/circle/baseline_circle_24.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -338,8 +338,8 @@
                         </option>
                         <option name="values">
                           <map>
-                            <entry key="outputName" value="baseline_article_24" />
-                            <entry key="sourceFile" value="C:\Users\erike\Downloads\hashtag-solid.svg" />
+                            <entry key="outputName" value="baseline_circle_24" />
+                            <entry key="sourceFile" value="C:\Users\erike\OneDrive\Imágenes\logo-openfire.svg" />
                           </map>
                         </option>
                       </PersistentState>

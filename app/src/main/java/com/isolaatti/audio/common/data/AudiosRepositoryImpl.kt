@@ -1,10 +1,10 @@
 package com.isolaatti.audio.common.data
 
+import android.net.Uri
 import android.util.Log
-import com.isolaatti.MyApplication
+import androidx.core.net.toFile
 import com.isolaatti.audio.common.domain.Audio
 import com.isolaatti.audio.common.domain.AudiosRepository
-import com.isolaatti.audio.drafts.data.AudiosDraftsDao
 import com.isolaatti.settings.domain.UserIdSetting
 import com.isolaatti.utils.Resource
 import kotlinx.coroutines.flow.Flow
@@ -13,12 +13,10 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import retrofit2.awaitResponse
-import java.io.File
 import javax.inject.Inject
 
 class AudiosRepositoryImpl @Inject constructor(
     private val audiosApi: AudiosApi,
-    private val audiosDraftsDao: AudiosDraftsDao,
     private val userIdSetting: UserIdSetting
 ) : AudiosRepository {
     companion object {
@@ -57,18 +55,12 @@ class AudiosRepositoryImpl @Inject constructor(
         emit(_getAudiosOfUser(userId, lastId))
     }
 
-    override fun uploadAudio(draftId: Long): Flow<Resource<Audio>> = flow {
-        val audioDraftEntity = audiosDraftsDao.getAudioDraftById(draftId)
-        if(audioDraftEntity == null) {
-            emit(Resource.Error(Resource.Error.ErrorType.NotFoundError, "draft not found"))
-            return@flow
-        }
+    override fun uploadAudio(uri: Uri, postId: Long): Flow<Resource<Audio>> = flow {
 
-        val file = File(MyApplication.myApp.filesDir, audioDraftEntity.audioLocalPath)
+
+        val file = uri.toFile()
 
         if(!file.exists()) {
-            // remove draft, file was removed from file system for some reason
-            audiosDraftsDao.deleteDrafts(arrayOf(audioDraftEntity))
             emit(Resource.Error(Resource.Error.ErrorType.OtherError, "File not found"))
             return@flow
         }
@@ -77,10 +69,9 @@ class AudiosRepositoryImpl @Inject constructor(
             val response = audiosApi.uploadFile(
                 MultipartBody.Part.createFormData(
                     AudiosApi.AudioParam, // api parameter name
-                    audioDraftEntity.audioLocalPath.split("/")[1],
-                    file.asRequestBody("audio/3gpp".toMediaType()) // actual file to be sent
+                    uri.lastPathSegment,
+                    file.asRequestBody("audio/aac".toMediaType()) // actual file to be sent
                 ),
-                MultipartBody.Part.createFormData(AudiosApi.NameParam, audioDraftEntity.name),
                 MultipartBody.Part.createFormData(AudiosApi.DurationParam, "0")
             ).awaitResponse()
 
@@ -88,7 +79,6 @@ class AudiosRepositoryImpl @Inject constructor(
                 val audioDto = response.body()
                 if(audioDto != null) {
                     Log.d(LOG_TAG, "emit audio dto")
-                    audiosDraftsDao.deleteDrafts(arrayOf(audioDraftEntity))
                     emit(Resource.Success(Audio.fromDto(audioDto)))
                 }
 

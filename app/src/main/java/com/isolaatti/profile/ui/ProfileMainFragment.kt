@@ -22,11 +22,8 @@ import coil.load
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.isolaatti.BuildConfig
 import com.isolaatti.R
-import com.isolaatti.audio.audio_selector.ui.AudioSelectorContract
-import com.isolaatti.audio.audios_list.ui.AudiosFragment
 import com.isolaatti.audio.common.domain.Audio
 import com.isolaatti.audio.common.domain.Playable
-import com.isolaatti.audio.player.AudioPlayerConnector
 import com.isolaatti.common.CoilImageLoader.imageLoader
 import com.isolaatti.common.Dialogs
 import com.isolaatti.common.ErrorMessageViewModel
@@ -39,8 +36,6 @@ import com.isolaatti.databinding.FragmentDiscussionsBinding
 import com.isolaatti.followers.domain.FollowingState
 import com.isolaatti.hashtags.ui.HashtagsPostsActivity
 import com.isolaatti.images.common.domain.entity.Image
-import com.isolaatti.images.image_chooser.ui.ImageChooserContract
-import com.isolaatti.images.image_list.ui.ImagesFragment
 import com.isolaatti.images.picture_viewer.ui.PictureViewerActivity
 import com.isolaatti.posting.comments.ui.BottomSheetPostComments
 import com.isolaatti.posting.posts.domain.entity.Post
@@ -78,7 +73,6 @@ class ProfileMainFragment : Fragment() {
 
     private var audioDescriptionAudio: Audio? = null
 
-    private lateinit var audioPlayerConnector: AudioPlayerConnector
 
     // collapsing bar
     private var title = ""
@@ -94,12 +88,6 @@ class ProfileMainFragment : Fragment() {
         viewModel.onPostAddedAtTheBeginning(it)
     }
 
-    private val chooseImageLauncher = registerForActivityResult(ImageChooserContract()) { image ->
-        // here change profile picture
-        if(image != null) {
-
-        }
-    }
 
     private val editDiscussion = registerForActivityResult(EditPostContract()) {
         if(it != null) {
@@ -113,64 +101,6 @@ class ProfileMainFragment : Fragment() {
         }
     }
 
-    private val audioSelectorLauncher = registerForActivityResult(AudioSelectorContract()) {
-
-    }
-
-
-    private val audioPlayerConnectorListener = object: AudioPlayerConnector.Listener {
-        override fun onPlaying(isPlaying: Boolean, audio: Playable) {
-            Log.d(LOG_TAG, "onPlaying() isPlaying: $isPlaying: audio $audio")
-            if(audio == audioDescriptionAudio) {
-                viewBinding.playButton.icon =
-                    AppCompatResources.getDrawable(
-                        requireContext(),
-                        if(isPlaying) R.drawable.baseline_pause_circle_24 else R.drawable.baseline_play_circle_24
-                    )
-            }
-            if(audio is Audio)
-                postsAdapter.setIsPlaying(isPlaying, audio)
-        }
-
-        override fun isLoading(isLoading: Boolean, audio: Playable) {
-            if(audio == audioDescriptionAudio) {
-                viewBinding.playButton.isEnabled = !isLoading
-                viewBinding.audioProgress.isIndeterminate = isLoading
-            }
-
-            if(audio is Audio)
-                postsAdapter.setIsLoading(isLoading, audio)
-
-        }
-
-        override fun progressChanged(second: Int, audio: Playable) {
-            if(audio == audioDescriptionAudio) {
-                viewBinding.audioProgress.setProgress(second, true)
-            }
-
-            if(audio is Audio)
-                postsAdapter.setProgress(second, audio)
-        }
-
-        override fun durationChanged(duration: Int, audio: Playable) {
-            if(audio == audioDescriptionAudio) {
-                viewBinding.audioProgress.max = duration
-            }
-
-            if(audio is Audio)
-                postsAdapter.setDuration(duration, audio)
-        }
-
-        override fun onEnded(audio: Playable) {
-            if(audio == audioDescriptionAudio) {
-                viewBinding.audioProgress.progress = 0
-            }
-
-            if(audio is Audio)
-                postsAdapter.setEnded(audio)
-        }
-
-    }
 
     private val profileObserver = Observer<UserProfile> { profile ->
         viewBinding.profileImageView.load(UrlGen.userProfileImage(profile.userId, invalidateCache = true), imageLoader)
@@ -243,7 +173,7 @@ class ProfileMainFragment : Fragment() {
                     val profile = optionClicked.payload as? UserProfile
                     when(optionClicked.optionId) {
                         Options.Option.OPTION_PROFILE_PHOTO_CHANGE_PHOTO -> {
-                            chooseImageLauncher.launch(ImageChooserContract.Requester.UserPost)
+
                         }
                         Options.Option.OPTION_PROFILE_PHOTO_REMOVE_PHOTO -> {
                             showRemoveProfileImageDialog()
@@ -287,7 +217,6 @@ class ProfileMainFragment : Fragment() {
                 }
                 Options.PROFILE_DESCRIPTION_OPTIONS -> {
                     optionsViewModel.handle()
-                    audioSelectorLauncher.launch(AudioSelectorContract.SelectorConfig(false, null))
                 }
             }
 
@@ -394,7 +323,7 @@ class ProfileMainFragment : Fragment() {
         }
         viewBinding.playButton.setOnClickListener {
             audioDescriptionAudio?.let { audio ->
-                audioPlayerConnector.playPauseAudio(audio)
+
             }
         }
 
@@ -499,7 +428,7 @@ class ProfileMainFragment : Fragment() {
             }
 
             override fun onPlay(audio: Audio) {
-                audioPlayerConnector.playPauseAudio(audio)
+
             }
 
             override fun onLoadMore() {
@@ -542,12 +471,6 @@ class ProfileMainFragment : Fragment() {
         bind()
         setObservers()
         setupCollapsingBar()
-
-        audioPlayerConnector = AudioPlayerConnector(requireContext())
-
-        audioPlayerConnector.addListener(audioPlayerConnectorListener)
-
-        viewLifecycleOwner.lifecycle.addObserver(audioPlayerConnector)
 
 
         viewLifecycleOwner.lifecycleScope.launch {

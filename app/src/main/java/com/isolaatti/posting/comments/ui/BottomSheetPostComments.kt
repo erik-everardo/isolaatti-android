@@ -32,7 +32,6 @@ import com.isolaatti.common.options_bottom_sheet.domain.OptionClicked
 import com.isolaatti.common.options_bottom_sheet.domain.Options
 import com.isolaatti.common.options_bottom_sheet.presentation.BottomSheetPostOptionsViewModel
 import com.isolaatti.common.options_bottom_sheet.ui.BottomSheetPostOptionsFragment
-import com.isolaatti.images.image_chooser.ui.ImageChooserContract
 import com.isolaatti.posting.link_creator.presentation.LinkCreatorViewModel
 import com.isolaatti.posting.link_creator.ui.LinkCreatorFragment
 import com.isolaatti.profile.ui.ProfileActivity
@@ -122,14 +121,6 @@ class BottomSheetPostComments() : BottomSheetDialogFragment(), OnUserInteractedC
 
     }
 
-    private val imageChooserLauncher = registerForActivityResult(ImageChooserContract()) { image ->
-
-
-        if(image != null) {
-
-        }
-    }
-
     private fun setObservers() {
         viewModel.comments.observe(viewLifecycleOwner, commentsObserver)
         viewModel.noMoreContent.observe(viewLifecycleOwner, noMoreContentObserver)
@@ -180,7 +171,7 @@ class BottomSheetPostComments() : BottomSheetDialogFragment(), OnUserInteractedC
     }
 
     private fun insertImage() {
-        imageChooserLauncher.launch(ImageChooserContract.Requester.UserPost)
+
     }
 
     private fun insertLink() {

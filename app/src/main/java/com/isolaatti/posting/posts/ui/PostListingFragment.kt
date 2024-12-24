@@ -15,9 +15,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.isolaatti.BuildConfig
 import com.isolaatti.R
 import com.isolaatti.audio.common.domain.Audio
-import com.isolaatti.audio.common.domain.Playable
-import com.isolaatti.audio.player.AudioPlayerConnector
-import com.isolaatti.common.CoilImageLoader
 import com.isolaatti.common.Dialogs
 import com.isolaatti.common.ErrorMessageViewModel
 import com.isolaatti.common.OnUserInteractedWithPostCallback
@@ -39,12 +36,6 @@ import com.isolaatti.profile.ui.ProfileActivity
 import com.isolaatti.reports.data.ContentType
 import com.isolaatti.reports.ui.NewReportBottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
-import io.noties.markwon.AbstractMarkwonPlugin
-import io.noties.markwon.Markwon
-import io.noties.markwon.MarkwonConfiguration
-import io.noties.markwon.image.coil.CoilImagesPlugin
-import io.noties.markwon.image.destination.ImageDestinationProcessorRelativeToAbsolute
-import io.noties.markwon.linkify.LinkifyPlugin
 
 @AndroidEntryPoint
 class PostListingFragment : Fragment(), OnUserInteractedWithPostCallback {
@@ -60,35 +51,6 @@ class PostListingFragment : Fragment(), OnUserInteractedWithPostCallback {
     private val viewModel: PostListingViewModel by viewModels()
     val optionsViewModel: BottomSheetPostOptionsViewModel by activityViewModels()
     private lateinit var adapter: PostsRecyclerViewAdapter
-    private lateinit var audioPlayerConnector: AudioPlayerConnector
-
-    private val audioPlayerConnectorListener = object: AudioPlayerConnector.Listener {
-        override fun onPlaying(isPlaying: Boolean, audio: Playable) {
-            if(audio is Audio)
-                adapter.setIsPlaying(isPlaying, audio)
-        }
-
-        override fun isLoading(isLoading: Boolean, audio: Playable) {
-            if(audio is Audio)
-                adapter.setIsLoading(isLoading, audio)
-        }
-
-        override fun progressChanged(second: Int, audio: Playable) {
-            if(audio is Audio)
-                adapter.setProgress(second, audio)
-        }
-
-        override fun durationChanged(duration: Int, audio: Playable) {
-            if(audio is Audio)
-                adapter.setDuration(duration, audio)
-        }
-
-        override fun onEnded(audio: Playable) {
-            if(audio is Audio)
-                adapter.setEnded(audio)
-        }
-
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -109,22 +71,6 @@ class PostListingFragment : Fragment(), OnUserInteractedWithPostCallback {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        audioPlayerConnector = AudioPlayerConnector(requireContext())
-        audioPlayerConnector.addListener(audioPlayerConnectorListener)
-        viewLifecycleOwner.lifecycle.addObserver(audioPlayerConnector)
-
-        val markwon = Markwon.builder(requireContext())
-            .usePlugin(object: AbstractMarkwonPlugin() {
-                override fun configureConfiguration(builder: MarkwonConfiguration.Builder) {
-                    builder
-                        .imageDestinationProcessor(
-                            ImageDestinationProcessorRelativeToAbsolute
-                            .create(BuildConfig.backend))
-                }
-            })
-            .usePlugin(CoilImagesPlugin.create(requireContext(), CoilImageLoader.imageLoader))
-            .usePlugin(LinkifyPlugin.create())
-            .build()
         adapter = PostsRecyclerViewAdapter(this)
         viewBinding.feedRecyclerView.adapter = adapter
         viewBinding.feedRecyclerView.setItemViewCacheSize(7)
@@ -177,7 +123,6 @@ class PostListingFragment : Fragment(), OnUserInteractedWithPostCallback {
     }
 
     override fun onPlay(audio: Audio) {
-        audioPlayerConnector.playPauseAudio(audio)
     }
 
     override fun onMoreInfo(postId: Long) {

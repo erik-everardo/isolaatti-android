@@ -7,9 +7,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.isolaatti.audio.common.domain.Audio
 import com.isolaatti.audio.common.domain.Playable
-import com.isolaatti.audio.common.domain.UploadAudioUC
-import com.isolaatti.audio.drafts.domain.AudioDraft
-import com.isolaatti.audio.drafts.domain.repository.AudioDraftsRepository
 import com.isolaatti.posting.posts.data.remote.CreatePostDto
 import com.isolaatti.posting.posts.data.remote.EditPostDto
 import com.isolaatti.posting.posts.data.remote.EditPostDto.Companion.PRIVACY_ISOLAATTI
@@ -34,9 +31,7 @@ import javax.inject.Inject
 class CreatePostViewModel @Inject constructor(
     private val makePost: MakePost,
     private val editPost: EditPost,
-    private val loadPost: LoadSinglePost,
-    private val audioDraftsRepository: AudioDraftsRepository,
-    private val uploadAudioUC: UploadAudioUC
+    private val loadPost: LoadSinglePost
 ) : ViewModel() {
 
     companion object {
@@ -89,21 +84,7 @@ class CreatePostViewModel @Inject constructor(
         viewModelScope.launch {
 
             if(audioDraft != null) {
-                uploadAudioUC(audioDraft!!).onEach { upLoadAudioResource ->
-                    Log.d(LOG_TAG, upLoadAudioResource.toString())
-                    when(upLoadAudioResource) {
-                        is Resource.Success -> {
-                            Log.d(LOG_TAG, "uploadAudioResource: Success")
-                            audioId = upLoadAudioResource.data?.id
-                            sendDiscussion()
-                        }
 
-                        is Resource.Error -> {}
-                        is Resource.Loading -> {
-                            sendingPost.postValue(true)
-                        }
-                    }
-                }.flowOn(Dispatchers.IO).launchIn(this)
             } else {
                 sendDiscussion()
             }
@@ -134,19 +115,7 @@ class CreatePostViewModel @Inject constructor(
 
         viewModelScope.launch {
             if(audioDraft != null) {
-                uploadAudioUC(audioDraft!!).onEach { upLoadAudioResource ->
-                    when(upLoadAudioResource) {
-                        is Resource.Success -> {
-                            audioId = upLoadAudioResource.data?.id
-                            sendEditDiscussion(postId)
-                        }
 
-                        is Resource.Error -> {}
-                        is Resource.Loading -> {
-                            sendingPost.postValue(true)
-                        }
-                    }
-                }.flowOn(Dispatchers.IO).launchIn(this)
             } else {
                 sendEditDiscussion(postId)
             }
@@ -166,22 +135,6 @@ class CreatePostViewModel @Inject constructor(
         }
     }
 
-    // call this when user has recorded or selected a draft
-    fun putAudioDraft(draft: AudioDraft) {
-        viewModelScope.launch {
-            audioDraftsRepository.getAudioDraftById(draft.id).onEach { draft ->
-                when(draft) {
-                    is Resource.Error -> {}
-                    is Resource.Loading -> {}
-                    is Resource.Success -> {
-                        audioAttachment.postValue(draft.data)
-                        this@CreatePostViewModel.audioDraft = draft.data!!.id
-                    }
-                }
-
-            }.flowOn(Dispatchers.IO).launchIn(this)
-        }
-    }
 
     // call this when user selects an existing audio (not a draft)
     fun putAudio(audio: Audio) {
