@@ -62,7 +62,13 @@ class CreatePostViewModel @Inject constructor(
     private fun sendDiscussion() {
         Log.d(LOG_TAG, "postDiscussion#send()")
         viewModelScope.launch {
-            makePost(EditPostDto.PRIVACY_ISOLAATTI, content, audioId, null).onEach {
+            makePost(
+                privacy = EditPostDto.PRIVACY_ISOLAATTI,
+                content = content,
+                images = photos.value,
+                audioId = audioId,
+                squadId = null
+            ).onEach {
                 when(it) {
                     is Resource.Success -> {
                         sendingPost.postValue(false)

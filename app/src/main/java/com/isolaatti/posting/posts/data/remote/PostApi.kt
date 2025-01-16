@@ -24,4 +24,7 @@ interface PostApi  {
     @GET("Posting/Post/{postId}/Versions")
     fun getVersions(@Path("postId") postId: Long): Call<ResultDto<List<VersionDto>>>
 
+    @POST("Posting/Post/{postId}/SetIsDraft")
+    fun setIsDraft(@Path("postId") postId: Long, @Query("isDraft") isDraft: Boolean): Call<FeedDto.PostDto>
+
 }

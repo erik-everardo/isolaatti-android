@@ -1,4 +1,4 @@
-package com.isolaatti.images.common.components
+package com.isolaatti.posting.posts.components
 
 import android.net.Uri
 import androidx.compose.foundation.Image
@@ -9,15 +9,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,26 +30,24 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Popup
 import androidx.compose.ui.zIndex
 import coil3.compose.AsyncImage
 import com.isolaatti.R
-import com.isolaatti.images.common.domain.entity.Image
 
 @Composable
-fun ImagesRow(
+fun PostAttachments(
     modifier: Modifier = Modifier,
     images: List<Uri>,
     deletable: Boolean,
-    addable: Boolean,
-    onClick: (index: Int) -> Unit,
-    onDeleteClick: (index: Int) -> Unit = {},
+    imageAddable: Boolean,
+    onImageClick: (index: Int) -> Unit,
+    onImageDeleteClick: (index: Int) -> Unit = {},
     onTakePicture: () -> Unit = {},
-    onUploadPicture: () -> Unit = {}
+    onUploadPicture: () -> Unit = {},
 ) {
     var showAddPhotoPopUp by remember { mutableStateOf(false) }
     LazyRow(modifier, contentPadding = PaddingValues(horizontal = 8.dp)) {
-        if(addable) {
+        if(imageAddable) {
             item {
                 Card(modifier = Modifier
                     .padding(horizontal = 4.dp)
@@ -93,7 +88,7 @@ fun ImagesRow(
                 .padding(horizontal = 4.dp)
                 .size(120.dp),
                 onClick = {
-                    onClick(index)
+                    onImageClick(index)
                 }) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -101,7 +96,7 @@ fun ImagesRow(
                 ) {
                     if(deletable) {
                         FilledTonalIconButton(
-                            onClick = { onDeleteClick(index) },
+                            onClick = { onImageDeleteClick(index) },
                             modifier = Modifier.zIndex(2f)
                         ) {
                             Icon(imageVector = Icons.Default.Close, contentDescription = null)
@@ -124,5 +119,5 @@ fun ImagesRow(
 @Preview(device = Devices.PIXEL_5)
 @Composable
 fun ImagesRowPreview() {
-    ImagesRow(images = emptyList(), deletable = true, addable = true, onClick = {})
+    PostAttachments(images = emptyList(), deletable = true, imageAddable = true, onImageClick = {})
 }

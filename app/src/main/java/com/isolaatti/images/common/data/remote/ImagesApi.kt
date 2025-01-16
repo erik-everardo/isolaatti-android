@@ -21,7 +21,7 @@ interface ImagesApi {
     @POST("images/create")
     @Multipart
     fun postImage(@Part file: MultipartBody.Part,
-                  @Part name: MultipartBody.Part,
+                  @Part postId: MultipartBody.Part,
                   @Part setAsProfile: MultipartBody.Part? = null,
                   @Part squadId: MultipartBody.Part? = null): Call<ImageDto>
 

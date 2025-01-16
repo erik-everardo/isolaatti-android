@@ -1,7 +1,16 @@
 package com.isolaatti.posting.posts.data.repository
 
+import android.content.ContentResolver
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.os.Build
 import android.util.Log
 import com.google.gson.Gson
+import com.isolaatti.images.common.data.remote.DeleteImagesDto
+import com.isolaatti.images.common.data.remote.ImageDto
+import com.isolaatti.images.common.data.remote.ImagesApi
+import com.isolaatti.images.common.domain.entity.Image
 import com.isolaatti.posting.posts.data.remote.CreatePostDto
 import com.isolaatti.posting.posts.data.remote.DeletePostDto
 import com.isolaatti.posting.posts.data.remote.EditPostDto
@@ -17,10 +26,19 @@ import com.isolaatti.profile.domain.entity.ProfileListItem
 import com.isolaatti.utils.Resource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.awaitResponse
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import javax.inject.Inject
 
-class PostsRepositoryImpl @Inject constructor(private val feedsApi: FeedsApi, private val postApi: PostApi) : PostsRepository {
+class PostsRepositoryImpl @Inject constructor(
+    private val feedsApi: FeedsApi,
+    private val postApi: PostApi,
+    private val imagesApi: ImagesApi,
+    private val contentResolver: ContentResolver
+) : PostsRepository {
     companion object {
         const val LOG_TAG = "PostsRepositoryImpl"
     }
@@ -64,16 +82,91 @@ class PostsRepositoryImpl @Inject constructor(private val feedsApi: FeedsApi, pr
         }
     }
 
-    override fun makePost(createPostDto: CreatePostDto): Flow<Resource<FeedDto.PostDto>> = flow {
+    override fun makePost(createPostDto: CreatePostDto, images: List<Uri>): Flow<Resource<FeedDto.PostDto>> = flow {
         emit(Resource.Loading())
         try {
-            val result = postApi.makePost(createPostDto).awaitResponse()
+            val hasImages = images.isNotEmpty()
+            val result = postApi.makePost(
+                if(hasImages) {
+                    createPostDto.copy(isDraft = true)
+                } else {
+                    createPostDto
+                }
+            ).awaitResponse()
             if(result.isSuccessful) {
-                emit(Resource.Success(result.body()))
-                return@flow
+
+                if(hasImages) {
+                    val successfulImageUploads: MutableList<ImageDto> = mutableListOf()
+
+                    val postId = result.body()?.post?.id
+                    if(postId == null) {
+                        emit(Resource.Error())
+                        return@flow
+                    }
+                    images.forEach { imageUri ->
+                        var imageInputStream: InputStream? = null
+                        try {
+                            imageInputStream = contentResolver.openInputStream(imageUri)
+                            val bitmap = BitmapFactory.decodeStream(imageInputStream)
+
+                            if(bitmap == null) {
+                                Log.e(LOG_TAG, "Error resolving image with content resolver")
+                                return@forEach
+                            }
+
+                            val outputStream = ByteArrayOutputStream()
+
+                            if(Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
+                                bitmap.compress(Bitmap.CompressFormat.WEBP, 50, outputStream)
+                            } else {
+                                bitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 50, outputStream)
+                            }
+
+
+                            val response = imagesApi.postImage(
+                                MultipartBody.Part.createFormData("file", "$postId-${System.currentTimeMillis()}",outputStream.toByteArray().toRequestBody()),
+                                MultipartBody.Part.createFormData("postId", postId.toString())
+                            ).awaitResponse()
+
+                            if(response.isSuccessful) {
+                                response.body()?.let { successfulImageUploads.add(it) }
+
+                            }
+
+                        } catch(e: Exception) {
+                            Log.e("ImagesRepository", e.toString())
+
+                        } finally {
+                            imageInputStream?.close()
+                        }
+                    }
+
+                    // undo post and emit error
+                    if(successfulImageUploads.size != images.size) {
+                        postApi.deletePost(DeletePostDto(postId)).awaitResponse()
+                        emit(Resource.Error(Resource.Error.ErrorType.ServerError, "Some images were not processed correctly"))
+                    } else {
+                        postApi.setIsDraft(postId, false)
+                        val response = postApi.getPost(postId).awaitResponse()
+
+                        if(response.isSuccessful) {
+                            emit(Resource.Success(response.body()))
+                        } else {
+                            val msg = "Post posted but could not retrieve updated post data from server"
+                            Log.e(LOG_TAG, msg)
+                            emit(Resource.Error(Resource.Error.mapErrorCode(response.code()), msg))
+                        }
+
+                    }
+                } else {
+                    emit(Resource.Success(result.body()))
+                    return@flow
+                }
+
             }
             emit(Resource.Error(Resource.Error.mapErrorCode(result.code())))
-        } catch(_: Exception) {
+        } catch(e: Exception) {
+            Log.d(LOG_TAG, e.toString())
             emit(Resource.Error(Resource.Error.ErrorType.NetworkError))
         }
     }

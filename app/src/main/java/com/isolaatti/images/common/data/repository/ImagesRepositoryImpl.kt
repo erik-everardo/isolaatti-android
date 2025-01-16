@@ -62,7 +62,7 @@ class ImagesRepositoryImpl @Inject constructor(private val imagesApi: ImagesApi,
         }
     }
 
-    override fun uploadImage(name: String, imageUri: Uri, squadId: String?): Flow<Resource<Image>> = flow {
+    override fun uploadImage(imageUri: Uri, postId: Long, squadId: String?): Flow<Resource<Image>> = flow {
         emit(Resource.Loading())
         var imageInputStream: InputStream? = null
         try {
@@ -84,8 +84,8 @@ class ImagesRepositoryImpl @Inject constructor(private val imagesApi: ImagesApi,
 
 
             val response = imagesApi.postImage(
-                MultipartBody.Part.createFormData("file", name,outputStream.toByteArray().toRequestBody()),
-                MultipartBody.Part.createFormData("name", name)
+                MultipartBody.Part.createFormData("file", "$postId-${System.currentTimeMillis()}",outputStream.toByteArray().toRequestBody()),
+                MultipartBody.Part.createFormData("postId", postId.toString())
             ).awaitResponse()
             if(response.isSuccessful) {
                 val imageDto = response.body()
@@ -105,13 +105,5 @@ class ImagesRepositoryImpl @Inject constructor(private val imagesApi: ImagesApi,
         } finally {
             imageInputStream?.close()
         }
-    }
-
-    override fun getDetachedDraftImages(): Flow<Resource<List<ImageDraftEntity>>> {
-        TODO("Not yet implemented")
-    }
-
-    override fun getDraftImagesOfPost(postId: Long): Flow<Resource<List<ImageDraftEntity>>> {
-        TODO("Not yet implemented")
     }
 }
