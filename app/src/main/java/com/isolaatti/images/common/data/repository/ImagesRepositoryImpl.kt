@@ -34,7 +34,7 @@ class ImagesRepositoryImpl @Inject constructor(private val imagesApi: ImagesApi,
             val response = imagesApi.getImagesOfUser(userId, lastId).awaitResponse()
             if(response.isSuccessful) {
                 val imagesDto = response.body()
-                val images = imagesDto?.data?.map { Image.fromDto(it) }
+                val images = imagesDto?.data?.map { Image(it.id) }
 
                 emit(Resource.Success(images))
 
@@ -93,7 +93,7 @@ class ImagesRepositoryImpl @Inject constructor(private val imagesApi: ImagesApi,
                     emit(Resource.Error(Resource.Error.ErrorType.ServerError))
                     return@flow
                 }
-                val image = Image.fromDto(imageDto)
+                val image = Image(imageDto.id)
                 emit(Resource.Success(image))
             } else {
                 emit(Resource.Error(Resource.Error.mapErrorCode(response.code())))

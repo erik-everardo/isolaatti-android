@@ -5,6 +5,7 @@ import android.os.Parcelable
 import com.isolaatti.audio.common.domain.Audio
 import com.isolaatti.common.Ownable
 import com.isolaatti.common.hashtagRegex
+import com.isolaatti.images.common.domain.entity.Image
 import com.isolaatti.posting.posts.data.remote.FeedDto
 
 data class Post(
@@ -20,7 +21,8 @@ data class Post(
     val userName: String,
     val squadName: String?,
     var liked: Boolean,
-    val audio: Audio? = null
+    val audio: Audio? = null,
+    val images: List<Image>
 ) : Ownable, Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readLong(),
@@ -35,7 +37,8 @@ data class Post(
         parcel.readString()!!,
         parcel.readString(),
         parcel.readByte() != 0.toByte(),
-        parcel.readSerializable() as?  Audio
+        parcel.readSerializable() as?  Audio,
+        parcel.readParcelableArray(Image::class.java.classLoader)?.toList() as? List<Image> ?: emptyList()
     ) {
     }
 
@@ -55,7 +58,8 @@ data class Post(
                     userName = it.userName,
                     squadName = it.squadName,
                     liked = it.liked,
-                    audio = it.audio?.let { audioDto -> Audio.fromDto(audioDto) }
+                    audio = it.audio?.let { audioDto -> Audio.fromDto(audioDto) },
+                    images = it.post.images.map { imageDto -> Image(imageDto.id) }
                 )
             }.toMutableList()
         }
@@ -73,7 +77,8 @@ data class Post(
                 numberOfLikes = postDto.numberOfLikes,
                 userName = postDto.userName,
                 squadName = postDto.squadName,
-                liked = postDto.liked
+                liked = postDto.liked,
+                images = postDto.post.images.map { imageDto -> Image(imageDto.id) }
             )
         }
 
@@ -103,6 +108,7 @@ data class Post(
         parcel.writeString(squadName)
         parcel.writeByte(if (liked) 1 else 0)
         parcel.writeSerializable(audio)
+        parcel.writeParcelableArray(images.toTypedArray(), 0)
     }
 
     override fun describeContents(): Int {

@@ -12,6 +12,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.text.set
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import coil.load
@@ -161,6 +162,14 @@ class PostsRecyclerViewAdapter (
                 } else {
                     itemBinding.audio.root.visibility = View.GONE
                     itemBinding.audio.playButton.setOnClickListener(null)
+                }
+
+                if(post.images.isNotEmpty()) {
+                    itemBinding.photosViewPager.isVisible = true
+                    itemBinding.photosViewPager.adapter = PostImagesViewPagerAdapter(post.images)
+                } else {
+                    itemBinding.photosViewPager.isVisible = false
+                    itemBinding.photosViewPager.adapter = null
                 }
                 itemBinding.shareButton.setOnClickListener {
                     callback.onShare(post.id)

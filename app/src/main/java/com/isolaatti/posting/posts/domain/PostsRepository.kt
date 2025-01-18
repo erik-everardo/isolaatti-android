@@ -18,7 +18,7 @@ interface PostsRepository {
 
     fun getProfilePosts(userId: Int, lastId: Long, olderFirst: Boolean, filter: FeedFilterDto?): Flow<Resource<MutableList<Post>>>
 
-    fun makePost(createPostDto: CreatePostDto, images: List<Uri>): Flow<Resource<FeedDto.PostDto>>
+    fun makePost(createPostDto: CreatePostDto, images: List<Uri>): Flow<Resource<PostingSteps>>
     fun editPost(editPostDto: EditPostDto): Flow<Resource<FeedDto.PostDto>>
     fun deletePost(postId: Long): Flow<Resource<PostDeletedDto>>
     fun loadPost(postId: Long): Flow<Resource<Post>>

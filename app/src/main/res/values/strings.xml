@@ -218,6 +218,8 @@
     <string name="ascending_by_creation_date">older-newer</string>
     <string name="descending_by_creation_date">newer-older</string>
     <string name="invalid_arg">Invalid value passed</string>
+    <string name="posting">Posting</string>
+    <string name="uploading_photos">Uploading photos</string>
     <string-array name="report_reasons">
         <item>Spam</item>
         <item>Explicit content</item>

@@ -11,6 +11,7 @@ import com.isolaatti.posting.posts.data.remote.CreatePostDto
 import com.isolaatti.posting.posts.data.remote.EditPostDto
 import com.isolaatti.posting.posts.data.remote.EditPostDto.Companion.PRIVACY_ISOLAATTI
 import com.isolaatti.posting.posts.data.remote.FeedDto
+import com.isolaatti.posting.posts.domain.PostingSteps
 import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.posting.posts.domain.use_case.EditPost
 import com.isolaatti.posting.posts.domain.use_case.LoadSinglePost
@@ -39,7 +40,6 @@ class CreatePostViewModel @Inject constructor(
     }
 
     val validation: MutableLiveData<Boolean> = MutableLiveData(false)
-    val posted: MutableLiveData<Post?> = MutableLiveData()
     val error: MutableLiveData<Resource.Error.ErrorType?> = MutableLiveData()
     val sendingPost: MutableLiveData<Boolean> = MutableLiveData(false)
     val postToEdit: MutableLiveData<EditPostDto> = MutableLiveData()
@@ -48,6 +48,9 @@ class CreatePostViewModel @Inject constructor(
         set(value) {field = value; liveContent.value = value} // TODO remove this and use only liveContent
     private val _photos: MutableStateFlow<List<Uri>> = MutableStateFlow(emptyList())
     val photos: StateFlow<List<Uri>> get() = _photos
+
+    private val _postingStep = MutableStateFlow(PostingSteps.Unspecified)
+    val postingStep: StateFlow<PostingSteps> get() = _postingStep
 
     val audioAttachment: MutableLiveData<Playable?> = MutableLiveData()
 
@@ -71,8 +74,12 @@ class CreatePostViewModel @Inject constructor(
             ).onEach {
                 when(it) {
                     is Resource.Success -> {
-                        sendingPost.postValue(false)
-                        posted.postValue(Post.fromPostDto(it.data!!))
+                        if(it.data == PostingSteps.Finished) {
+                            sendingPost.postValue(false)
+                        }
+
+                        _postingStep.value = it.data!!
+
                     }
                     is Resource.Error -> {
                         sendingPost.postValue(false)
@@ -103,7 +110,6 @@ class CreatePostViewModel @Inject constructor(
                 when(it) {
                     is Resource.Success -> {
                         sendingPost.postValue(false)
-                        posted.postValue(Post.fromPostDto(it.data!!))
                     }
                     is Resource.Error -> {
                         sendingPost.postValue(false)

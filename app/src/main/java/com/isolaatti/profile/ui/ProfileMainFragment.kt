@@ -182,10 +182,7 @@ class ProfileMainFragment : Fragment() {
                             val profilePictureUrl = profile?.profilePictureUrl
                             if(profilePictureUrl != null) {
                                 PictureViewerActivity.startActivityWithImages(requireContext(), arrayOf(
-                                    Image(
-                                        profile.profileImageId ?: "",
-                                        profile.userId,
-                                        profile.uniqueUsername)
+                                    Image(profile.profileImageId ?: "")
                                 ))
                             }
                         }

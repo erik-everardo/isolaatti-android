@@ -19,7 +19,7 @@ class PictureViewerMainFragment : Fragment() {
     private val onPageChangeCallback = object: ViewPager2.OnPageChangeCallback() {
         override fun onPageSelected(position: Int) {
             super.onPageSelected(position)
-            binding.imageAuthor.text = images[position].username
+            //binding.imageAuthor.text = images[position].username
         }
     }
 
@@ -42,7 +42,7 @@ class PictureViewerMainFragment : Fragment() {
         binding.viewpager.adapter = adapter
         binding.viewpager.setCurrentItem(position, false)
         binding.viewpager.registerOnPageChangeCallback(onPageChangeCallback)
-        binding.imageAuthor.text = images[position].username
+        //binding.imageAuthor.text = images[position].username
     }
 
     override fun onDestroyView() {

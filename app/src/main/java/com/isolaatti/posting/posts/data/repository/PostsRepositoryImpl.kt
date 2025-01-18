@@ -7,10 +7,8 @@ import android.net.Uri
 import android.os.Build
 import android.util.Log
 import com.google.gson.Gson
-import com.isolaatti.images.common.data.remote.DeleteImagesDto
 import com.isolaatti.images.common.data.remote.ImageDto
 import com.isolaatti.images.common.data.remote.ImagesApi
-import com.isolaatti.images.common.domain.entity.Image
 import com.isolaatti.posting.posts.data.remote.CreatePostDto
 import com.isolaatti.posting.posts.data.remote.DeletePostDto
 import com.isolaatti.posting.posts.data.remote.EditPostDto
@@ -20,6 +18,7 @@ import com.isolaatti.posting.posts.data.remote.FeedsApi
 import com.isolaatti.posting.posts.data.remote.PostApi
 import com.isolaatti.posting.posts.data.remote.PostDeletedDto
 import com.isolaatti.posting.posts.data.remote.VersionDto
+import com.isolaatti.posting.posts.domain.PostingSteps
 import com.isolaatti.posting.posts.domain.PostsRepository
 import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.profile.domain.entity.ProfileListItem
@@ -82,7 +81,7 @@ class PostsRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun makePost(createPostDto: CreatePostDto, images: List<Uri>): Flow<Resource<FeedDto.PostDto>> = flow {
+    override fun makePost(createPostDto: CreatePostDto, images: List<Uri>): Flow<Resource<PostingSteps>> = flow {
         emit(Resource.Loading())
         try {
             val hasImages = images.isNotEmpty()
@@ -103,6 +102,7 @@ class PostsRepositoryImpl @Inject constructor(
                         emit(Resource.Error())
                         return@flow
                     }
+                    emit(Resource.Success(PostingSteps.UploadingPhotos))
                     images.forEach { imageUri ->
                         var imageInputStream: InputStream? = null
                         try {
@@ -146,20 +146,19 @@ class PostsRepositoryImpl @Inject constructor(
                         postApi.deletePost(DeletePostDto(postId)).awaitResponse()
                         emit(Resource.Error(Resource.Error.ErrorType.ServerError, "Some images were not processed correctly"))
                     } else {
-                        postApi.setIsDraft(postId, false)
-                        val response = postApi.getPost(postId).awaitResponse()
+                        val setIsDraftCall = postApi.setIsDraft(postId, false).awaitResponse()
 
-                        if(response.isSuccessful) {
-                            emit(Resource.Success(response.body()))
+                        if(setIsDraftCall.isSuccessful) {
+                            emit(Resource.Success(PostingSteps.Finished))
                         } else {
-                            val msg = "Post posted but could not retrieve updated post data from server"
-                            Log.e(LOG_TAG, msg)
-                            emit(Resource.Error(Resource.Error.mapErrorCode(response.code()), msg))
+                            val code = setIsDraftCall.code()
+                            Log.e(LOG_TAG, "Could not set as \"not draft\"")
+                            emit(Resource.Error(Resource.Error.mapErrorCode(code), "Could not set as \"not draft\""))
                         }
 
                     }
                 } else {
-                    emit(Resource.Success(result.body()))
+                    emit(Resource.Success(PostingSteps.Finished))
                     return@flow
                 }
 

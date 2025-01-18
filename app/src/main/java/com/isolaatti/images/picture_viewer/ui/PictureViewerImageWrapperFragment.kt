@@ -53,7 +53,7 @@ class PictureViewerImageWrapperFragment : Fragment() {
         fun getInstance(image: Image): PictureViewerImageWrapperFragment {
             val fragment = PictureViewerImageWrapperFragment()
             fragment.arguments = Bundle().apply {
-                putSerializable(ARGUMENT_IMAGE, image)
+                putParcelable(ARGUMENT_IMAGE, image)
             }
 
             return fragment
