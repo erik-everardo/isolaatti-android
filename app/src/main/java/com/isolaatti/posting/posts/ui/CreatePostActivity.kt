@@ -39,6 +39,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -110,7 +111,7 @@ class CreatePostActivity : IsolaattiBaseActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            var text by remember { mutableStateOf("") }
+            val text by viewModel.liveContent.observeAsState("")
             val focusRequester = remember { FocusRequester() }
             val pictures by viewModel.photos.collectAsStateWithLifecycle()
 
@@ -163,7 +164,7 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                         AlertDialog(
                             onDismissRequest = {},
                             text = {
-                                Row {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
                                     CircularProgressIndicator()
                                     Text(
                                         when(postingStep) {
@@ -171,7 +172,8 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                             PostingSteps.UploadingPhotos -> getString(R.string.uploading_photos)
                                             PostingSteps.Finished -> ""
                                             PostingSteps.Unspecified -> ""
-                                        }
+                                        },
+                                        modifier = Modifier.padding(4.dp)
                                     )
                                 }
                             },
@@ -181,12 +183,14 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                             },
                             confirmButton = {}
                         )
+                    } else if(posting == false){
+                        finish()
                     }
                     Column(modifier = Modifier.padding(it).verticalScroll(scrollState)) {
                         OutlinedTextField(
                             value = text,
-                            onValueChange = {
-                                text = it
+                            onValueChange = { textFieldValue ->
+                                viewModel.liveContent.postValue(textFieldValue)
                             },
                             modifier = Modifier
                                 .padding(horizontal = 8.dp)

@@ -41,11 +41,9 @@ class CreatePostViewModel @Inject constructor(
 
     val validation: MutableLiveData<Boolean> = MutableLiveData(false)
     val error: MutableLiveData<Resource.Error.ErrorType?> = MutableLiveData()
-    val sendingPost: MutableLiveData<Boolean> = MutableLiveData(false)
+    val sendingPost: MutableLiveData<Boolean?> = MutableLiveData(null)
     val postToEdit: MutableLiveData<EditPostDto> = MutableLiveData()
     val liveContent: MutableLiveData<String> = MutableLiveData()
-    var content: String = ""
-        set(value) {field = value; liveContent.value = value} // TODO remove this and use only liveContent
     private val _photos: MutableStateFlow<List<Uri>> = MutableStateFlow(emptyList())
     val photos: StateFlow<List<Uri>> get() = _photos
 
@@ -67,7 +65,7 @@ class CreatePostViewModel @Inject constructor(
         viewModelScope.launch {
             makePost(
                 privacy = EditPostDto.PRIVACY_ISOLAATTI,
-                content = content,
+                content = liveContent.value ?: "",
                 images = photos.value,
                 audioId = audioId,
                 squadId = null
@@ -106,13 +104,13 @@ class CreatePostViewModel @Inject constructor(
 
     private fun sendEditDiscussion(postId: Long) {
         viewModelScope.launch {
-            editPost(postId, EditPostDto.PRIVACY_ISOLAATTI, content, audioId, null).onEach {
+            editPost(postId, EditPostDto.PRIVACY_ISOLAATTI, liveContent.value ?: "", audioId, null).onEach {
                 when(it) {
                     is Resource.Success -> {
                         sendingPost.postValue(false)
                     }
                     is Resource.Error -> {
-                        sendingPost.postValue(false)
+                        sendingPost.postValue(null)
                         error.postValue(it.errorType)
                     }
                     is Resource.Loading -> {
@@ -139,8 +137,10 @@ class CreatePostViewModel @Inject constructor(
             loadPost(postId).onEach { postRes ->
                 if(postRes is Resource.Success) {
                     postRes.data?.let {
-                        postToEdit.postValue(EditPostDto(PRIVACY_ISOLAATTI, content = it.textContent, postId = it.id))
-                        it.audio?.let { audio -> audioAttachment.postValue(audio) }
+                        //postToEdit.postValue(EditPostDto(PRIVACY_ISOLAATTI, content = it.textContent, postId = it.id))
+                        //it.audio?.let { audio -> audioAttachment.postValue(audio) }
+
+                        liveContent.postValue(it.textContent)
                     }
                 }
             }.flowOn(Dispatchers.IO).launchIn(this)
