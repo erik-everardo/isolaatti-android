@@ -7,10 +7,9 @@ import android.net.Uri
 import android.os.Build
 import android.util.Log
 import com.isolaatti.images.common.data.dao.ImagesDraftsDao
-import com.isolaatti.images.common.data.entity.ImageDraftEntity
 import com.isolaatti.images.common.data.remote.DeleteImagesDto
 import com.isolaatti.images.common.data.remote.ImagesApi
-import com.isolaatti.images.common.domain.entity.Image
+import com.isolaatti.images.common.domain.entity.RemoteImage
 import com.isolaatti.images.common.domain.repository.ImagesRepository
 import com.isolaatti.utils.Resource
 import kotlinx.coroutines.flow.Flow
@@ -28,13 +27,13 @@ class ImagesRepositoryImpl @Inject constructor(private val imagesApi: ImagesApi,
         companion object {
             const val TAG = "ImagesRepositoryImpl"
         }
-    override fun getImagesOfUser(userId: Int, lastId: String?): Flow<Resource<List<Image>>> = flow {
+    override fun getImagesOfUser(userId: Int, lastId: String?): Flow<Resource<List<RemoteImage>>> = flow {
         emit(Resource.Loading())
         try {
             val response = imagesApi.getImagesOfUser(userId, lastId).awaitResponse()
             if(response.isSuccessful) {
                 val imagesDto = response.body()
-                val images = imagesDto?.data?.map { Image(it.id) }
+                val images = imagesDto?.data?.map { RemoteImage(it.id) }
 
                 emit(Resource.Success(images))
 
@@ -46,7 +45,7 @@ class ImagesRepositoryImpl @Inject constructor(private val imagesApi: ImagesApi,
         }
     }
 
-    override fun deleteImages(images: List<Image>): Flow<Resource<Boolean>> = flow {
+    override fun deleteImages(images: List<RemoteImage>): Flow<Resource<Boolean>> = flow {
         emit(Resource.Loading())
         val dto = DeleteImagesDto(images.map { it.id })
         try {
@@ -62,7 +61,7 @@ class ImagesRepositoryImpl @Inject constructor(private val imagesApi: ImagesApi,
         }
     }
 
-    override fun uploadImage(imageUri: Uri, postId: Long, squadId: String?): Flow<Resource<Image>> = flow {
+    override fun uploadImage(imageUri: Uri, postId: Long, squadId: String?): Flow<Resource<RemoteImage>> = flow {
         emit(Resource.Loading())
         var imageInputStream: InputStream? = null
         try {
@@ -93,7 +92,7 @@ class ImagesRepositoryImpl @Inject constructor(private val imagesApi: ImagesApi,
                     emit(Resource.Error(Resource.Error.ErrorType.ServerError))
                     return@flow
                 }
-                val image = Image(imageDto.id)
+                val image = RemoteImage(imageDto.id)
                 emit(Resource.Success(image))
             } else {
                 emit(Resource.Error(Resource.Error.mapErrorCode(response.code())))

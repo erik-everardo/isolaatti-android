@@ -2,23 +2,27 @@ package com.isolaatti.posting.posts.presentation
 
 import android.net.Uri
 import android.util.Log
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.isolaatti.audio.common.domain.Audio
 import com.isolaatti.audio.common.domain.Playable
-import com.isolaatti.posting.posts.data.remote.CreatePostDto
+import com.isolaatti.images.common.domain.entity.Image
+import com.isolaatti.images.common.domain.entity.LocalImage
+import com.isolaatti.images.common.domain.entity.RemoteImage
 import com.isolaatti.posting.posts.data.remote.EditPostDto
-import com.isolaatti.posting.posts.data.remote.EditPostDto.Companion.PRIVACY_ISOLAATTI
-import com.isolaatti.posting.posts.data.remote.FeedDto
 import com.isolaatti.posting.posts.domain.PostingSteps
-import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.posting.posts.domain.use_case.EditPost
 import com.isolaatti.posting.posts.domain.use_case.LoadSinglePost
 import com.isolaatti.posting.posts.domain.use_case.MakePost
 import com.isolaatti.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -44,8 +48,9 @@ class CreatePostViewModel @Inject constructor(
     val sendingPost: MutableLiveData<Boolean?> = MutableLiveData(null)
     val postToEdit: MutableLiveData<EditPostDto> = MutableLiveData()
     val liveContent: MutableLiveData<String> = MutableLiveData()
-    private val _photos: MutableStateFlow<List<Uri>> = MutableStateFlow(emptyList())
-    val photos: StateFlow<List<Uri>> get() = _photos
+    private val _photos: MutableStateFlow<List<Image>> = MutableStateFlow(emptyList())
+    val photos: StateFlow<List<Image>> get() = _photos
+    var audioToUpload: Uri? = null
 
     private val _postingStep = MutableStateFlow(PostingSteps.Unspecified)
     val postingStep: StateFlow<PostingSteps> get() = _postingStep
@@ -54,6 +59,15 @@ class CreatePostViewModel @Inject constructor(
 
     private var audioDraft: Long? = null
     private var audioId: String? = null
+
+    // region Player state
+    val isPlaying: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    var position: MutableStateFlow<Long> = MutableStateFlow(0L)
+    var duration: MutableStateFlow<Long> = MutableStateFlow(0L)
+    var isLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    var ended: Boolean = false
+    // endregion
+
 
     /**
      * postDiscussion() and editDiscussion() will check for audios pending to upload (drafts). It will
@@ -66,7 +80,7 @@ class CreatePostViewModel @Inject constructor(
             makePost(
                 privacy = EditPostDto.PRIVACY_ISOLAATTI,
                 content = liveContent.value ?: "",
-                images = photos.value,
+                images = photos.value.filterIsInstance<LocalImage>(),
                 audioId = audioId,
                 squadId = null
             ).onEach {
@@ -140,6 +154,8 @@ class CreatePostViewModel @Inject constructor(
                         //postToEdit.postValue(EditPostDto(PRIVACY_ISOLAATTI, content = it.textContent, postId = it.id))
                         //it.audio?.let { audio -> audioAttachment.postValue(audio) }
 
+                        _photos.value = it.images
+
                         liveContent.postValue(it.textContent)
                     }
                 }
@@ -158,13 +174,26 @@ class CreatePostViewModel @Inject constructor(
         audioAttachment.value = null
     }
 
-    fun addPicture(uri: Uri) {
+    fun addPicture(uri: LocalImage) {
         _photos.value = listOf(uri) + _photos.value
     }
 
     fun removePicture(index: Int) {
-        _photos.value = _photos.value.toMutableList().apply {
-            removeAt(index)
+        val image = _photos.value.getOrNull(index)
+        if(image == null) {
+            return
         }
+
+        when(image) {
+            is LocalImage -> {
+                _photos.value = _photos.value.toMutableList().apply {
+                    removeAt(index)
+                }
+            }
+            is RemoteImage -> {
+                image.delete = true
+            }
+        }
+
     }
 }

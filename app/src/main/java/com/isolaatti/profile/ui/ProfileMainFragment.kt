@@ -8,7 +8,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.appcompat.content.res.AppCompatResources
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -23,7 +22,6 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.isolaatti.BuildConfig
 import com.isolaatti.R
 import com.isolaatti.audio.common.domain.Audio
-import com.isolaatti.audio.common.domain.Playable
 import com.isolaatti.common.CoilImageLoader.imageLoader
 import com.isolaatti.common.Dialogs
 import com.isolaatti.common.ErrorMessageViewModel
@@ -35,7 +33,7 @@ import com.isolaatti.common.options_bottom_sheet.ui.BottomSheetPostOptionsFragme
 import com.isolaatti.databinding.FragmentDiscussionsBinding
 import com.isolaatti.followers.domain.FollowingState
 import com.isolaatti.hashtags.ui.HashtagsPostsActivity
-import com.isolaatti.images.common.domain.entity.Image
+import com.isolaatti.images.common.domain.entity.RemoteImage
 import com.isolaatti.images.picture_viewer.ui.PictureViewerActivity
 import com.isolaatti.posting.comments.ui.BottomSheetPostComments
 import com.isolaatti.posting.posts.domain.entity.Post
@@ -182,7 +180,7 @@ class ProfileMainFragment : Fragment() {
                             val profilePictureUrl = profile?.profilePictureUrl
                             if(profilePictureUrl != null) {
                                 PictureViewerActivity.startActivityWithImages(requireContext(), arrayOf(
-                                    Image(profile.profileImageId ?: "")
+                                    RemoteImage(profile.profileImageId ?: "")
                                 ))
                             }
                         }

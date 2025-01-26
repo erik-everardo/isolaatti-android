@@ -220,6 +220,12 @@
     <string name="invalid_arg">Invalid value passed</string>
     <string name="posting">Posting</string>
     <string name="uploading_photos">Uploading photos</string>
+    <string name="record_audio_permission_required">We need permission to use your microphone</string>
+    <string name="request_permission">Request permission</string>
+    <string name="record_audio_permission_required_rationale">In order to be able to record we need to access your mic.</string>
+    <string name="pause_audio">Pause audio</string>
+    <string name="play_audio">Play audio</string>
+    <string name="just_recorded_audio_title">Just recorded audio</string>
     <string-array name="report_reasons">
         <item>Spam</item>
         <item>Explicit content</item>

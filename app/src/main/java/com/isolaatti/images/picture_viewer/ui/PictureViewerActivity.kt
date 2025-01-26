@@ -5,8 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.isolaatti.databinding.ActivityPictureViewerBinding
-import com.isolaatti.images.common.domain.entity.Image
-import com.isolaatti.images.picture_viewer.presentation.PictureViewerViewPagerAdapter
+import com.isolaatti.images.common.domain.entity.RemoteImage
 
 class PictureViewerActivity : AppCompatActivity() {
     private lateinit var binding: ActivityPictureViewerBinding
@@ -25,7 +24,7 @@ class PictureViewerActivity : AppCompatActivity() {
         const val EXTRA_IMAGES = "images"
         const val EXTRA_IMAGE_POSITiON = "position"
 
-        fun startActivityWithImages(context: Context, images: Array<Image>, position: Int = 0) {
+        fun startActivityWithImages(context: Context, images: Array<RemoteImage>, position: Int = 0) {
             if(images.isEmpty()) {
                 return
             }

@@ -1,6 +1,7 @@
 package com.isolaatti.posting.posts.components
 
 import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -33,11 +34,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import coil3.compose.AsyncImage
 import com.isolaatti.R
+import com.isolaatti.images.common.domain.entity.Image
+import com.isolaatti.images.common.domain.entity.LocalImage
+import com.isolaatti.images.common.domain.entity.RemoteImage
 
 @Composable
 fun PostAttachments(
     modifier: Modifier = Modifier,
-    images: List<Uri>,
+    images: List<Image>,
     deletable: Boolean,
     imageAddable: Boolean,
     onImageClick: (index: Int) -> Unit,
@@ -103,13 +107,26 @@ fun PostAttachments(
                         }
                     }
 
-
-                    AsyncImage(
-                        model = images[index],
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize().zIndex(1f),
-                        contentScale = ContentScale.Crop
-                    )
+                    when(val image = images[index]) {
+                        is LocalImage -> {
+                            AsyncImage(
+                                model = image.uri,
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize().zIndex(1f),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                        is RemoteImage -> {
+                            if(!image.delete) {
+                                AsyncImage(
+                                    model = image.reducedImageUrl,
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize().zIndex(1f),
+                                    contentScale = ContentScale.Crop,
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

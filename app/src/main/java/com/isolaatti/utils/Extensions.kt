@@ -1,8 +1,20 @@
 package com.isolaatti.utils
 
-fun Int.clockFormat(): String {
-    val minutes = this / 60
-    val seconds = this % 60
+import java.lang.StringBuilder
+import kotlin.time.Duration
 
-    return "${minutes}:${seconds.toString().padStart(2, '0')}"
+fun Duration.clockFormat(): String {
+    return toComponents { hours, minutes, seconds, nanoseconds ->
+        val sb = StringBuilder().apply {
+            if(hours > 0) {
+                append(hours.toString().padStart(2, '0'))
+                append(":")
+            }
+            append(minutes.toString().padStart(2, '0'))
+            append(":")
+            append(seconds.toString().padStart(2, '0'))
+        }
+
+        sb.toString()
+    }
 }

@@ -9,6 +9,7 @@ import android.util.Log
 import com.google.gson.Gson
 import com.isolaatti.images.common.data.remote.ImageDto
 import com.isolaatti.images.common.data.remote.ImagesApi
+import com.isolaatti.images.common.domain.entity.LocalImage
 import com.isolaatti.posting.posts.data.remote.CreatePostDto
 import com.isolaatti.posting.posts.data.remote.DeletePostDto
 import com.isolaatti.posting.posts.data.remote.EditPostDto
@@ -81,7 +82,7 @@ class PostsRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun makePost(createPostDto: CreatePostDto, images: List<Uri>): Flow<Resource<PostingSteps>> = flow {
+    override fun makePost(createPostDto: CreatePostDto, images: List<LocalImage>): Flow<Resource<PostingSteps>> = flow {
         emit(Resource.Loading())
         try {
             val hasImages = images.isNotEmpty()
@@ -103,10 +104,10 @@ class PostsRepositoryImpl @Inject constructor(
                         return@flow
                     }
                     emit(Resource.Success(PostingSteps.UploadingPhotos))
-                    images.forEach { imageUri ->
+                    images.forEach { localImage ->
                         var imageInputStream: InputStream? = null
                         try {
-                            imageInputStream = contentResolver.openInputStream(imageUri)
+                            imageInputStream = contentResolver.openInputStream(localImage.uri)
                             val bitmap = BitmapFactory.decodeStream(imageInputStream)
 
                             if(bitmap == null) {

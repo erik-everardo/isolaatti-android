@@ -3,7 +3,7 @@ package com.isolaatti.profile.data.repository
 import android.util.Log
 import com.isolaatti.auth.data.local.UserInfoDao
 import com.isolaatti.auth.data.local.UserInfoEntity
-import com.isolaatti.images.common.domain.entity.Image
+import com.isolaatti.images.common.domain.entity.RemoteImage
 import com.isolaatti.profile.data.remote.ProfileApi
 import com.isolaatti.profile.data.remote.UpdateProfileDto
 import com.isolaatti.profile.domain.ProfileRepository
@@ -37,7 +37,7 @@ class ProfileRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun setProfileImage(image: Image): Flow<Resource<Boolean>> = flow {
+    override fun setProfileImage(image: RemoteImage): Flow<Resource<Boolean>> = flow {
 
         try {
             val result = profileApi.setProfileImage(image.id).awaitResponse()

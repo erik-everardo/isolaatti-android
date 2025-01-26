@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.isolaatti.followers.domain.FollowingState
-import com.isolaatti.images.common.domain.entity.Image
+import com.isolaatti.images.common.domain.entity.RemoteImage
 import com.isolaatti.posting.posts.presentation.PostListingViewModelBase
 import com.isolaatti.posting.posts.presentation.UpdateEvent
 import com.isolaatti.profile.domain.entity.UserProfile
@@ -83,7 +83,7 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun setProfileImage(image: Image) {
+    fun setProfileImage(image: RemoteImage) {
         viewModelScope.launch {
             setProfileImageUC(image).onEach {
                 _profile.postValue(_profile.value?.copy(profileImageId = image.id))

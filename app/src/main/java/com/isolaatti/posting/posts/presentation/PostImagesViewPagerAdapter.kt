@@ -1,16 +1,13 @@
 package com.isolaatti.posting.posts.presentation
 
-import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.RelativeLayout
-import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import coil.load
-import com.isolaatti.images.common.domain.entity.Image
+import com.isolaatti.images.common.domain.entity.RemoteImage
 
-class PostImagesViewPagerAdapter(private val images: List<Image>) :
+class PostImagesViewPagerAdapter(private val images: List<RemoteImage>) :
     RecyclerView.Adapter<PostImagesViewPagerAdapter.PostImagesViewPagerAdapterItemViewHolder>() {
     class PostImagesViewPagerAdapterItemViewHolder(val imageView: ImageView) : ViewHolder(imageView)
 

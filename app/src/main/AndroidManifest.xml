@@ -5,6 +5,8 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <application
         android:name=".MyApplication"
         android:allowBackup="false"
@@ -17,6 +19,7 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
 
+        <!-- Activities -->
         <activity
             android:name="com.google.android.gms.oss.licenses.OssLicensesMenuActivity"
             android:theme="@style/Theme.Isolaatti.OSS" />
@@ -48,10 +51,12 @@
         <activity android:name=".about.AboutActivity" android:theme="@style/Theme.Isolaatti"/>
         <activity android:name=".images.picture_viewer.ui.PictureViewerActivity"  android:theme="@style/Theme.Isolaatti"/>
         <activity android:name=".sign_up.ui.SignUpActivity" android:theme="@style/Theme.Isolaatti"/>
-        <activity android:name=".images.image_maker.ui.ImageMakerActivity" android:theme="@style/Theme.Isolaatti"/>
         <activity android:name=".profile.ui.EditProfileActivity" android:theme="@style/Theme.Isolaatti" />
         <activity android:name=".posting.posts.ui.PostInfoActivity" android:theme="@style/Theme.Isolaatti"/>
         <activity android:name=".hashtags.ui.HashtagsPostsActivity" android:theme="@style/Theme.Isolaatti" />
+
+        <!-- End activities-->
+
         <provider
             android:authorities="com.isolaatti.provider"
             android:name="androidx.core.content.FileProvider"
@@ -60,12 +65,21 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/provider_paths"/>
         </provider>
+
+        <!-- Services -->
         <service android:name=".push_notifications.FcmService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
 
+        </service>
+        <service android:name=".audio.player.MediaService"
+            android:foregroundServiceType="mediaPlayback"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaSessionService"/>
+            </intent-filter>
         </service>
 
     </application>

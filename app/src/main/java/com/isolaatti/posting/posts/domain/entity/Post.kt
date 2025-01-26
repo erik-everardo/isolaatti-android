@@ -5,7 +5,7 @@ import android.os.Parcelable
 import com.isolaatti.audio.common.domain.Audio
 import com.isolaatti.common.Ownable
 import com.isolaatti.common.hashtagRegex
-import com.isolaatti.images.common.domain.entity.Image
+import com.isolaatti.images.common.domain.entity.RemoteImage
 import com.isolaatti.posting.posts.data.remote.FeedDto
 
 data class Post(
@@ -22,7 +22,7 @@ data class Post(
     val squadName: String?,
     var liked: Boolean,
     val audio: Audio? = null,
-    val images: List<Image>
+    val images: List<RemoteImage>
 ) : Ownable, Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readLong(),
@@ -38,7 +38,7 @@ data class Post(
         parcel.readString(),
         parcel.readByte() != 0.toByte(),
         parcel.readSerializable() as?  Audio,
-        parcel.readParcelableArray(Image::class.java.classLoader)?.toList() as? List<Image> ?: emptyList()
+        parcel.readParcelableArray(RemoteImage::class.java.classLoader)?.toList() as? List<RemoteImage> ?: emptyList()
     ) {
     }
 
@@ -59,7 +59,7 @@ data class Post(
                     squadName = it.squadName,
                     liked = it.liked,
                     audio = it.audio?.let { audioDto -> Audio.fromDto(audioDto) },
-                    images = it.post.images.map { imageDto -> Image(imageDto.id) }
+                    images = it.post.images.map { imageDto -> RemoteImage(imageDto.id) }
                 )
             }.toMutableList()
         }
@@ -78,7 +78,7 @@ data class Post(
                 userName = postDto.userName,
                 squadName = postDto.squadName,
                 liked = postDto.liked,
-                images = postDto.post.images.map { imageDto -> Image(imageDto.id) }
+                images = postDto.post.images.map { imageDto -> RemoteImage(imageDto.id) }
             )
         }
 
