@@ -1,6 +1,8 @@
 package com.isolaatti.audio.common.components
 
 import androidx.annotation.OptIn
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -13,6 +15,11 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -32,9 +39,10 @@ fun AudioPlayer(
     isLoading: Boolean,
     durationMs: Long,
     onPlay: () -> Unit = {},
-    onPause: () -> Unit = {}
+    onPause: () -> Unit = {},
+    onSeek: (position: Float) -> Unit = {}
 ) {
-    val sliderValue = positionMs.coerceAtLeast(1).toFloat() / durationMs.coerceAtLeast(1).toFloat()
+
 
 
 
@@ -51,7 +59,27 @@ fun AudioPlayer(
             if(isLoading) {
                 LinearProgressIndicator(modifier = Modifier.padding(horizontal = 4.dp).weight(1f))
             } else {
-                Slider(value = sliderValue, onValueChange = {}, modifier = Modifier.padding(horizontal = 4.dp).weight(1f))
+                var value by remember { mutableFloatStateOf(0f) }
+                val interactionSource = remember { MutableInteractionSource() }
+                val isDragged by interactionSource.collectIsDraggedAsState()
+                LaunchedEffect(positionMs) {
+                    if(!isDragged) {
+                        value = positionMs.toFloat()
+                    }
+
+                }
+
+                Slider(
+                    value = value,
+                    onValueChange = {
+                        value = it
+                    },
+                    onValueChangeFinished = {
+                        onSeek(value)
+                    },
+                    modifier = Modifier.padding(horizontal = 4.dp).weight(1f),
+                    valueRange = 0f..durationMs.toFloat()
+                )
             }
 
             Text("${positionMs.milliseconds.clockFormat()}/${durationMs.milliseconds.clockFormat()}")

@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -66,6 +67,12 @@ class CreatePostViewModel @Inject constructor(
     var duration: MutableStateFlow<Long> = MutableStateFlow(0L)
     var isLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
     var ended: Boolean = false
+    // endregion
+
+    // region Recorder state
+    var isRecording: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    var recordingIsPaused: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    var recodingIsStopped: MutableStateFlow<Boolean> = MutableStateFlow(false)
     // endregion
 
 

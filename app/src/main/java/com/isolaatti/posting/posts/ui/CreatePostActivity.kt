@@ -67,9 +67,11 @@ import com.isolaatti.posting.posts.components.PostAttachments
 import com.isolaatti.posting.posts.domain.PostingSteps
 import com.isolaatti.posting.posts.presentation.CreatePostViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.Calendar
 import kotlin.time.Duration.Companion.milliseconds
@@ -144,6 +146,10 @@ class CreatePostActivity : IsolaattiBaseActivity() {
         }
     }
 
+    private lateinit var recordOutputFile: File
+
+
+
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -152,12 +158,26 @@ class CreatePostActivity : IsolaattiBaseActivity() {
         val sessionToken = SessionToken(this, ComponentName(this, MediaService::class.java))
         mediaControllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
 
-        mediaRecorder = if (Build.VERSION.SDK_INT >= 31) MediaRecorder(this) else MediaRecorder()
 
         lifecycleScope.launch {
             mediaController = mediaControllerFuture.await()
 
             mediaController.addListener(playerListener)
+
+            // check audios directory
+            val directory = File(this@CreatePostActivity.filesDir, "recordings")
+
+            withContext(Dispatchers.IO) {
+                if(!directory.isDirectory) {
+                    if(directory.isFile) {
+                        directory.delete()
+                    }
+                    directory.mkdir()
+                }
+            }
+
+            recordOutputFile = File(directory, "${System.currentTimeMillis()}.3gp")
+
 
             setContent {
                 val text by viewModel.liveContent.observeAsState("")
@@ -257,6 +277,7 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                     IconButton(
                                         onClick = {
                                             audioRecorderIsVisible = !audioRecorderIsVisible
+                                            mediaRecorder = if (Build.VERSION.SDK_INT >= 31) MediaRecorder(this@CreatePostActivity) else MediaRecorder()
                                         }
                                     ) {
                                         Icon(painterResource(id = R.drawable.baseline_mic_24), null)
@@ -275,7 +296,9 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                 val duration by viewModel.duration.collectAsState()
                                 val isLoading by viewModel.isLoading.collectAsState()
 
-                                val outputFile = File(this@CreatePostActivity.filesDir, "${System.currentTimeMillis()}.3gp")
+                                val isRecording by viewModel.isRecording.collectAsState()
+                                val recordIsPaused by viewModel.recordingIsPaused.collectAsState()
+                                val recordIsStopped by viewModel.recodingIsStopped.collectAsState()
 
                                 LaunchedEffect(isPlaying) {
                                     while(isPlaying) {
@@ -288,6 +311,29 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                     modifier = Modifier.padding(16.dp),
                                     onDismiss = {
                                         audioRecorderIsVisible = false
+
+                                        // stop playback
+                                        mediaController.stop()
+                                        mediaController.clearMediaItems()
+
+                                        // delete file
+                                        lifecycleScope.launch(Dispatchers.IO) {
+                                            if(recordOutputFile.exists()) {
+                                                recordOutputFile.delete()
+                                            }
+                                        }
+
+                                        // release media recorder
+                                        mediaRecorder.release()
+
+                                        // clear references
+                                        viewModel.recodingIsStopped.value = false
+                                        viewModel.isRecording.value = false
+                                        viewModel.recordingIsPaused.value = false
+                                        viewModel.isPlaying.value = false
+                                        viewModel.duration.value = 0L
+                                        viewModel.position.value = 0L
+                                        viewModel.audioToUpload = null
                                     },
                                     onPlay = {
                                         if(mediaController.isCommandAvailable(Player.COMMAND_PREPARE)) {
@@ -302,28 +348,41 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                     onPause = {
                                         mediaController.pause()
                                     },
-                                    onStartRecording = {
+                                    onStartRecording = { fromPause ->
 
-                                        mediaRecorder.run {
-                                            setAudioSource(MediaRecorder.AudioSource.MIC)
-                                            setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
-                                            setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
-                                            if (Build.VERSION.SDK_INT >= 26) {
-                                                setOutputFile(outputFile)
-                                            } else {
-                                                setOutputFile(outputFile.path)
+                                        if(fromPause) {
+                                            mediaRecorder.resume()
+                                        } else {
+                                            mediaRecorder.run {
+                                                setAudioSource(MediaRecorder.AudioSource.MIC)
+                                                setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
+                                                setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+                                                if (Build.VERSION.SDK_INT >= 26) {
+                                                    setOutputFile(recordOutputFile)
+                                                } else {
+                                                    setOutputFile(recordOutputFile.path)
+                                                }
+
+                                                prepare()
+                                                start()
                                             }
-
-                                            prepare()
-                                            start()
                                         }
+                                        viewModel.recodingIsStopped.value = false
+                                        viewModel.isRecording.value = true
+                                        viewModel.recordingIsPaused.value = false
+
+
+
                                     },
                                     onPauseRecording = {
                                         mediaRecorder.pause()
+                                        viewModel.recodingIsStopped.value = false
+                                        viewModel.isRecording.value = true
+                                        viewModel.recordingIsPaused.value = true
                                     },
                                     onStopRecording = {
                                         mediaRecorder.stop()
-                                        val audioUri = outputFile.toUri()
+                                        val audioUri = recordOutputFile.toUri()
                                         mediaController.setMediaItem(
                                             MediaItem.Builder()
                                                 .setUri(audioUri)
@@ -333,14 +392,20 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                                 .build()
                                         )
                                         viewModel.audioToUpload = audioUri
+                                        viewModel.recodingIsStopped.value = true
+                                        viewModel.isRecording.value = false
+                                        viewModel.recordingIsPaused.value = false
                                     },
                                     isPlaying = isPlaying,
                                     position = position,
                                     durationSeconds = duration,
-                                    isRecording = false,
-                                    recordIsPaused = false,
-                                    recordIsStopped = false,
-                                    isLoading = isLoading
+                                    isRecording = isRecording,
+                                    recordIsPaused = recordIsPaused,
+                                    recordIsStopped = recordIsStopped,
+                                    isLoading = isLoading,
+                                    onSeek = { ms ->
+                                        mediaController.seekTo(ms.toLong())
+                                    }
                                 )
                             }
 

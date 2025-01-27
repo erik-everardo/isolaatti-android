@@ -56,6 +56,7 @@ fun AudioRecorder(
     isLoading: Boolean,
     durationSeconds: Long,
     position: Long,
+    onSeek: (position: Float) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
 
@@ -67,9 +68,9 @@ fun AudioRecorder(
     var duration by remember { mutableLongStateOf(0L) }
 
 
-    LaunchedEffect(isPlaying) {
+    LaunchedEffect(isRecording, recordIsPaused) {
         coroutineScope {
-            while(isPlaying) {
+            while(isRecording && !recordIsPaused) {
                 duration += 500
                 delay(500.milliseconds)
             }
@@ -93,7 +94,7 @@ fun AudioRecorder(
         when {
             audioRecordPermissionState.status.isGranted -> {
                 when {
-                     !isRecording -> {
+                     !isRecording && !recordIsStopped-> {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.Center
@@ -112,7 +113,7 @@ fun AudioRecorder(
                         }
                     }
 
-                    isRecording -> {
+                    isRecording && !recordIsStopped -> {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.padding(horizontal = 8.dp)
@@ -121,9 +122,10 @@ fun AudioRecorder(
                             Spacer(Modifier.weight(1f))
                             IconButton(onClick = {
                                 if(recordIsPaused) {
-                                    onPauseRecording()
-                                } else {
                                     onStartRecording(true)
+
+                                } else {
+                                    onPauseRecording()
                                 }
 
                             }) {
@@ -141,7 +143,7 @@ fun AudioRecorder(
                         }
                     }
 
-                    recordIsStopped -> {
+                    else -> {
                         AudioPlayer(
                             modifier = Modifier.fillMaxWidth(),
                             positionMs = position,
@@ -149,7 +151,8 @@ fun AudioRecorder(
                             isPlaying = isPlaying,
                             durationMs = durationSeconds,
                             onPlay = onPlay,
-                            onPause = onPause
+                            onPause = onPause,
+                            onSeek = onSeek
                         )
                     }
                 }
