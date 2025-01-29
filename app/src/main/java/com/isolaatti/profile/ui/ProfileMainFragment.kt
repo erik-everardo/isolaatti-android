@@ -17,7 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import coil.load
+import coil3.load
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.isolaatti.BuildConfig
 import com.isolaatti.R
@@ -40,8 +40,6 @@ import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.posting.posts.presentation.CreatePostContract
 import com.isolaatti.posting.posts.presentation.EditPostContract
 import com.isolaatti.posting.posts.presentation.PostListingRecyclerViewAdapterWiring
-import com.isolaatti.posting.posts.presentation.PostsRecyclerViewAdapter
-import com.isolaatti.posting.posts.presentation.UpdateEvent
 import com.isolaatti.posting.posts.ui.PostInfoActivity
 import com.isolaatti.posting.posts.viewer.ui.PostViewerActivity
 import com.isolaatti.profile.domain.entity.UserProfile
@@ -67,7 +65,6 @@ class ProfileMainFragment : Fragment() {
     val errorViewModel: ErrorMessageViewModel by activityViewModels()
     private var userId: Int? = null
 
-    lateinit var postsAdapter: PostsRecyclerViewAdapter
 
     private var audioDescriptionAudio: Audio? = null
 
@@ -129,13 +126,13 @@ class ProfileMainFragment : Fragment() {
         setupUiForUserType(profile.isUserItself)
     }
 
-    private val postsObserver: Observer<Pair<List<Post>?, UpdateEvent>?> = Observer {
-        if(it?.first != null) {
-            postsAdapter.updateList(it.first!!, it.second)
-            postsAdapter.newContentRequestFinished()
-        }
-
-    }
+//    private val postsObserver: Observer<Pair<List<Post>?, UpdateEvent>?> = Observer {
+//        if(it?.first != null) {
+//            postsAdapter.updateList(it.first!!, it.second)
+//            postsAdapter.newContentRequestFinished()
+//        }
+//
+//    }
 
     private val followingStateObserver: Observer<FollowingState> = Observer {
         when(it) {
@@ -310,8 +307,8 @@ class ProfileMainFragment : Fragment() {
             findNavController().navigate(ProfileMainFragmentDirections.actionDiscussionsFragmentToMainFollowersFragment(userId!!))
         }
 
-        viewBinding.feedRecyclerView.adapter = postsAdapter
-        viewBinding.feedRecyclerView.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
+//        viewBinding.feedRecyclerView.adapter = postsAdapter
+//        viewBinding.feedRecyclerView.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
 
         viewBinding.swipeToRefresh.setOnRefreshListener {
             viewModel.getFeed(true, null)
@@ -330,7 +327,7 @@ class ProfileMainFragment : Fragment() {
 
     private fun setObservers() {
         viewModel.profile.observe(viewLifecycleOwner, profileObserver)
-        viewModel.posts.observe(viewLifecycleOwner, postsObserver)
+        //viewModel.posts.observe(viewLifecycleOwner, postsObserver)
         viewModel.followingState.observe(viewLifecycleOwner, followingStateObserver)
         optionsViewModel.optionClicked.observe(viewLifecycleOwner, optionsObserver)
         viewModel.loadingPosts.observe(viewLifecycleOwner) {
@@ -366,11 +363,10 @@ class ProfileMainFragment : Fragment() {
                             .create(BuildConfig.backend))
                 }
             })
-            .usePlugin(CoilImagesPlugin.create(requireContext(), imageLoader))
             .usePlugin(LinkifyPlugin.create())
             .build()
 
-        postsAdapter = PostsRecyclerViewAdapter(postListingRecyclerViewAdapterWiring )
+        //postsAdapter = PostsRecyclerViewAdapter(postListingRecyclerViewAdapterWiring )
 
     }
 

@@ -5,7 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
-import coil.load
+import coil3.load
 import com.isolaatti.R
 import com.isolaatti.databinding.UsersCarouselItemBinding
 import com.isolaatti.profile.domain.entity.ProfileListItem

@@ -7,7 +7,9 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.graphics.drawable.toBitmap
-import coil.request.ImageRequest
+import coil3.request.ImageRequest
+import coil3.request.fallback
+import coil3.toBitmap
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.isolaatti.MyApplication

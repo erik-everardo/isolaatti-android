@@ -4,7 +4,7 @@ import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import coil.load
+import coil3.load
 import com.isolaatti.common.CoilImageLoader.imageLoader
 import com.isolaatti.databinding.CommentLayoutBinding
 import com.isolaatti.posting.comments.domain.model.Comment

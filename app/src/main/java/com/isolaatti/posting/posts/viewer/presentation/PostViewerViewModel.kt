@@ -60,10 +60,10 @@ class PostViewerViewModel @Inject constructor(private val loadSinglePost: LoadSi
     }
 
     private fun updateLikesCount(likesCount: Int) {
-        val updatedPost = post.value?.copy(numberOfLikes = likesCount)
-        if(updatedPost != null) {
-            post.postValue(updatedPost!!)
-        }
+//        val updatedPost = post.value?.copy(numberOfLikes = likesCount)
+//        if(updatedPost != null) {
+//            post.postValue(updatedPost!!)
+//        }
     }
 
     fun likeDislikePost() {

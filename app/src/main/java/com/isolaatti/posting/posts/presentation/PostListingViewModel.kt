@@ -16,17 +16,13 @@ class PostListingViewModel @Inject constructor(private val postsRepository: Post
     override fun getFeed(refresh: Boolean, hashtag: String?) {
         viewModelScope.launch {
             if (refresh) {
-                posts.value = null
+                posts.value = emptyList()
             }
             postsRepository.getFeed(getLastId(), hashtag).onEach { listResource ->
                 when (listResource) {
                     is Resource.Success -> {
-                        val eventType = if((postsList?.size ?: 0) > 0)  UpdateEvent.UpdateType.PAGE_ADDED else UpdateEvent.UpdateType.REFRESH
                         loadingPosts.postValue(false)
-                        posts.postValue(Pair(postsList?.apply {
-                            addAll(listResource.data ?: listOf())
-                        } ?: listResource.data,
-                            UpdateEvent(eventType, null)))
+                        posts.value += listResource.data ?: emptyList()
 
                         noMoreContent.postValue(listResource.data?.size == 0)
                     }

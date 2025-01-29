@@ -4,8 +4,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.os.BundleCompat
 import androidx.fragment.app.Fragment
-import coil.load
+import coil3.load
 import com.isolaatti.common.CoilImageLoader.imageLoader
 import com.isolaatti.databinding.FragmentTouchImageViewWrapperBinding
 import com.isolaatti.images.common.domain.entity.RemoteImage
@@ -24,7 +25,7 @@ class PictureViewerImageWrapperFragment : Fragment() {
     ): View {
         binding = FragmentTouchImageViewWrapperBinding.inflate(inflater)
 
-        image = arguments?.getSerializable(ARGUMENT_IMAGE) as RemoteImage
+        image = BundleCompat.getParcelable(requireArguments(), ARGUMENT_IMAGE, RemoteImage::class.java)
 
         return binding.root
     }

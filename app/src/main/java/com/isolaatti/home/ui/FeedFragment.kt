@@ -20,7 +20,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
-import coil.load
+import coil3.load
 import com.google.android.material.card.MaterialCardView
 import com.isolaatti.R
 import com.isolaatti.about.AboutActivity

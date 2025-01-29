@@ -4,7 +4,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
-import coil.load
+import coil3.load
 import com.isolaatti.images.common.domain.entity.RemoteImage
 
 class PostImagesViewPagerAdapter(private val images: List<RemoteImage>) :

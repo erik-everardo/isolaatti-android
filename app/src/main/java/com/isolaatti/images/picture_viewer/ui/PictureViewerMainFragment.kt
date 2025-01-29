@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.IntentCompat
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.widget.ViewPager2
 import com.isolaatti.databinding.FragmentMainPictureViewerBinding
@@ -36,7 +37,7 @@ class PictureViewerMainFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        images = requireActivity().intent.extras?.getSerializable(PictureViewerActivity.EXTRA_IMAGES) as Array<RemoteImage>
+        images = IntentCompat.getParcelableArrayExtra(requireActivity().intent, PictureViewerActivity.EXTRA_IMAGES, RemoteImage::class.java) as Array<RemoteImage>
         val position = requireActivity().intent.extras?.getInt(PictureViewerActivity.EXTRA_IMAGE_POSITiON) ?: 0
         val adapter = PictureViewerViewPagerAdapter(this, images)
         binding.viewpager.adapter = adapter

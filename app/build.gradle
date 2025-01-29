@@ -101,8 +101,11 @@ dependencies {
     // Customtabs
     implementation 'androidx.browser:browser:1.8.0'
 
-    implementation 'io.coil-kt:coil:2.5.0'
-    implementation 'io.coil-kt:coil-svg:2.5.0'
+    // Coil
+    implementation 'io.coil-kt.coil3:coil:3.0.4'
+    implementation 'io.coil-kt.coil3:coil-svg:3.0.4'
+    implementation "io.coil-kt.coil3:coil-compose:3.0.1"
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.1")
 
 
     implementation "io.noties.markwon:core:$markwon_version"
@@ -156,8 +159,7 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.8.5'
     implementation 'androidx.compose.runtime:runtime-livedata'
 
-    implementation "io.coil-kt.coil3:coil-compose:3.0.1"
-    implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.1")
+
 
     implementation("com.google.accompanist:accompanist-permissions:0.36.0")
 }

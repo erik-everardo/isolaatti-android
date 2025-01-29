@@ -8,8 +8,8 @@ import android.util.Log
 import androidx.activity.viewModels
 import androidx.core.app.TaskStackBuilder
 import androidx.core.content.res.ResourcesCompat
-import coil.imageLoader
-import coil.load
+import coil3.imageLoader
+import coil3.load
 import com.isolaatti.BuildConfig
 import com.isolaatti.R
 import com.isolaatti.common.IsolaattiBaseActivity
@@ -153,7 +153,6 @@ class PostViewerActivity : IsolaattiBaseActivity() {
                             .create(BuildConfig.backend))
                 }
             })
-            .usePlugin(CoilImagesPlugin.create(this, imageLoader))
             .usePlugin(LinkifyPlugin.create())
             .build()
 

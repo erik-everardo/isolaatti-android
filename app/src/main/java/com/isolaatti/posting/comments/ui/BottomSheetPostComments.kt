@@ -217,7 +217,6 @@ class BottomSheetPostComments() : BottomSheetDialogFragment(), OnUserInteractedC
                             .create("https://isolaatti.com/"))
                 }
             })
-            .usePlugin(CoilImagesPlugin.create(requireContext(), imageLoader))
             .usePlugin(LinkifyPlugin.create())
             .build()
 

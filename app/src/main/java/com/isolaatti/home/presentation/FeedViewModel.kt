@@ -5,9 +5,6 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.isolaatti.auth.domain.AuthRepository
-import com.isolaatti.posting.posts.domain.PostsRepository
-import com.isolaatti.posting.posts.presentation.PostListingViewModelBase
-import com.isolaatti.posting.posts.presentation.UpdateEvent
 import com.isolaatti.profile.domain.entity.UserProfile
 import com.isolaatti.profile.domain.use_case.GetProfile
 import com.isolaatti.utils.Resource

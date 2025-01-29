@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import coil.load
+import coil3.load
 import com.isolaatti.databinding.FragmentSettingsBinding
 import com.isolaatti.settings.presentation.SettingsViewModel
 import dagger.hilt.android.AndroidEntryPoint

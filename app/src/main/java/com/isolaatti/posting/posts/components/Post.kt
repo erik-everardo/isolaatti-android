@@ -4,25 +4,22 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,11 +28,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.isolaatti.R
+import com.isolaatti.images.common.domain.entity.Image
+import com.isolaatti.images.common.domain.entity.RemoteImage
 import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.utils.UrlGen.userProfileImage
 
@@ -44,13 +44,17 @@ fun Post(
     post: Post,
     onClick: () -> Unit = {},
     onLike: () -> Unit = {},
+    onDislike: () -> Unit = {},
     onComments: () -> Unit = {},
     onShare: () -> Unit = {},
     onInfo: () -> Unit = {},
     onOptions: () -> Unit = {},
-    onUsernameClick: () -> Unit = {}
+    onUsernameClick: () -> Unit = {},
+    onImageClick: (images: List<RemoteImage>, index: Int) -> Unit = {_, _ -> },
+    onHashtagClick: (hashtag: String) -> Unit = {},
+    modifier: Modifier = Modifier
 ) {
-    Card {
+    Card(modifier = modifier.padding(8.dp)) {
         Row(modifier = Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
             AsyncImage(
                 model = userProfileImage(post.userId),
@@ -78,37 +82,80 @@ fun Post(
             // TODO audio player here
         }
 
-        Text(post.textContent, modifier = Modifier.padding(8.dp))
+        if(post.textContent.isNotBlank()) {
+            Text(post.textContent, modifier = Modifier.padding(8.dp))
+        }
 
-        // TODO pager
         if(post.images.isNotEmpty()) {
-            Box(Modifier.fillMaxWidth().aspectRatio(1f))
+            Box {
+                val pagerState = rememberPagerState(pageCount = {post.images.size})
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f)
+                ) {
+                    val image = post.images[it]
+                    AsyncImage(
+                        image.reducedImageUrl, null,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(8.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                            .clickable {
+                                onImageClick(post.images, it)
+                            }
+                    )
+                }
+                if(post.images.size > 1) {
+                    Text("${pagerState.currentPage + 1} of ${pagerState.pageCount}",
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(20.dp)
+                            .background(Color.Black.copy(alpha = 0.5f)),
+                        color = Color.White
+                    )
+                }
+            }
         }
 
         Row(modifier = Modifier.height(50.dp).padding(4.dp)) {
-            FilledTonalIconButton(onClick = onLike, modifier = Modifier.padding(4.dp).weight(1f)) {
+            FilledTonalIconButton(
+                onClick = { if(post.liked) { onDislike() } else { onLike() } },
+                modifier = Modifier.padding(4.dp).weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(painterResource(R.drawable.hands_clapping_solid), null, modifier = Modifier.size(30.dp))
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Clap")
-                        Text(post.numberOfLikes.toString())
-                    }
+                    Icon(
+                        painterResource(R.drawable.hands_clapping_solid),
+                        null,
+                        modifier = Modifier.padding(horizontal = 8.dp).size(30.dp),
+                        tint = if(post.liked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = post.numberOfLikes.toString(),
+                        modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
             FilledTonalIconButton(onClick = onComments, modifier = Modifier.padding(4.dp).weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(painterResource(R.drawable.comments_solid), null, modifier = Modifier.size(30.dp))
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Comments")
-                        Text(post.numberOfComments.toString())
-                    }
+                    Icon(
+                        painterResource(R.drawable.comments_solid),
+                        null,
+                        modifier = Modifier.padding(horizontal = 8.dp).size(30.dp)
+                    )
+                    Text(
+                        text = post.numberOfComments.toString(),
+                        modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
-            FilledTonalIconButton(onClick = onShare, modifier = Modifier.padding(4.dp).weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(painterResource(R.drawable.baseline_share_24), null, modifier = Modifier.size(30.dp))
-                    Text("Share")
-                }
+            FilledTonalIconButton(onClick = onShare, modifier = Modifier.padding(4.dp)) {
+                Icon(
+                    painterResource(R.drawable.baseline_share_24),
+                    null,
+                )
             }
             FilledTonalIconButton(onClick = onInfo, modifier = Modifier.padding(4.dp)) {
                 Icon(painterResource(R.drawable.baseline_info_24), null)

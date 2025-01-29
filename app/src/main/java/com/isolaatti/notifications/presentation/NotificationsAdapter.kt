@@ -6,7 +6,8 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
-import coil.load
+import coil3.load
+import coil3.request.fallback
 import com.isolaatti.R
 import com.isolaatti.databinding.NotificationItemBinding
 import com.isolaatti.notifications.domain.FollowNotification

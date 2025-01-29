@@ -1,12 +1,12 @@
 package com.isolaatti.profile.presentation
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.isolaatti.followers.domain.FollowingState
 import com.isolaatti.images.common.domain.entity.RemoteImage
 import com.isolaatti.posting.posts.presentation.PostListingViewModelBase
-import com.isolaatti.posting.posts.presentation.UpdateEvent
 import com.isolaatti.profile.domain.entity.UserProfile
 import com.isolaatti.profile.domain.use_case.FollowUser
 import com.isolaatti.profile.domain.use_case.GetProfile
@@ -116,14 +116,14 @@ class ProfileViewModel @Inject constructor(
     override fun getFeed(refresh: Boolean, hashtag: String?) {
         viewModelScope.launch {
             if(refresh) {
-                posts.value = Pair(null, UpdateEvent(UpdateEvent.UpdateType.REFRESH, null))
-                getLastId()
+                posts.value = emptyList()
             }
+            Log.d(TAG, "getFeed")
             getProfilePostsUseCase(profileId, getLastId(), false, null).onEach { feedDtoResource ->
                 when (feedDtoResource) {
                     is Resource.Success -> {
                         loadingPosts.postValue(false)
-                        posts.postValue(Pair(posts.value?.first?.apply { addAll(feedDtoResource.data ?: listOf()) } ?: feedDtoResource.data, UpdateEvent(if(refresh) UpdateEvent.UpdateType.REFRESH else UpdateEvent.UpdateType.PAGE_ADDED, null)))
+                        posts.value += feedDtoResource.data ?: emptyList()
                         noMoreContent.postValue(feedDtoResource.data?.size == 0)
                     }
 

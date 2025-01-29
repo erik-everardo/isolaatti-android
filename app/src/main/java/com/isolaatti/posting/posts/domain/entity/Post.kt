@@ -2,28 +2,39 @@ package com.isolaatti.posting.posts.domain.entity
 
 import android.os.Parcel
 import android.os.Parcelable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.isolaatti.audio.common.domain.Audio
 import com.isolaatti.common.Ownable
 import com.isolaatti.common.hashtagRegex
 import com.isolaatti.images.common.domain.entity.RemoteImage
 import com.isolaatti.posting.posts.data.remote.FeedDto
 
-data class Post(
+class Post(
     val id: Long,
-    var textContent: String,
+    textContent: String,
     override val userId: Int,
     val privacy: Int,
     val date: String,
     var audioId: String? = null,
     val squadId: String? = null,
-    var numberOfLikes: Int,
-    var numberOfComments: Int,
+    numberOfLikes: Int,
+    numberOfComments: Int,
     val userName: String,
     val squadName: String? = null,
-    var liked: Boolean,
+    liked: Boolean,
     val audio: Audio? = null,
-    val images: List<RemoteImage>
+    images: List<RemoteImage>
 ) : Ownable, Parcelable {
+
+    var liked by mutableStateOf(liked)
+    var images by mutableStateOf(images)
+    var textContent by mutableStateOf(textContent)
+    var numberOfLikes by mutableIntStateOf(numberOfLikes)
+    var numberOfComments by mutableStateOf(numberOfComments)
+
     constructor(parcel: Parcel) : this(
         parcel.readLong(),
         parcel.readString()!!,

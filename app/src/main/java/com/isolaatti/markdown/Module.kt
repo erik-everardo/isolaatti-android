@@ -31,7 +31,6 @@ class Module {
                                 .create(BuildConfig.backend))
                 }
             })
-            .usePlugin(CoilImagesPlugin.create(context, CoilImageLoader.imageLoader))
             .usePlugin(LinkifyPlugin.create())
             .build()
     }

@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
-import coil.load
+import coil3.load
 import com.isolaatti.R
 import com.isolaatti.common.CoilImageLoader.imageLoader
 import com.isolaatti.databinding.FragmentEditCommentBinding
@@ -51,7 +51,7 @@ class EditCommentDialogFragment : DialogFragment() {
                                 .create("https://isolaatti.com/"))
                 }
             })
-            .usePlugin(CoilImagesPlugin.create(requireContext(), imageLoader))
+            //.usePlugin(CoilImagesPlugin.create(requireContext(), imageLoader))
             .usePlugin(LinkifyPlugin.create())
             .build()
 

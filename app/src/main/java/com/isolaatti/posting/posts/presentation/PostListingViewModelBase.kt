@@ -11,6 +11,7 @@ import com.isolaatti.posting.posts.domain.use_case.DeletePost
 import com.isolaatti.profile.domain.use_case.GetProfilePosts
 import com.isolaatti.utils.Resource
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -30,9 +31,8 @@ abstract class PostListingViewModelBase : ViewModel() {
     @Inject
     lateinit var deletePostUseCase: DeletePost
 
-    val posts: MutableLiveData<Pair<MutableList<Post>?, UpdateEvent>?> = MutableLiveData()
+    val posts: MutableStateFlow<List<Post>> = MutableStateFlow(emptyList())
 
-    val postsList get() = posts.value?.first
 
     val loadingPosts = MutableLiveData(false)
 
@@ -41,7 +41,7 @@ abstract class PostListingViewModelBase : ViewModel() {
     val errorLoading: MutableLiveData<Resource.Error.ErrorType?> = MutableLiveData()
     var isLoadingFromScrolling = false
 
-    fun getLastId(): Long = try { posts.value?.first?.last()?.id ?: 0 } catch (e: NoSuchElementException) { 0 }
+    fun getLastId(): Long = try { posts.value?.last()?.id ?: 0 } catch (e: NoSuchElementException) { 0 }
 
 
     abstract fun getFeed(refresh: Boolean, hashtag: String?)
@@ -58,18 +58,9 @@ abstract class PostListingViewModelBase : ViewModel() {
                         Log.i(TAG, "Loading likePost($postId)")
                     }
                     is Resource.Success -> {
-                        val likedPost = posts.value?.first?.find { post -> post.id == like.data?.postId }
-                        val index = posts.value?.first?.indexOf(likedPost)
-                        if(index != null){
-                            val temp = posts.value?.first?.toMutableList()
-                            Log.d("***", temp.toString())
-                            temp?.set(index, likedPost!!.apply {
-                                liked = true
-                                numberOfLikes = like.data?.likesCount ?: 0
-
-                            })
-                        }
-                        posts.postValue(posts.value?.copy(second = UpdateEvent(UpdateEvent.UpdateType.POST_LIKED, index)))
+                        val likedPost = posts.value?.find { post -> post.id == like.data?.postId }
+                        likedPost?.liked = true
+                        likedPost?.numberOfLikes = like.data!!.likesCount
                     }
                 }
 
@@ -90,16 +81,9 @@ abstract class PostListingViewModelBase : ViewModel() {
                         Log.i(TAG, "Loading unLikePost($postId)")
                     }
                     is Resource.Success -> {
-                        val likedPost = posts.value?.first?.find { post -> post.id == like.data?.postId }
-                        val index = posts.value?.first?.indexOf(likedPost)
-                        if(index != null){
-                            val temp = posts.value?.first?.toMutableList()
-                            temp?.set(index, likedPost!!.apply {
-                                liked = false
-                                numberOfLikes = like.data?.likesCount ?: 0
-                            })
-                        }
-                        posts.postValue(posts.value?.copy(second = UpdateEvent(UpdateEvent.UpdateType.POST_LIKED, index)))
+                        val likedPost = posts.value?.find { post -> post.id == like.data?.postId }
+                        likedPost?.liked = false
+                        likedPost?.numberOfLikes = like.data!!.likesCount
                     }
                 }
 
@@ -113,12 +97,9 @@ abstract class PostListingViewModelBase : ViewModel() {
             deletePostUseCase(postId).onEach { res ->
                 when(res) {
                     is Resource.Success -> {
-                        val postDeleted = posts.value?.first?.find { post -> post.id == postId }
+                        val postDeleted = posts.value?.find { post -> post.id == postId }
                             ?: return@onEach
-                        val index = posts.value?.first?.indexOf(postDeleted)
-
-                        posts.value?.first?.removeAt(index!!)
-                        posts.postValue(posts.value?.copy(second = UpdateEvent(UpdateEvent.UpdateType.POST_REMOVED, index)))
+                        posts.value = posts.value.toMutableList().apply { remove(postDeleted) }
                     }
                     is Resource.Loading -> {}
                     is Resource.Error -> {}

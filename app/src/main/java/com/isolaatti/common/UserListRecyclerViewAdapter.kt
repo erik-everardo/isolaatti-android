@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.Adapter
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
-import coil.load
+import coil3.load
 import com.isolaatti.R
 import com.isolaatti.common.CoilImageLoader.imageLoader
 import com.isolaatti.databinding.ItemUserListBinding
