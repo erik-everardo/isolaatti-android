@@ -226,6 +226,10 @@
     <string name="pause_audio">Pause audio</string>
     <string name="play_audio">Play audio</string>
     <string name="just_recorded_audio_title">Just recorded audio</string>
+    <string name="back_button">Back button</string>
+    <string name="profile">Profile</string>
+    <string name="add_post_button_desc">Add post button</string>
+    <string name="you_will_see_what_user_posts_here">When %s posts something you will see it here</string>
     <string-array name="report_reasons">
         <item>Spam</item>
         <item>Explicit content</item>

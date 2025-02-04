@@ -2,6 +2,7 @@ package com.isolaatti.profile.domain.entity
 
 import com.isolaatti.audio.common.domain.Audio
 import com.isolaatti.common.Ownable
+import com.isolaatti.images.common.domain.entity.RemoteImage
 import com.isolaatti.profile.data.remote.UserProfileDto
 import com.isolaatti.utils.UrlGen
 import java.io.Serializable
@@ -26,6 +27,8 @@ data class UserProfile(
 
     val profileAvatarPictureUrl: String get() = UrlGen.userProfileImage(userId)
     val profilePictureUrl: String get() = UrlGen.userProfileImageFullQuality(userId)
+
+    val profileImage: RemoteImage? get() = profileImageId?.let { imageId -> RemoteImage(imageId) }
     companion object {
         fun fromDto(userProfileDto: UserProfileDto): UserProfile {
             return UserProfile(

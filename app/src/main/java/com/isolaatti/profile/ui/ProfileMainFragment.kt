@@ -1,6 +1,6 @@
 package com.isolaatti.profile.ui
 
-import android.content.Context
+import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -8,71 +8,88 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.LinearLayoutManager
-import coil3.load
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
+import androidx.navigation.findNavController
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.common.util.concurrent.ListenableFuture
 import com.isolaatti.BuildConfig
 import com.isolaatti.R
-import com.isolaatti.audio.common.domain.Audio
-import com.isolaatti.common.CoilImageLoader.imageLoader
+import com.isolaatti.audio.player.MediaService
 import com.isolaatti.common.Dialogs
 import com.isolaatti.common.ErrorMessageViewModel
-import com.isolaatti.common.Ownable
-import com.isolaatti.common.options_bottom_sheet.domain.OptionClicked
+import com.isolaatti.common.IsolaattiTheme
 import com.isolaatti.common.options_bottom_sheet.domain.Options
 import com.isolaatti.common.options_bottom_sheet.presentation.BottomSheetPostOptionsViewModel
 import com.isolaatti.common.options_bottom_sheet.ui.BottomSheetPostOptionsFragment
-import com.isolaatti.databinding.FragmentDiscussionsBinding
 import com.isolaatti.followers.domain.FollowingState
 import com.isolaatti.hashtags.ui.HashtagsPostsActivity
-import com.isolaatti.images.common.domain.entity.RemoteImage
 import com.isolaatti.images.picture_viewer.ui.PictureViewerActivity
 import com.isolaatti.posting.comments.ui.BottomSheetPostComments
+import com.isolaatti.posting.posts.components.PostComponent
 import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.posting.posts.presentation.CreatePostContract
-import com.isolaatti.posting.posts.presentation.EditPostContract
-import com.isolaatti.posting.posts.presentation.PostListingRecyclerViewAdapterWiring
 import com.isolaatti.posting.posts.ui.PostInfoActivity
 import com.isolaatti.posting.posts.viewer.ui.PostViewerActivity
 import com.isolaatti.profile.domain.entity.UserProfile
 import com.isolaatti.profile.presentation.EditProfileContract
 import com.isolaatti.profile.presentation.ProfileViewModel
+import com.isolaatti.profile.ui.components.ProfileHeader
 import com.isolaatti.reports.data.ContentType
 import com.isolaatti.reports.ui.NewReportBottomSheetDialogFragment
-import com.isolaatti.utils.UrlGen
 import dagger.hilt.android.AndroidEntryPoint
-import io.noties.markwon.AbstractMarkwonPlugin
-import io.noties.markwon.Markwon
-import io.noties.markwon.MarkwonConfiguration
-import io.noties.markwon.image.coil.CoilImagesPlugin
-import io.noties.markwon.image.destination.ImageDestinationProcessorRelativeToAbsolute
-import io.noties.markwon.linkify.LinkifyPlugin
+import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class ProfileMainFragment : Fragment() {
-    lateinit var viewBinding: FragmentDiscussionsBinding
     private val viewModel: ProfileViewModel by viewModels()
     val optionsViewModel: BottomSheetPostOptionsViewModel by activityViewModels()
     val errorViewModel: ErrorMessageViewModel by activityViewModels()
     private var userId: Int? = null
-
-
-    private var audioDescriptionAudio: Audio? = null
-
-
-    // collapsing bar
-    private var title = ""
-    private var scrollRange = -1
-    private var isShow = false
 
     private val createDiscussion = registerForActivityResult(CreatePostContract()) {
         if(it == null)
@@ -83,13 +100,6 @@ class ProfileMainFragment : Fragment() {
         viewModel.onPostAddedAtTheBeginning(it)
     }
 
-
-    private val editDiscussion = registerForActivityResult(EditPostContract()) {
-        if(it != null) {
-            viewModel.onPostUpdate(it)
-        }
-    }
-
     private val editProfile = registerForActivityResult(EditProfileContract()) { updatedProfile ->
         if(updatedProfile != null) {
             viewModel.setProfile(updatedProfile)
@@ -97,121 +107,324 @@ class ProfileMainFragment : Fragment() {
     }
 
 
-    private val profileObserver = Observer<UserProfile> { profile ->
-        viewBinding.profileImageView.load(UrlGen.userProfileImage(profile.userId, invalidateCache = true), imageLoader)
 
-        title = profile.name
-        viewBinding.textViewUsername.text = profile.name
-        viewBinding.textViewDescription.text = profile.descriptionText
-        if(profile.descriptionText.isNullOrBlank()) {
-            viewBinding.descriptionCard.visibility = View.GONE
-        }
+    private fun getData() {
 
-        viewBinding.goToFollowersBtn.text = getString(
-            R.string.go_to_followers_btn_text,
-            profile.numberOfFollowers.toString(),
-            profile.numberOfFollowing.toString()
-        )
-
-
-        viewBinding.profileImageView.setOnClickListener {
-            optionsViewModel.setOptions(Options.PROFILE_PHOTO_OPTIONS, CALLER_ID, profile)
-            val fragment = BottomSheetPostOptionsFragment()
-            fragment.show(parentFragmentManager, BottomSheetPostOptionsFragment.TAG)
-        }
-
-        audioDescriptionAudio = profile.descriptionAudio
-        viewBinding.playButtonContainer.visibility = if(profile.descriptionAudio != null) View.VISIBLE else View.GONE
-
-        setupUiForUserType(profile.isUserItself)
-    }
-
-//    private val postsObserver: Observer<Pair<List<Post>?, UpdateEvent>?> = Observer {
-//        if(it?.first != null) {
-//            postsAdapter.updateList(it.first!!, it.second)
-//            postsAdapter.newContentRequestFinished()
-//        }
-//
-//    }
-
-    private val followingStateObserver: Observer<FollowingState> = Observer {
-        when(it) {
-            FollowingState.FollowingThisUser -> {
-                viewBinding.textViewFollowingState.setText(R.string.following_user)
-                viewBinding.followButton.setText(R.string.unfollow)
-                viewBinding.followButton.isChecked = true
-            }
-            FollowingState.MutuallyFollowing -> {
-                viewBinding.textViewFollowingState.setText(R.string.mutually_following)
-                viewBinding.followButton.setText(R.string.unfollow)
-                viewBinding.followButton.isChecked = true
-            }
-            FollowingState.ThisUserIsFollowingMe -> {
-                viewBinding.textViewFollowingState.setText(R.string.following_you)
-                viewBinding.followButton.setText(R.string.follow)
-                viewBinding.followButton.isChecked = false
-            }
-            FollowingState.NotMutuallyFollowing -> {
-                viewBinding.textViewFollowingState.text = ""
-                viewBinding.followButton.setText(R.string.follow)
-                viewBinding.followButton.isChecked = false
-            }
+        userId?.let { profileId ->
+            viewModel.profileId = profileId
+            viewModel.getProfile()
+            viewModel.getFeed(true, null)
         }
     }
 
-    private val optionsObserver: Observer<OptionClicked?> = Observer { optionClicked ->
-        if(optionClicked?.callerId == CALLER_ID) {
-            Log.d("ProfileMainFragment", optionClicked.toString())
+    private lateinit var mediaControllerFuture: ListenableFuture<MediaController>
+    private lateinit var mediaController: MediaController
 
-            when(optionClicked.optionsId) {
-                Options.PROFILE_PHOTO_OPTIONS -> {
-                    val profile = optionClicked.payload as? UserProfile
-                    when(optionClicked.optionId) {
-                        Options.Option.OPTION_PROFILE_PHOTO_CHANGE_PHOTO -> {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val sessionToken = SessionToken(requireContext(), ComponentName(requireContext(), MediaService::class.java))
+        mediaControllerFuture = MediaController.Builder(requireContext(), sessionToken).buildAsync()
+
+        userId = (requireActivity()).intent.extras?.getInt(ProfileActivity.EXTRA_USER_ID)
+        getData()
+    }
+
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+
+
+        return ComposeView(requireContext()).apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                val isRefreshing by viewModel.isRefreshing.collectAsState()
+                val lazyColumState = rememberLazyListState()
+                val profile by viewModel.profile.observeAsState()
+                val followingState by viewModel.followingState.observeAsState()
+                val isAtTop by remember {
+                    derivedStateOf {
+                        lazyColumState.firstVisibleItemIndex == 0 && lazyColumState.firstVisibleItemScrollOffset == 0
+                    }
+                }
+                var showAddPostButton by remember { mutableStateOf(false) }
+
+                val nestedScrollConnection = remember {
+                    object : NestedScrollConnection {
+                        override fun onPreScroll(
+                            available: Offset,
+                            source: NestedScrollSource
+                        ): Offset {
+                            // Hide FAB
+                            if (available.y < -1) {
+                                showAddPostButton = false
+                            }
+
+                            // Show FAB
+                            if (available.y > 1) {
+                                showAddPostButton = true
+                            }
+
+                            return Offset.Zero
+                        }
+                    }
+                }
+
+                LaunchedEffect(profile) {
+                    showAddPostButton = profile?.isUserItself == true
+                }
+
+                val followingText = when(followingState) {
+                    FollowingState.FollowingThisUser -> {
+                        stringResource(R.string.following_user)
+                    }
+                    FollowingState.MutuallyFollowing -> {
+                        stringResource(R.string.mutually_following)
+                    }
+                    FollowingState.ThisUserIsFollowingMe -> {
+                        stringResource(R.string.following_you)
+                    }
+                    FollowingState.NotMutuallyFollowing -> {
+                        ""
+                    }
+
+                    null -> ""
+                }
+
+
+                val posts by viewModel.posts.collectAsState()
+                val loadingProfile by viewModel.loadingProfile.collectAsState()
+
+                val playingAudio by remember { mutableStateOf(true) }
+                IsolaattiTheme {
+                    Scaffold(
+                        topBar = {
+                            TopAppBar(
+                                navigationIcon = {
+                                    IconButton(
+                                        onClick = {
+                                            activity?.finish()
+                                        }
+                                    ) {
+                                        Icon(Icons.AutoMirrored.Default.ArrowBack, stringResource(R.string.back_button))
+                                    }
+                                },
+                                title = {
+                                    Text(if(isAtTop) stringResource(R.string.profile) else profile?.name ?: "")
+                                },
+                                actions = {
+                                    IconButton(
+                                        onClick = {
+                                            profile?.let { findNavController().navigate(ProfileMainFragmentDirections.actionMainFragmentToQrCodeFragment(it)) }
+                                        }
+                                    ) {
+                                        Icon(painterResource(R.drawable.baseline_qr_code_24), stringResource(R.string.qr_code))
+                                    }
+                                }
+                            )
+                        },
+                        floatingActionButton = {
+                            AnimatedVisibility(
+                                visible = showAddPostButton,
+                                enter = slideInVertically(initialOffsetY = { it * 2 }),
+                                exit = slideOutVertically(targetOffsetY = { it * 2 })
+                            ) {
+                                FloatingActionButton(
+                                    onClick = {
+                                        createDiscussion.launch(Unit)
+                                    }
+                                ) {
+                                    Icon(Icons.Default.Add, stringResource(R.string.add_post_button_desc))
+                                }
+                            }
 
                         }
-                        Options.Option.OPTION_PROFILE_PHOTO_REMOVE_PHOTO -> {
-                            showRemoveProfileImageDialog()
-                        }
-                        Options.Option.OPTION_PROFILE_PHOTO_VIEW_PHOTO -> {
-                            val profilePictureUrl = profile?.profilePictureUrl
-                            if(profilePictureUrl != null) {
-                                PictureViewerActivity.startActivityWithImages(requireContext(), arrayOf(
-                                    RemoteImage(profile.profileImageId ?: "")
-                                ))
+                    ) { insets ->
+
+                        PullToRefreshBox(
+                            isRefreshing,
+                            onRefresh = {
+                                viewModel.getProfile()
+                                viewModel.getFeed(refresh = true, hashtag = null)
+                            },
+                            modifier = Modifier
+                                .padding(insets)
+                                .consumeWindowInsets(insets)
+                        ) {
+                            LazyColumn(
+                                state = lazyColumState,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .then(if(profile?.isUserItself == true) { Modifier.nestedScroll(nestedScrollConnection) } else Modifier)
+                            ) {
+                                item {
+                                    profile?.let {
+                                        ProfileHeader(
+                                            modifier = Modifier.padding(16.dp),
+                                            name = it.name,
+                                            description = it.descriptionText,
+                                            image = it.profileImage,
+                                            audio = it.descriptionAudio,
+                                            followingCount = it.numberOfFollowing,
+                                            followerCount = it.numberOfFollowers,
+                                            loading = loadingProfile,
+                                            onImageClick = {
+                                                optionsViewModel.setOptions(Options.PROFILE_PHOTO_OPTIONS, CALLER_ID, it)
+                                                val fragment = BottomSheetPostOptionsFragment()
+                                                fragment.show(parentFragmentManager, BottomSheetPostOptionsFragment.TAG)
+                                            },
+                                            onFollowersClick = {
+                                                findNavController().navigate(ProfileMainFragmentDirections.actionDiscussionsFragmentToMainFollowersFragment(it.userId))
+                                            },
+                                            followingText = followingText,
+                                            followingThisUser = it.followingThisUser,
+                                            isOwnUser = it.isUserItself,
+                                            onFollowChange = { follow ->
+                                                viewModel.followUser()
+                                            },
+                                            profileAudioProgress = 0.4f,
+                                            showProfileAudioProgress = true,
+                                            onEditProfileClick = {
+                                                editProfile.launch(it)
+                                            }
+                                        )
+                                    }
+                                }
+
+                                if(posts.isEmpty()) {
+                                    item {
+                                        Text(getString(R.string.you_will_see_what_user_posts_here, profile?.name ?: ""), modifier = Modifier.padding(24.dp))
+                                    }
+                                }
+
+                                items(count = posts.size, key = {posts[it].id}) {
+                                    val post = posts[it]
+                                    PostComponent(
+                                        modifier = Modifier.animateItem(),
+                                        post = post,
+                                        onClick = {
+                                            PostViewerActivity.startActivity(requireContext(), post.id)
+                                        },
+                                        onComments = {
+                                            val modalBottomSheet = BottomSheetPostComments.getInstance(post.id)
+                                            modalBottomSheet.show(requireActivity().supportFragmentManager, BottomSheetPostComments.TAG)
+                                        },
+                                        onOptions = {
+                                            optionsViewModel.setOptions(Options.POST_OPTIONS, CALLER_ID, post)
+                                            val modalBottomSheet = BottomSheetPostOptionsFragment()
+                                            modalBottomSheet.show(requireActivity().supportFragmentManager, BottomSheetPostOptionsFragment.TAG)
+                                        },
+                                        onInfo = {
+                                            PostInfoActivity.startActivity(requireContext(), post.id)
+                                        },
+                                        onLike = {
+                                            viewModel.likePost(post.id)
+                                        },
+                                        onDislike = {
+                                            viewModel.unLikePost(post.id)
+                                        },
+                                        onShare = {
+                                            val intent = Intent.createChooser(Intent().apply {
+                                                action = Intent.ACTION_SEND
+                                                putExtra(Intent.EXTRA_TEXT, "${BuildConfig.backend}/pub/${post.id}")
+                                                type = "text/plain"
+                                            }, getString(R.string.share_post))
+                                            startActivity(intent)
+                                        },
+                                        onImageClick = { images, index ->
+                                            PictureViewerActivity.startActivityWithImages(requireContext(), images.toTypedArray(), index)
+                                        },
+                                        onUsernameClick = {
+                                            if(profile?.userId == post.userId) return@PostComponent
+                                            ProfileActivity.startActivity(requireContext(), post.userId)
+                                        },
+                                        onHashtagClick = { hashtag ->
+                                            HashtagsPostsActivity.startActivity(requireContext(), hashtag)
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
-                    optionsViewModel.handle()
-                }
-                Options.POST_OPTIONS -> {
-                    // post id should come as payload
-                    val post = optionClicked.payload as? Post ?: return@Observer
-                    when(optionClicked.optionId) {
-                        Options.Option.OPTION_DELETE -> {
-                            Dialogs.buildDeletePostDialog(requireContext()) { delete ->
-                                optionsViewModel.handle()
-                                if(delete) {
-                                    viewModel.deletePost(post.id)
-                                }
-                            }.show()
-
-                        }
-                        Options.Option.OPTION_EDIT -> {
-                            optionsViewModel.handle()
-                            editDiscussion.launch(post.id)
-                        }
-                        Options.Option.OPTION_REPORT -> {
-                            optionsViewModel.handle()
-                            NewReportBottomSheetDialogFragment.newInstance(ContentType.Post, post.id.toString()).show(childFragmentManager, NewReportBottomSheetDialogFragment.LOG_TAG)
-                        }
-                    }
-                }
-                Options.PROFILE_DESCRIPTION_OPTIONS -> {
-                    optionsViewModel.handle()
                 }
             }
+        }
+    }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            mediaController = mediaControllerFuture.await()
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                errorViewModel.retry.collect {
+                    viewModel.retry()
+                    errorViewModel.handleRetry()
+                }
+            }
+        }
+
+        optionsViewModel.optionClicked.observe(viewLifecycleOwner) { optionClicked ->
+            if(optionClicked?.callerId == CALLER_ID) {
+                Log.d("ProfileMainFragment", optionClicked.toString())
+
+                when(optionClicked.optionsId) {
+                    Options.PROFILE_PHOTO_OPTIONS -> {
+                        val profile = optionClicked.payload as? UserProfile
+                        when(optionClicked.optionId) {
+                            Options.Option.OPTION_PROFILE_PHOTO_CHANGE_PHOTO -> {
+
+                            }
+                            Options.Option.OPTION_PROFILE_PHOTO_REMOVE_PHOTO -> {
+                                showRemoveProfileImageDialog()
+                            }
+                            Options.Option.OPTION_PROFILE_PHOTO_VIEW_PHOTO -> {
+                                profile?.profileImage?.let {
+                                    PictureViewerActivity.startActivityWithImages(requireContext(), arrayOf(it))
+                                }
+                            }
+                        }
+                        optionsViewModel.handle()
+                    }
+                    Options.POST_OPTIONS -> {
+                        // post id should come as payload
+                        val post = optionClicked.payload as? Post ?: return@observe
+                        when(optionClicked.optionId) {
+                            Options.Option.OPTION_DELETE -> {
+                                Dialogs.buildDeletePostDialog(requireContext()) { delete ->
+                                    optionsViewModel.handle()
+                                    if(delete) {
+                                        viewModel.deletePost(post.id)
+                                    }
+                                }.show()
+
+                            }
+                            Options.Option.OPTION_EDIT -> {
+                                optionsViewModel.handle()
+                                //editDiscussion.launch(post.id)
+                            }
+                            Options.Option.OPTION_REPORT -> {
+                                NewReportBottomSheetDialogFragment
+                                    .newInstance(ContentType.Post, post.id.toString())
+                                    .show(childFragmentManager, NewReportBottomSheetDialogFragment.LOG_TAG)
+                                optionsViewModel.handle()
+                            }
+                        }
+                    }
+                    Options.PROFILE_DESCRIPTION_OPTIONS -> {
+                        optionsViewModel.handle()
+                    }
+                }
+
+
+            }
 
         }
     }
@@ -226,254 +439,6 @@ class ProfileMainFragment : Fragment() {
             }
             .show()
     }
-
-    private lateinit var postListingRecyclerViewAdapterWiring: PostListingRecyclerViewAdapterWiring
-
-    // counter variable to prevent calling appBarLayout.totalScrollRange many times
-    private var i = 0
-    private fun setupCollapsingBar() {
-        viewBinding.topAppBarLayout.addOnOffsetChangedListener { appBarLayout, verticalOffset ->
-            // prevent calling appBarLayout.totalScrollRange many times
-            if (i == 30) {
-                scrollRange = appBarLayout.totalScrollRange
-                i = 0
-            } else {
-                i++
-            }
-
-            if (scrollRange + verticalOffset == 0) {
-                viewBinding.collapsingToolbarLayout.title = viewModel.profile.value?.name
-                isShow = true
-            } else if (isShow) {
-                viewBinding.collapsingToolbarLayout.title = " "
-            }
-        }
-    }
-
-    private fun showBlockUserDialog() {
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle(R.string.block_profile)
-            .setMessage(getString(R.string.block_profile_dialog_message, viewModel.profile.value?.name ?: ""))
-            .setPositiveButton(R.string.yes_continue) {_, _ ->
-                // TODO implement
-            }
-            .setNegativeButton(R.string.no, null)
-            .show()
-
-    }
-
-    private fun bind() {
-
-        if(userId == null) {
-            return
-        }
-
-
-        viewBinding.topAppBar.setNavigationOnClickListener {
-            requireActivity().finish()
-        }
-
-        viewBinding.topAppBar.setOnMenuItemClickListener {
-            when(it.itemId) {
-                R.id.edit_profile -> {
-                    viewModel.profile.value?.let { profile -> editProfile.launch(profile) }
-
-                    true
-                }
-                R.id.user_link_menu_item -> {
-                    viewModel.profile.value?.let { profile ->
-                        findNavController().navigate(ProfileMainFragmentDirections.actionMainFragmentToQrCodeFragment(profile))
-                    }
-
-                    true
-                }
-                R.id.report_profile_menu_item -> {
-                    NewReportBottomSheetDialogFragment.newInstance(ContentType.Profile, viewModel.profileId.toString()).show(childFragmentManager, NewReportBottomSheetDialogFragment.LOG_TAG)
-                    true
-                }
-                R.id.block_profile_menu_item -> {
-                    showBlockUserDialog()
-                    true
-                }
-                else -> false
-            }
-        }
-
-        viewBinding.createPostButton.setOnClickListener {
-            createDiscussion.launch(Unit)
-        }
-
-        viewBinding.goToFollowersBtn.setOnClickListener {
-            findNavController().navigate(ProfileMainFragmentDirections.actionDiscussionsFragmentToMainFollowersFragment(userId!!))
-        }
-
-//        viewBinding.feedRecyclerView.adapter = postsAdapter
-//        viewBinding.feedRecyclerView.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
-
-        viewBinding.swipeToRefresh.setOnRefreshListener {
-            viewModel.getFeed(true, null)
-        }
-        viewBinding.playButton.setOnClickListener {
-            audioDescriptionAudio?.let { audio ->
-
-            }
-        }
-
-        viewBinding.followButton.setOnClickListener {
-            it.isEnabled = false
-            viewModel.followUser()
-        }
-    }
-
-    private fun setObservers() {
-        viewModel.profile.observe(viewLifecycleOwner, profileObserver)
-        //viewModel.posts.observe(viewLifecycleOwner, postsObserver)
-        viewModel.followingState.observe(viewLifecycleOwner, followingStateObserver)
-        optionsViewModel.optionClicked.observe(viewLifecycleOwner, optionsObserver)
-        viewModel.loadingPosts.observe(viewLifecycleOwner) {
-            viewBinding.loadingIndicator.visibility = if(it) View.VISIBLE else View.GONE
-            if(!it) {
-                viewBinding.swipeToRefresh.isRefreshing = false
-            }
-        }
-        viewModel.errorLoading.observe(viewLifecycleOwner) {
-            errorViewModel.error.postValue(it)
-        }
-        viewModel.followingLoading.observe(viewLifecycleOwner) {
-            viewBinding.followButton.isEnabled = !it
-        }
-    }
-
-    private fun getData() {
-
-        userId?.let { profileId ->
-            viewModel.profileId = profileId
-            viewModel.getProfile()
-            viewModel.getFeed(true, null)
-        }
-    }
-
-    private fun setupPostsAdapter() {
-        val markwon = Markwon.builder(requireContext())
-            .usePlugin(object: AbstractMarkwonPlugin() {
-                override fun configureConfiguration(builder: MarkwonConfiguration.Builder) {
-                    builder
-                        .imageDestinationProcessor(
-                            ImageDestinationProcessorRelativeToAbsolute
-                            .create(BuildConfig.backend))
-                }
-            })
-            .usePlugin(LinkifyPlugin.create())
-            .build()
-
-        //postsAdapter = PostsRecyclerViewAdapter(postListingRecyclerViewAdapterWiring )
-
-    }
-
-    private fun setupUiForUserType(isOwnProfile: Boolean) {
-        if(isOwnProfile) {
-            viewBinding.followButton.visibility = View.GONE
-            viewBinding.topAppBar.menu?.run {
-                removeItem(R.id.block_profile_menu_item)
-                removeItem(R.id.report_profile_menu_item)
-            }
-            viewBinding.descriptionCard.setOnClickListener {
-                optionsViewModel.setOptions(Options.PROFILE_DESCRIPTION_OPTIONS, CALLER_ID, null)
-                val fragment = BottomSheetPostOptionsFragment()
-                fragment.show(parentFragmentManager, BottomSheetPostOptionsFragment.TAG)
-            }
-        } else {
-            viewBinding.createPostButton.visibility = View.GONE
-            viewBinding.topAppBar.menu.removeItem(R.id.edit_profile)
-        }
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        userId = (requireActivity()).intent.extras?.getInt(ProfileActivity.EXTRA_USER_ID)
-        getData()
-    }
-
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-
-        postListingRecyclerViewAdapterWiring = object: PostListingRecyclerViewAdapterWiring(viewModel) {
-            override fun onComment(postId: Long) {
-                val modalBottomSheet = BottomSheetPostComments.getInstance(postId)
-                modalBottomSheet.show(requireActivity().supportFragmentManager, BottomSheetPostComments.TAG)
-            }
-
-            override fun onOpenPost(postId: Long) {
-                PostViewerActivity.startActivity(requireContext(), postId)
-            }
-
-            override fun onOptions(post: Ownable) {
-                optionsViewModel.setOptions(Options.POST_OPTIONS, CALLER_ID, post)
-                val modalBottomSheet = BottomSheetPostOptionsFragment()
-                modalBottomSheet.show(requireActivity().supportFragmentManager, BottomSheetPostOptionsFragment.TAG)
-            }
-
-            override fun onProfileClick(userId: Int) {
-                //ProfileActivity.startActivity(requireContext(), userId)
-            }
-
-            override fun onPlay(audio: Audio) {
-
-            }
-
-            override fun onLoadMore() {
-                viewModel.getFeed(false, null)
-            }
-
-            override fun onMoreInfo(postId: Long) {
-                PostInfoActivity.startActivity(requireContext(), postId)
-            }
-
-            override fun onShare(postId: Long) {
-                val intent = Intent.createChooser(Intent().apply {
-                    action = Intent.ACTION_SEND
-                    putExtra(Intent.EXTRA_TEXT, "${BuildConfig.backend}/pub/${postId}")
-                    type = "text/plain"
-                }, getString(R.string.share_post))
-                startActivity(intent)
-            }
-
-            override fun hashtagClicked(hashtag: String) {
-                HashtagsPostsActivity.startActivity(requireContext(), hashtag)
-            }
-        }
-    }
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        viewBinding = FragmentDiscussionsBinding.inflate(inflater)
-
-        return viewBinding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        setupPostsAdapter()
-        bind()
-        setObservers()
-        setupCollapsingBar()
-
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                errorViewModel.retry.collect {
-                    viewModel.retry()
-                    errorViewModel.handleRetry()
-                }
-            }
-        }
-    }
-
     companion object {
         const val CALLER_ID = 30
         const val LOG_TAG = "ProfileMainFragment"

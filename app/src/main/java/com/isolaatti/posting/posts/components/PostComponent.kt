@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,13 +33,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.isolaatti.R
-import com.isolaatti.images.common.domain.entity.Image
 import com.isolaatti.images.common.domain.entity.RemoteImage
 import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.utils.UrlGen.userProfileImage
 
 @Composable
-fun Post(
+fun PostComponent(
     post: Post,
     onClick: () -> Unit = {},
     onLike: () -> Unit = {},
@@ -54,7 +52,7 @@ fun Post(
     onHashtagClick: (hashtag: String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    Card(modifier = modifier.padding(8.dp)) {
+    Card(modifier = modifier.padding(8.dp).clickable { onClick() }) {
         Row(modifier = Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
             AsyncImage(
                 model = userProfileImage(post.userId),
@@ -169,5 +167,5 @@ fun Post(
 @Composable
 @Preview(device = Devices.PIXEL_5)
 fun PostPreview() {
-    Post(Post(id = 0L, textContent = "Test", userId = 1, privacy = 2, date = "Date", images = emptyList(), liked = false, userName = "Username", numberOfLikes = 1, numberOfComments = 2))
+    PostComponent(Post(id = 0L, textContent = "Test", userId = 1, privacy = 2, date = "Date", images = emptyList(), liked = false, userName = "Username", numberOfLikes = 1, numberOfComments = 2))
 }

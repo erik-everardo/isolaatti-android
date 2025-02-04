@@ -40,6 +40,7 @@ import com.isolaatti.hashtags.ui.HashtagsPostsActivity
 import com.isolaatti.home.ui.FeedFragment
 import com.isolaatti.images.picture_viewer.ui.PictureViewerActivity
 import com.isolaatti.posting.comments.ui.BottomSheetPostComments
+import com.isolaatti.posting.posts.components.PostComponent
 import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.posting.posts.presentation.EditPostContract
 import com.isolaatti.posting.posts.presentation.PostListingViewModel
@@ -85,7 +86,7 @@ class PostListingFragment : Fragment() {
                         LazyColumn(flingBehavior = ScrollableDefaults.flingBehavior()) {
                             items(count = posts.size, key = {posts[it].id}) {
                                 val post = posts[it]
-                                com.isolaatti.posting.posts.components.Post(
+                                PostComponent(
                                     modifier = Modifier.animateItem(),
                                     post = post,
                                     onClick = {

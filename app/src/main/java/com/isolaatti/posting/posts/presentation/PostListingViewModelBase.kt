@@ -33,7 +33,6 @@ abstract class PostListingViewModelBase : ViewModel() {
 
     val posts: MutableStateFlow<List<Post>> = MutableStateFlow(emptyList())
 
-
     val loadingPosts = MutableLiveData(false)
 
     val noMoreContent = MutableLiveData(false)
@@ -114,6 +113,6 @@ abstract class PostListingViewModelBase : ViewModel() {
     }
 
     fun onPostAddedAtTheBeginning(post: Post) {
-
+        posts.value = listOf(post) + posts.value
     }
 }

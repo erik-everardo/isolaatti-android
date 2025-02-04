@@ -16,6 +16,7 @@ import com.isolaatti.profile.domain.use_case.SetProfileImage
 import com.isolaatti.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -32,6 +33,7 @@ class ProfileViewModel @Inject constructor(
 ) : PostListingViewModelBase() {
     private val _profile = MutableLiveData<UserProfile>()
     val profile: LiveData<UserProfile> get() = _profile
+    val loadingProfile: MutableStateFlow<Boolean> = MutableStateFlow(true)
 
     var profileId: Int  = 0
 
@@ -40,6 +42,8 @@ class ProfileViewModel @Inject constructor(
     private val toRetry: MutableList<Runnable> = mutableListOf()
 
     val followingLoading: MutableLiveData<Boolean> = MutableLiveData()
+
+    val isRefreshing: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
 
     // runs the lists of "Runnable" one by one and clears list. After this is executed,
@@ -57,13 +61,17 @@ class ProfileViewModel @Inject constructor(
             getProfileUseCase(profileId).onEach {
                 when(it) {
                     is Resource.Error -> {
+                        loadingProfile.value = false
                         errorLoading.postValue(it.errorType)
                         toRetry.add {
                             getProfile()
                         }
                     }
-                    is Resource.Loading -> {}
+                    is Resource.Loading -> {
+                        loadingProfile.value = true
+                    }
                     is Resource.Success -> {
+                        loadingProfile.value = false
                         _profile.postValue(it.data!!)
                         followingState.postValue(
                             it.data.let { user-> getFollowingState(user.followingThisUser, user.thisUserIsFollowingMe) }
@@ -118,20 +126,34 @@ class ProfileViewModel @Inject constructor(
             if(refresh) {
                 posts.value = emptyList()
             }
-            Log.d(TAG, "getFeed")
             getProfilePostsUseCase(profileId, getLastId(), false, null).onEach { feedDtoResource ->
                 when (feedDtoResource) {
                     is Resource.Success -> {
-                        loadingPosts.postValue(false)
+                        if(refresh) {
+                            isRefreshing.value = false
+                        } else {
+                            loadingPosts.postValue(false)
+                        }
+
                         posts.value += feedDtoResource.data ?: emptyList()
                         noMoreContent.postValue(feedDtoResource.data?.size == 0)
                     }
 
                     is Resource.Loading -> {
-                        loadingPosts.postValue(true)
+                        if(refresh) {
+                            isRefreshing.value = true
+                        } else {
+                            loadingPosts.postValue(true)
+                        }
+
                     }
 
                     is Resource.Error -> {
+                        if(refresh) {
+                            isRefreshing.value = true
+                        } else {
+                            loadingPosts.postValue(true)
+                        }
                         errorLoading.postValue(feedDtoResource.errorType)
                         toRetry.add {
                             getFeed(refresh, hashtag)
