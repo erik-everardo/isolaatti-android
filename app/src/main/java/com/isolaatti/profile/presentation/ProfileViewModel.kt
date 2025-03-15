@@ -45,6 +45,8 @@ class ProfileViewModel @Inject constructor(
 
     val isRefreshing: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
+    val settingUpAudio: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
 
     // runs the lists of "Runnable" one by one and clears list. After this is executed,
     // caller should report as handled

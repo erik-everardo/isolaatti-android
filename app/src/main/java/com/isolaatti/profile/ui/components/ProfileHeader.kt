@@ -65,11 +65,10 @@ fun ProfileHeader(
     followerCount: Int,
     followingCount: Int,
     onImageClick: () -> Unit,
-    showProfileAudioProgress: Boolean,
-    profileAudioProgress: Float,
     onFollowersClick: () -> Unit,
     onEditProfileClick: () -> Unit,
     onFollowChange: (Boolean) -> Unit,
+    audioPlayer: @Composable () -> Unit = {},
     loading: Boolean = false,
     isOwnUser: Boolean,
     followingThisUser: Boolean,
@@ -121,6 +120,8 @@ fun ProfileHeader(
                     Text(it, modifier = Modifier.padding(top = 8.dp))
                 }
 
+                audioPlayer()
+
                 TextButton(onClick = onFollowersClick, modifier = Modifier.padding(top = 4.dp)) {
                     Text(stringResource(R.string.go_to_followers_btn_text, followerCount, followingCount))
                 }
@@ -164,8 +165,6 @@ fun ProfileHeaderPreview() {
         isOwnUser = true,
         followingThisUser = true,
         onImageClick = {},
-        profileAudioProgress = 0.6f,
-        showProfileAudioProgress = true,
         onFollowersClick = {},
         onFollowChange = {},
         onEditProfileClick = {}

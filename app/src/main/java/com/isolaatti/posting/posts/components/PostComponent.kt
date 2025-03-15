@@ -15,6 +15,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,10 +34,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.isolaatti.R
+import com.isolaatti.audio.common.components.AudioPlayer
+import com.isolaatti.audio.common.domain.Audio
+import com.isolaatti.audio.player.AudioPlaybackState
 import com.isolaatti.images.common.domain.entity.RemoteImage
 import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.utils.UrlGen.userProfileImage
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostComponent(
     post: Post,
@@ -50,6 +55,7 @@ fun PostComponent(
     onUsernameClick: () -> Unit = {},
     onImageClick: (images: List<RemoteImage>, index: Int) -> Unit = {_, _ -> },
     onHashtagClick: (hashtag: String) -> Unit = {},
+    onPlay: (audio: Audio, positionMs: Long) -> Unit =  {_, _ -> },
     modifier: Modifier = Modifier
 ) {
     Card(modifier = modifier.padding(8.dp).clickable { onClick() }) {
@@ -77,7 +83,22 @@ fun PostComponent(
         }
 
         post.audio?.let {
-            // TODO audio player here
+            AudioPlayer(
+                modifier = Modifier.fillMaxWidth().height(80.dp),
+                positionMs = 2000L,
+                isPlaying = false,
+                durationMs = 30_000L,
+                isLoading = false,
+                onPlay = {
+
+                },
+                onPause = {
+
+                },
+                onSeek = {
+
+                }
+            )
         }
 
         if(post.textContent.isNotBlank()) {
@@ -167,5 +188,5 @@ fun PostComponent(
 @Composable
 @Preview(device = Devices.PIXEL_5)
 fun PostPreview() {
-    PostComponent(Post(id = 0L, textContent = "Test", userId = 1, privacy = 2, date = "Date", images = emptyList(), liked = false, userName = "Username", numberOfLikes = 1, numberOfComments = 2))
+    PostComponent(Post(id = 0L, textContent = "Test", userId = 1, privacy = 2, date = "Date", images = emptyList(), liked = false, userName = "Username", numberOfLikes = 2, numberOfComments = 3))
 }

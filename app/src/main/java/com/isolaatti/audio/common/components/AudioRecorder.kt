@@ -19,8 +19,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -40,6 +42,35 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
+
+class AudioRecorderState(
+    isRecording: Boolean = false,
+    recordIsStopped: Boolean = false,
+    recordIsPaused: Boolean = false,
+    isPlaying: Boolean = false,
+    isLoading: Boolean = false,
+    durationSeconds: Long = 0L,
+    position: Long = 0L,
+
+) {
+    var isRecording by mutableStateOf(isRecording)
+    var recordIsStopped by mutableStateOf(recordIsStopped)
+    var recordIsPaused by mutableStateOf(recordIsPaused)
+    var isPlaying by mutableStateOf(isPlaying)
+    var isLoading by mutableStateOf(isLoading)
+    var durationSeconds by mutableStateOf(durationSeconds)
+    var position by mutableStateOf(position)
+
+    fun clearState() {
+        recordIsStopped = false
+        isRecording = false
+        recordIsPaused = false
+        isPlaying = false
+        durationSeconds = 0L
+        position = 0L
+    }
+}
+
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun AudioRecorder(
@@ -49,13 +80,7 @@ fun AudioRecorder(
     onStopRecording: () -> Unit,
     onPauseRecording: () -> Unit,
     onStartRecording: (fromPaused: Boolean) -> Unit,
-    isRecording: Boolean,
-    recordIsStopped: Boolean,
-    recordIsPaused: Boolean,
-    isPlaying: Boolean,
-    isLoading: Boolean,
-    durationSeconds: Long,
-    position: Long,
+    state: AudioRecorderState = AudioRecorderState(),
     onSeek: (position: Float) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -68,9 +93,9 @@ fun AudioRecorder(
     var duration by remember { mutableLongStateOf(0L) }
 
 
-    LaunchedEffect(isRecording, recordIsPaused) {
+    LaunchedEffect(state.isRecording, state.recordIsPaused) {
         coroutineScope {
-            while(isRecording && !recordIsPaused) {
+            while(state.isRecording && !state.recordIsPaused) {
                 duration += 500
                 delay(500.milliseconds)
             }
@@ -94,7 +119,7 @@ fun AudioRecorder(
         when {
             audioRecordPermissionState.status.isGranted -> {
                 when {
-                     !isRecording && !recordIsStopped-> {
+                     !state.isRecording && !state.recordIsStopped-> {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.Center
@@ -113,7 +138,7 @@ fun AudioRecorder(
                         }
                     }
 
-                    isRecording && !recordIsStopped -> {
+                    state.isRecording && !state.recordIsStopped -> {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.padding(horizontal = 8.dp)
@@ -121,7 +146,7 @@ fun AudioRecorder(
                             Text(duration.milliseconds.clockFormat(), modifier = Modifier.padding(horizontal = 4.dp))
                             Spacer(Modifier.weight(1f))
                             IconButton(onClick = {
-                                if(recordIsPaused) {
+                                if(state.recordIsPaused) {
                                     onStartRecording(true)
 
                                 } else {
@@ -129,7 +154,7 @@ fun AudioRecorder(
                                 }
 
                             }) {
-                                if(recordIsPaused) {
+                                if(state.recordIsPaused) {
                                     Icon(painterResource(R.drawable.baseline_circle_24), null, tint = Color.Red)
                                 } else {
                                     Icon(painterResource(R.drawable.baseline_pause_24), null)
@@ -146,10 +171,10 @@ fun AudioRecorder(
                     else -> {
                         AudioPlayer(
                             modifier = Modifier.fillMaxWidth(),
-                            positionMs = position,
-                            isLoading = isLoading,
-                            isPlaying = isPlaying,
-                            durationMs = durationSeconds,
+                            positionMs = state.position,
+                            isLoading = state.isLoading,
+                            isPlaying = state.isPlaying,
+                            durationMs = state.durationSeconds,
                             onPlay = onPlay,
                             onPause = onPause,
                             onSeek = onSeek

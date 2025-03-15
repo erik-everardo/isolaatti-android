@@ -159,7 +159,7 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.8.5'
     implementation 'androidx.compose.runtime:runtime-livedata'
 
-
-
     implementation("com.google.accompanist:accompanist-permissions:0.36.0")
+
+    implementation "androidx.work:work-runtime-ktx:2.10.0"
 }

@@ -26,6 +26,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import com.isolaatti.BuildConfig
 import com.isolaatti.R
+import com.isolaatti.audio.common.components.AudioRecorderState
 import com.isolaatti.audio.common.domain.Audio
 import com.isolaatti.common.Dialogs
 import com.isolaatti.common.ErrorMessageViewModel
@@ -62,6 +63,7 @@ class PostListingFragment : Fragment() {
     private val errorViewModel: ErrorMessageViewModel by activityViewModels()
     private val viewModel: PostListingViewModel by viewModels()
     val optionsViewModel: BottomSheetPostOptionsViewModel by activityViewModels()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

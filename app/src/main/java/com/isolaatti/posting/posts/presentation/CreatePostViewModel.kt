@@ -11,6 +11,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.isolaatti.audio.common.components.AudioRecorderState
 import com.isolaatti.audio.common.domain.Audio
 import com.isolaatti.audio.common.domain.Playable
 import com.isolaatti.images.common.domain.entity.Image
@@ -61,19 +62,9 @@ class CreatePostViewModel @Inject constructor(
     private var audioDraft: Long? = null
     private var audioId: String? = null
 
-    // region Player state
-    val isPlaying: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    var position: MutableStateFlow<Long> = MutableStateFlow(0L)
-    var duration: MutableStateFlow<Long> = MutableStateFlow(0L)
-    var isLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val audioRecorderState = AudioRecorderState()
     var ended: Boolean = false
-    // endregion
 
-    // region Recorder state
-    var isRecording: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    var recordingIsPaused: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    var recodingIsStopped: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    // endregion
 
 
     /**
