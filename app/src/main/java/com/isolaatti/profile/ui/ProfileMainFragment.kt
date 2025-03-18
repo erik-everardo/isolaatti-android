@@ -2,12 +2,17 @@ package com.isolaatti.profile.ui
 
 import android.content.ComponentName
 import android.content.Intent
+import android.media.MediaRecorder
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -23,10 +28,12 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -34,6 +41,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -45,6 +53,8 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -54,10 +64,13 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.navigation.findNavController
+import coil3.toUri
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.common.util.concurrent.ListenableFuture
 import com.isolaatti.BuildConfig
+import com.isolaatti.MyApplication
 import com.isolaatti.R
+import com.isolaatti.audio.common.components.AudioRecorder
 import com.isolaatti.audio.player.MediaService
 import com.isolaatti.common.Dialogs
 import com.isolaatti.common.ErrorMessageViewModel
@@ -67,22 +80,30 @@ import com.isolaatti.common.options_bottom_sheet.presentation.BottomSheetPostOpt
 import com.isolaatti.common.options_bottom_sheet.ui.BottomSheetPostOptionsFragment
 import com.isolaatti.followers.domain.FollowingState
 import com.isolaatti.hashtags.ui.HashtagsPostsActivity
+import com.isolaatti.images.common.domain.entity.LocalImage
 import com.isolaatti.images.picture_viewer.ui.PictureViewerActivity
 import com.isolaatti.posting.comments.ui.BottomSheetPostComments
 import com.isolaatti.posting.posts.components.PostComponent
 import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.posting.posts.presentation.CreatePostContract
+import com.isolaatti.posting.posts.ui.CreatePostActivity
 import com.isolaatti.posting.posts.ui.PostInfoActivity
 import com.isolaatti.posting.posts.viewer.ui.PostViewerActivity
 import com.isolaatti.profile.domain.entity.UserProfile
 import com.isolaatti.profile.presentation.EditProfileContract
 import com.isolaatti.profile.presentation.ProfileViewModel
+import com.isolaatti.profile.ui.components.ConfirmChangeProfilePictureBottomSheet
 import com.isolaatti.profile.ui.components.ProfileHeader
+import com.isolaatti.profile.ui.components.ProfilePictureBottomSheet
+import com.isolaatti.profile.ui.components.ProfilePictureBottomSheetActions
+import com.isolaatti.profile.ui.components.ProfilePictureState
 import com.isolaatti.reports.data.ContentType
 import com.isolaatti.reports.ui.NewReportBottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
+import java.io.File
+import java.util.Calendar
 
 @AndroidEntryPoint
 class ProfileMainFragment : Fragment() {
@@ -90,6 +111,19 @@ class ProfileMainFragment : Fragment() {
     val optionsViewModel: BottomSheetPostOptionsViewModel by activityViewModels()
     val errorViewModel: ErrorMessageViewModel by activityViewModels()
     private var userId: Int? = null
+
+    private var cameraPhotoUri: Uri? = null
+
+    private fun makePhotoUri(): Uri {
+        val cacheFile = File(requireContext().filesDir, "temp_picture_${Calendar.getInstance().timeInMillis}")
+        return FileProvider.getUriForFile(requireContext(), "${MyApplication.myApp.packageName}.provider", cacheFile)
+    }
+
+    private val takePhotoLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) {
+        if(it && cameraPhotoUri != null) {
+            viewModel.onProfilePictureSelected(cameraPhotoUri!!)
+        }
+    }
 
     private val createDiscussion = registerForActivityResult(CreatePostContract()) {
         if(it == null)
@@ -106,7 +140,11 @@ class ProfileMainFragment : Fragment() {
         }
     }
 
-
+    private val choosePictureLauncher = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) {
+        if(it != null) {
+            viewModel.onProfilePictureSelected(it)
+        }
+    }
 
     private fun getData() {
 
@@ -119,6 +157,7 @@ class ProfileMainFragment : Fragment() {
 
     private lateinit var mediaControllerFuture: ListenableFuture<MediaController>
     private lateinit var mediaController: MediaController
+    private lateinit var mediaRecorder: MediaRecorder
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -129,6 +168,8 @@ class ProfileMainFragment : Fragment() {
         userId = (requireActivity()).intent.extras?.getInt(ProfileActivity.EXTRA_USER_ID)
         getData()
     }
+
+
 
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -174,8 +215,25 @@ class ProfileMainFragment : Fragment() {
                     }
                 }
 
+                /* Profile picture bottom sheet */
+                var showProfilePictureBottomSheet by remember { mutableStateOf(false) }
+                val profilePictureSheetState = rememberModalBottomSheetState()
+                var profilePictureState by remember { mutableStateOf(ProfilePictureState()) }
+
+                val scope = rememberCoroutineScope()
+                val showConfirmChangeProfilePicture by viewModel.showConfirmChangeProfilePictureBottomSheet.collectAsState()
+                val newProfilePicture by viewModel.newProfileImage.collectAsState()
+                val uploadingProfilePicture by viewModel.uploadingProfilePicture.collectAsState()
+
+                var showAudioRecorder by remember { mutableStateOf(false) }
+
                 LaunchedEffect(profile) {
                     showAddPostButton = profile?.isUserItself == true
+                    profilePictureState = ProfilePictureState(
+                        showViewImage = profile?.profileImage != null,
+                        showChangeProfileImage = profile?.isUserItself == true,
+                        showRemoveImage = profile?.isUserItself == true
+                    )
                 }
 
                 val followingText = when(followingState) {
@@ -199,7 +257,6 @@ class ProfileMainFragment : Fragment() {
                 val posts by viewModel.posts.collectAsState()
                 val loadingProfile by viewModel.loadingProfile.collectAsState()
 
-                val playingAudio by remember { mutableStateOf(true) }
                 IsolaattiTheme {
                     Scaffold(
                         topBar = {
@@ -245,6 +302,80 @@ class ProfileMainFragment : Fragment() {
                         }
                     ) { insets ->
 
+                        if(showProfilePictureBottomSheet) {
+                            ProfilePictureBottomSheet(
+                                sheetState = profilePictureSheetState,
+                                onDismissRequest = {
+                                    showProfilePictureBottomSheet = false
+                                },
+                                onAction = { action ->
+                                    when(action) {
+                                        ProfilePictureBottomSheetActions.ViewImage -> {
+                                            profile?.profileImage?.let {
+                                                PictureViewerActivity.startActivityWithImages(requireContext(), arrayOf(it))
+                                            }
+                                        }
+                                        ProfilePictureBottomSheetActions.ChangeImage -> {
+                                            choosePictureLauncher
+                                                .launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                                        }
+                                        ProfilePictureBottomSheetActions.RemoveImage -> {
+                                            showRemoveProfileImageDialog()
+                                        }
+
+                                        ProfilePictureBottomSheetActions.TakeAPicture -> {
+                                            cameraPhotoUri = makePhotoUri()
+                                            takePhotoLauncher.launch(cameraPhotoUri)
+                                        }
+                                    }
+                                    scope.launch { profilePictureSheetState.hide() }.invokeOnCompletion {
+                                        if (!profilePictureSheetState.isVisible) {
+                                            showProfilePictureBottomSheet = false
+                                        }
+                                    }
+                                },
+                                state = profilePictureState
+                            )
+                        }
+
+                        if(showConfirmChangeProfilePicture) {
+                            newProfilePicture?.let {
+                                ConfirmChangeProfilePictureBottomSheet(
+                                    onDismiss = {
+                                        viewModel.hideConfirmPictureSheet()
+                                    },
+                                    oldImage = profile?.profileImage?.imageUrl?.toUri(),
+                                    newImage = it,
+                                    onAccept = {
+                                        viewModel.setProfileImage()
+                                    },
+                                    loading = uploadingProfilePicture
+                                )
+                            }
+                        }
+
+                        if(showAudioRecorder) {
+                            ModalBottomSheet(onDismissRequest = { showAudioRecorder = false }) {
+                                AudioRecorder(
+                                    onDismiss = {},
+                                    onPlay = TODO(),
+                                    onPause = TODO(),
+                                    onStopRecording = TODO(),
+                                    onPauseRecording = TODO(),
+                                    onStartRecording = TODO(),
+                                    isRecording = TODO(),
+                                    recordIsStopped = TODO(),
+                                    recordIsPaused = TODO(),
+                                    isPlaying = TODO(),
+                                    isLoading = TODO(),
+                                    durationSeconds = TODO(),
+                                    position = TODO(),
+                                    onSeek = TODO(),
+                                    modifier = TODO()
+                                )
+                            }
+                        }
+
                         PullToRefreshBox(
                             isRefreshing,
                             onRefresh = {
@@ -273,9 +404,7 @@ class ProfileMainFragment : Fragment() {
                                             followerCount = it.numberOfFollowers,
                                             loading = loadingProfile,
                                             onImageClick = {
-                                                optionsViewModel.setOptions(Options.PROFILE_PHOTO_OPTIONS, CALLER_ID, it)
-                                                val fragment = BottomSheetPostOptionsFragment()
-                                                fragment.show(parentFragmentManager, BottomSheetPostOptionsFragment.TAG)
+                                                showProfilePictureBottomSheet = true
                                             },
                                             onFollowersClick = {
                                                 findNavController().navigate(ProfileMainFragmentDirections.actionDiscussionsFragmentToMainFollowersFragment(it.userId))
@@ -290,6 +419,11 @@ class ProfileMainFragment : Fragment() {
                                             showProfileAudioProgress = true,
                                             onEditProfileClick = {
                                                 editProfile.launch(it)
+                                            },
+                                            onAddAudioDescription = {
+                                                mediaRecorder = if (Build.VERSION.SDK_INT >= 31) MediaRecorder(requireContext()) else MediaRecorder()
+                                                showAudioRecorder = true
+
                                             }
                                         )
                                     }
@@ -376,23 +510,6 @@ class ProfileMainFragment : Fragment() {
                 Log.d("ProfileMainFragment", optionClicked.toString())
 
                 when(optionClicked.optionsId) {
-                    Options.PROFILE_PHOTO_OPTIONS -> {
-                        val profile = optionClicked.payload as? UserProfile
-                        when(optionClicked.optionId) {
-                            Options.Option.OPTION_PROFILE_PHOTO_CHANGE_PHOTO -> {
-
-                            }
-                            Options.Option.OPTION_PROFILE_PHOTO_REMOVE_PHOTO -> {
-                                showRemoveProfileImageDialog()
-                            }
-                            Options.Option.OPTION_PROFILE_PHOTO_VIEW_PHOTO -> {
-                                profile?.profileImage?.let {
-                                    PictureViewerActivity.startActivityWithImages(requireContext(), arrayOf(it))
-                                }
-                            }
-                        }
-                        optionsViewModel.handle()
-                    }
                     Options.POST_OPTIONS -> {
                         // post id should come as payload
                         val post = optionClicked.payload as? Post ?: return@observe

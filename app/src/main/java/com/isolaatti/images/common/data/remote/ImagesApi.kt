@@ -21,8 +21,8 @@ interface ImagesApi {
     @POST("images/create")
     @Multipart
     fun postImage(@Part file: MultipartBody.Part,
-                  @Part postId: MultipartBody.Part,
-                  @Part setAsProfile: MultipartBody.Part? = null,
+                  @Part postId: MultipartBody.Part? = null,
+                  @Query("setAsProfile") setAsProfile: Boolean = false,
                   @Part squadId: MultipartBody.Part? = null): Call<ImageDto>
 
     @POST("images/delete/delete_many")

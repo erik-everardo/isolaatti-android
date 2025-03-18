@@ -6,7 +6,9 @@ import androidx.compose.animation.core.animateValue
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,8 +20,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -70,6 +74,7 @@ fun ProfileHeader(
     onFollowersClick: () -> Unit,
     onEditProfileClick: () -> Unit,
     onFollowChange: (Boolean) -> Unit,
+    onAddAudioDescription: () -> Unit,
     loading: Boolean = false,
     isOwnUser: Boolean,
     followingThisUser: Boolean,
@@ -126,6 +131,27 @@ fun ProfileHeader(
                 }
 
                 when {
+                    isOwnUser && audio == null -> {
+                        OutlinedCard(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
+                            Column(modifier = Modifier.padding(8.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(stringResource(R.string.you_have_now_audio))
+                                FilledTonalButton(
+                                    onClick = {
+
+                                    }
+                                ) {
+                                    Text(stringResource(R.string.set_audio_description))
+                                }
+                            }
+                        }
+                    }
+
+                    audio != null -> {
+
+                    }
+                }
+
+                when {
                     isOwnUser -> {
                         OutlinedButton(onClick = onEditProfileClick) {
                             Icon(Icons.Default.Edit, null)
@@ -168,6 +194,7 @@ fun ProfileHeaderPreview() {
         showProfileAudioProgress = true,
         onFollowersClick = {},
         onFollowChange = {},
-        onEditProfileClick = {}
+        onEditProfileClick = {},
+        onAddAudioDescription = {}
     )
 }

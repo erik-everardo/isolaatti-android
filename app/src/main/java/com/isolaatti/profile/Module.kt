@@ -1,8 +1,10 @@
 package com.isolaatti.profile
 
+import android.content.ContentResolver
 import com.isolaatti.auth.data.local.UserInfoDao
 import com.isolaatti.connectivity.RetrofitClient
 import com.isolaatti.database.AppDatabase
+import com.isolaatti.images.common.data.remote.ImagesApi
 import com.isolaatti.profile.data.remote.ProfileApi
 import com.isolaatti.profile.data.repository.ProfileRepositoryImpl
 import com.isolaatti.profile.domain.ProfileRepository
@@ -25,8 +27,8 @@ class Module {
     }
 
     @Provides
-    fun provideProfileRepository(profileApi: ProfileApi, userInfoDao: UserInfoDao): ProfileRepository {
-        return ProfileRepositoryImpl(profileApi, userInfoDao)
+    fun provideProfileRepository(profileApi: ProfileApi, userInfoDao: UserInfoDao, imagesApi: ImagesApi, contentResolver: ContentResolver): ProfileRepository {
+        return ProfileRepositoryImpl(profileApi, userInfoDao, imagesApi, contentResolver)
     }
 
 

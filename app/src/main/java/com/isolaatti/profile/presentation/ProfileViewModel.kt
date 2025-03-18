@@ -1,10 +1,16 @@
 package com.isolaatti.profile.presentation
 
+import android.net.Uri
 import android.util.Log
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.isolaatti.followers.domain.FollowingState
+import com.isolaatti.images.common.domain.entity.LocalImage
 import com.isolaatti.images.common.domain.entity.RemoteImage
 import com.isolaatti.posting.posts.presentation.PostListingViewModelBase
 import com.isolaatti.profile.domain.entity.UserProfile
@@ -45,6 +51,12 @@ class ProfileViewModel @Inject constructor(
 
     val isRefreshing: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
+    val showConfirmChangeProfilePictureBottomSheet: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
+    val newProfileImage: MutableStateFlow<Uri?> = MutableStateFlow(null)
+
+    val uploadingProfilePicture: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val errorProfilePicture: MutableStateFlow<Resource.Error<RemoteImage>?> = MutableStateFlow(null)
 
     // runs the lists of "Runnable" one by one and clears list. After this is executed,
     // caller should report as handled
@@ -91,11 +103,29 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun setProfileImage(image: RemoteImage) {
+    fun setProfileImage() {
         viewModelScope.launch {
-            setProfileImageUC(image).onEach {
-                _profile.postValue(_profile.value?.copy(profileImageId = image.id))
-            }.flowOn(Dispatchers.IO).launchIn(this)
+            newProfileImage.value?.let {
+                setProfileImageUC(LocalImage(it)).onEach { resource ->
+                    when(resource) {
+                        is Resource.Error<RemoteImage> -> {
+                            errorProfilePicture.value = resource
+                            uploadingProfilePicture.value = false
+                        }
+                        is Resource.Loading<RemoteImage> -> {
+                            errorProfilePicture.value = null
+                            uploadingProfilePicture.value = true
+                        }
+                        is Resource.Success<RemoteImage> -> {
+                            errorProfilePicture.value = null
+                            uploadingProfilePicture.value = false
+                            showConfirmChangeProfilePictureBottomSheet.value = false
+                            _profile.postValue(_profile.value?.copy(profileImageId = resource.data?.id))
+                        }
+                    }
+
+                }.flowOn(Dispatchers.IO).launchIn(this)
+            }
         }
     }
 
@@ -179,6 +209,20 @@ class ProfileViewModel @Inject constructor(
                     }
                 }
             }.flowOn(Dispatchers.IO).launchIn(this)
+        }
+    }
+
+    fun hideConfirmPictureSheet() {
+        viewModelScope.launch {
+            showConfirmChangeProfilePictureBottomSheet.value = false
+            newProfileImage.value = null
+        }
+    }
+
+    fun onProfilePictureSelected(uri: Uri) {
+        viewModelScope.launch {
+            showConfirmChangeProfilePictureBottomSheet.value = true
+            newProfileImage.value = uri
         }
     }
 }

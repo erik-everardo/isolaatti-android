@@ -230,6 +230,10 @@
     <string name="profile">Profile</string>
     <string name="add_post_button_desc">Add post button</string>
     <string name="you_will_see_what_user_posts_here">When %s posts something you will see it here</string>
+    <string name="old_picture">Old picture</string>
+    <string name="change_profile_photo_question">Change profile picture?</string>
+    <string name="uploading_photo">Uploading photo</string>
+    <string name="you_have_now_audio">You have no audio description</string>
     <string-array name="report_reasons">
         <item>Spam</item>
         <item>Explicit content</item>

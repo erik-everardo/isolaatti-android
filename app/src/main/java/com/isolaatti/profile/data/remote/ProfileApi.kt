@@ -12,8 +12,6 @@ interface ProfileApi {
     @GET("Fetch/UserProfile/{userId}")
     fun userProfile(@Path("userId") userId: Int): Call<UserProfileDto>
 
-    @POST("EditProfile/SetProfilePhoto")
-    fun setProfileImage(@Query("imageId") imageId: String): Call<Void>
 
     @POST("EditProfile/UpdateProfile")
     fun updateProfile(@Body updateProfileDto: UpdateProfileDto): Call<UserProfileDto>

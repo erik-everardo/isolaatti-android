@@ -1,8 +1,14 @@
 package com.isolaatti.profile.data.repository
 
+import android.content.ContentResolver
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.os.Build
 import android.util.Log
 import com.isolaatti.auth.data.local.UserInfoDao
 import com.isolaatti.auth.data.local.UserInfoEntity
+import com.isolaatti.images.common.data.remote.ImagesApi
+import com.isolaatti.images.common.domain.entity.LocalImage
 import com.isolaatti.images.common.domain.entity.RemoteImage
 import com.isolaatti.profile.data.remote.ProfileApi
 import com.isolaatti.profile.data.remote.UpdateProfileDto
@@ -11,12 +17,20 @@ import com.isolaatti.profile.domain.entity.UserProfile
 import com.isolaatti.utils.Resource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.awaitResponse
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.InputStream
 import javax.inject.Inject
 
 class ProfileRepositoryImpl @Inject constructor(
     private val profileApi: ProfileApi,
-    private val userInfoDao: UserInfoDao) : ProfileRepository {
+    private val userInfoDao: UserInfoDao,
+    private val imagesApi: ImagesApi,
+    private val contentResolver: ContentResolver
+) : ProfileRepository {
     override fun getProfile(userId: Int): Flow<Resource<UserProfile>> = flow {
         try {
             val result = profileApi.userProfile(userId).awaitResponse()
@@ -37,16 +51,41 @@ class ProfileRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun setProfileImage(image: RemoteImage): Flow<Resource<Boolean>> = flow {
-
+    override fun setProfileImage(image: LocalImage): Flow<Resource<RemoteImage>> = flow {
+        emit(Resource.Loading())
         try {
-            val result = profileApi.setProfileImage(image.id).awaitResponse()
+            var imageInputStream: InputStream? = null
 
-            if(result.isSuccessful) {
-                emit(Resource.Success(true))
-            } else {
-                emit(Resource.Error(Resource.Error.mapErrorCode(result.code())))
+            contentResolver.openInputStream(image.uri).use {
+                imageInputStream = it
+
+                val bitmap = BitmapFactory.decodeStream(imageInputStream)
+
+                val outputStream = ByteArrayOutputStream()
+
+                if(Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
+                    bitmap.compress(Bitmap.CompressFormat.WEBP, 50, outputStream)
+                } else {
+                    bitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 50, outputStream)
+                }
+
+
+                val result = imagesApi
+                    .postImage(
+                        file = MultipartBody.Part.createFormData("file", "profile-${System.currentTimeMillis()}",outputStream.toByteArray().toRequestBody()),
+                        setAsProfile = true
+                    )
+                    .awaitResponse()
+
+                if(result.isSuccessful) {
+                    val imageDto = result.body()
+                    emit(Resource.Success(RemoteImage(imageDto!!.id)))
+                } else {
+                    emit(Resource.Error(Resource.Error.mapErrorCode(result.code())))
+                }
             }
+
+
         } catch (e: Exception) {
             Log.e("ProfileRepositoryImpl", e.message.toString())
             emit(Resource.Error(Resource.Error.ErrorType.NetworkError))
