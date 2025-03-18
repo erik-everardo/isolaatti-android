@@ -57,6 +57,8 @@ class ProfileViewModel @Inject constructor(
 
     val uploadingProfilePicture: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val errorProfilePicture: MutableStateFlow<Resource.Error<RemoteImage>?> = MutableStateFlow(null)
+    val settingUpAudio: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
 
     // runs the lists of "Runnable" one by one and clears list. After this is executed,
     // caller should report as handled

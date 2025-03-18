@@ -234,6 +234,7 @@
     <string name="change_profile_photo_question">Change profile picture?</string>
     <string name="uploading_photo">Uploading photo</string>
     <string name="you_have_now_audio">You have no audio description</string>
+    <string name="setup_your_profile_audio">Setup your profile audio</string>
     <string-array name="report_reasons">
         <item>Spam</item>
         <item>Explicit content</item>

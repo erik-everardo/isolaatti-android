@@ -4,6 +4,9 @@ import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.isolaatti.audio.common.components.AudioRecorderState
+import com.isolaatti.audio.common.domain.Audio
+import com.isolaatti.audio.player.AudioPlaybackState
 import com.isolaatti.posting.likes.domain.repository.LikesRepository
 import com.isolaatti.posting.posts.data.remote.FeedDto
 import com.isolaatti.posting.posts.domain.entity.Post
@@ -40,7 +43,13 @@ abstract class PostListingViewModelBase : ViewModel() {
     val errorLoading: MutableLiveData<Resource.Error.ErrorType?> = MutableLiveData()
     var isLoadingFromScrolling = false
 
+    val mediaControllerIsAvailable: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
+    val audioState: MutableStateFlow<AudioPlaybackState> = MutableStateFlow(AudioPlaybackState())
+
     fun getLastId(): Long = try { posts.value?.last()?.id ?: 0 } catch (e: NoSuchElementException) { 0 }
+
+    val audioRecorderState = AudioRecorderState()
 
 
     abstract fun getFeed(refresh: Boolean, hashtag: String?)
@@ -114,5 +123,17 @@ abstract class PostListingViewModelBase : ViewModel() {
 
     fun onPostAddedAtTheBeginning(post: Post) {
         posts.value = listOf(post) + posts.value
+    }
+
+    fun setAudioToPlay(audio: Audio) {
+        audioState.value = AudioPlaybackState(currentAudio = audio)
+    }
+
+    fun setIsPlaying(isPlaying: Boolean) {
+        audioState.value = audioState.value.copy(isPlaying = isPlaying)
+    }
+
+    fun updateProgress(progress: Long, duration: Long) {
+        audioState.value = audioState.value.copy(progress = progress, duration = duration)
     }
 }

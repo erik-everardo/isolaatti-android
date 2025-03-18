@@ -4,6 +4,7 @@ import android.os.Parcel
 import android.os.Parcelable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.isolaatti.audio.common.domain.Audio
@@ -34,6 +35,10 @@ class Post(
     var textContent by mutableStateOf(textContent)
     var numberOfLikes by mutableIntStateOf(numberOfLikes)
     var numberOfComments by mutableStateOf(numberOfComments)
+
+    var playing by mutableStateOf(false)
+    var durationMs by mutableLongStateOf(0L)
+    var progressMs by mutableLongStateOf(0L)
 
     constructor(parcel: Parcel) : this(
         parcel.readLong(),

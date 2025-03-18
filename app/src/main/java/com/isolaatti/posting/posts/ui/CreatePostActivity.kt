@@ -124,21 +124,21 @@ class CreatePostActivity : IsolaattiBaseActivity() {
 
     private val playerListener: Player.Listener = object: Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
-            viewModel.isPlaying.value = isPlaying
+            viewModel.audioRecorderState.isPlaying = isPlaying
         }
 
         override fun onPlaybackStateChanged(playbackState: Int) {
             when(playbackState) {
                 Player.STATE_READY -> {
                     viewModel.ended = false
-                    viewModel.isLoading.value = false
-                    viewModel.duration.value = this@CreatePostActivity.mediaController.duration
+                    viewModel.audioRecorderState.isLoading = false
+                    viewModel.audioRecorderState.durationSeconds = this@CreatePostActivity.mediaController.duration
                 }
                 Player.STATE_ENDED -> {
                     viewModel.ended = true
                 }
                 Player.STATE_BUFFERING -> {
-                    viewModel.isLoading.value = true
+                    viewModel.audioRecorderState.isLoading = true
                 }
 
                 Player.STATE_IDLE -> {}
@@ -291,19 +291,11 @@ class CreatePostActivity : IsolaattiBaseActivity() {
 
                             AnimatedVisibility(audioRecorderIsVisible) {
 
-                                val isPlaying by viewModel.isPlaying.collectAsState()
-                                val position by viewModel.position.collectAsState()
-                                val duration by viewModel.duration.collectAsState()
-                                val isLoading by viewModel.isLoading.collectAsState()
 
-                                val isRecording by viewModel.isRecording.collectAsState()
-                                val recordIsPaused by viewModel.recordingIsPaused.collectAsState()
-                                val recordIsStopped by viewModel.recodingIsStopped.collectAsState()
-
-                                LaunchedEffect(isPlaying) {
-                                    while(isPlaying) {
+                                LaunchedEffect(viewModel.audioRecorderState.isPlaying) {
+                                    while(viewModel.audioRecorderState.isPlaying) {
                                         delay(500.milliseconds)
-                                        viewModel.position.value = mediaController.currentPosition
+                                        viewModel.audioRecorderState.position = mediaController.currentPosition
                                     }
                                 }
 
@@ -327,12 +319,7 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                         mediaRecorder.release()
 
                                         // clear references
-                                        viewModel.recodingIsStopped.value = false
-                                        viewModel.isRecording.value = false
-                                        viewModel.recordingIsPaused.value = false
-                                        viewModel.isPlaying.value = false
-                                        viewModel.duration.value = 0L
-                                        viewModel.position.value = 0L
+                                        viewModel.audioRecorderState.clearState()
                                         viewModel.audioToUpload = null
                                     },
                                     onPlay = {
@@ -367,18 +354,19 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                                 start()
                                             }
                                         }
-                                        viewModel.recodingIsStopped.value = false
-                                        viewModel.isRecording.value = true
-                                        viewModel.recordingIsPaused.value = false
+
+                                        viewModel.audioRecorderState.recordIsStopped = false
+                                        viewModel.audioRecorderState.isRecording = true
+                                        viewModel.audioRecorderState.recordIsPaused = false
 
 
 
                                     },
                                     onPauseRecording = {
                                         mediaRecorder.pause()
-                                        viewModel.recodingIsStopped.value = false
-                                        viewModel.isRecording.value = true
-                                        viewModel.recordingIsPaused.value = true
+                                        viewModel.audioRecorderState.recordIsStopped = false
+                                        viewModel.audioRecorderState.isRecording = true
+                                        viewModel.audioRecorderState.recordIsPaused = true
                                     },
                                     onStopRecording = {
                                         mediaRecorder.stop()
@@ -392,17 +380,11 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                                 .build()
                                         )
                                         viewModel.audioToUpload = audioUri
-                                        viewModel.recodingIsStopped.value = true
-                                        viewModel.isRecording.value = false
-                                        viewModel.recordingIsPaused.value = false
+                                        viewModel.audioRecorderState.recordIsStopped = true
+                                        viewModel.audioRecorderState.isRecording = false
+                                        viewModel.audioRecorderState.recordIsPaused = false
                                     },
-                                    isPlaying = isPlaying,
-                                    position = position,
-                                    durationSeconds = duration,
-                                    isRecording = isRecording,
-                                    recordIsPaused = recordIsPaused,
-                                    recordIsStopped = recordIsStopped,
-                                    isLoading = isLoading,
+                                    state = viewModel.audioRecorderState,
                                     onSeek = { ms ->
                                         mediaController.seekTo(ms.toLong())
                                     }
