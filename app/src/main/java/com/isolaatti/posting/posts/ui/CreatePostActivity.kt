@@ -132,7 +132,7 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                 Player.STATE_READY -> {
                     viewModel.ended = false
                     viewModel.audioRecorderState.isLoading = false
-                    viewModel.audioRecorderState.durationSeconds = this@CreatePostActivity.mediaController.duration
+                    viewModel.audioRecorderState.durationMilliseconds = this@CreatePostActivity.mediaController.duration
                 }
                 Player.STATE_ENDED -> {
                     viewModel.ended = true

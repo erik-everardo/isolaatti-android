@@ -4,9 +4,7 @@ import android.content.ComponentName
 import android.content.Intent
 import android.media.MediaRecorder
 import android.os.Build
-import android.media.MediaRecorder
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -18,26 +16,37 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Card
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -50,7 +59,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
@@ -60,7 +68,9 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
@@ -69,10 +79,12 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.navigation.findNavController
-import coil3.toUri
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.common.util.concurrent.ListenableFuture
 import com.isolaatti.BuildConfig
@@ -90,16 +102,13 @@ import com.isolaatti.common.options_bottom_sheet.presentation.BottomSheetPostOpt
 import com.isolaatti.common.options_bottom_sheet.ui.BottomSheetPostOptionsFragment
 import com.isolaatti.followers.domain.FollowingState
 import com.isolaatti.hashtags.ui.HashtagsPostsActivity
-import com.isolaatti.images.common.domain.entity.LocalImage
 import com.isolaatti.images.picture_viewer.ui.PictureViewerActivity
 import com.isolaatti.posting.comments.ui.BottomSheetPostComments
 import com.isolaatti.posting.posts.components.PostComponent
 import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.posting.posts.presentation.CreatePostContract
-import com.isolaatti.posting.posts.ui.CreatePostActivity
 import com.isolaatti.posting.posts.ui.PostInfoActivity
 import com.isolaatti.posting.posts.viewer.ui.PostViewerActivity
-import com.isolaatti.profile.domain.entity.UserProfile
 import com.isolaatti.profile.presentation.EditProfileContract
 import com.isolaatti.profile.presentation.ProfileViewModel
 import com.isolaatti.profile.ui.components.ConfirmChangeProfilePictureBottomSheet
@@ -111,12 +120,13 @@ import com.isolaatti.reports.data.ContentType
 import com.isolaatti.reports.ui.NewReportBottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.Calendar
+import kotlin.time.Duration.Companion.milliseconds
 
 @AndroidEntryPoint
 class ProfileMainFragment : Fragment() {
@@ -172,9 +182,6 @@ class ProfileMainFragment : Fragment() {
     private lateinit var mediaController: MediaController
     private lateinit var mediaRecorder: MediaRecorder
 
-    private var mediaRecorder: MediaRecorder? = null
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModel.mediaControllerIsAvailable.value = false
@@ -190,36 +197,6 @@ class ProfileMainFragment : Fragment() {
     // initialized in onViewCreated
     private lateinit var directory: File
 
-    private fun startRecording(callback: () -> Unit) {
-        recordOutputFile = File(directory, "${System.currentTimeMillis()}.3gp")
-        mediaRecorder = if (Build.VERSION.SDK_INT >= 31) MediaRecorder(requireContext()) else MediaRecorder()
-        mediaRecorder?.run {
-            setAudioSource(MediaRecorder.AudioSource.MIC)
-            setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
-            setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
-            if (Build.VERSION.SDK_INT >= 26) {
-                setOutputFile(recordOutputFile)
-            } else {
-                setOutputFile(recordOutputFile.path)
-            }
-
-            prepare()
-            start()
-            callback()
-        }
-    }
-
-    private fun pauseRecording() {
-
-    }
-
-    private fun stopRecording() {
-
-    }
-
-    private fun playRecordedAudio() {
-
-    }
 
     private fun pauseRecordedAudio() {
 
@@ -231,11 +208,28 @@ class ProfileMainFragment : Fragment() {
 
     private fun playAudio(descriptionAudio: Audio) {
 
+        if(mediaController.currentMediaItem?.mediaId == descriptionAudio.id) {
+            mediaController.play()
+        } else {
+            val mediaItem = MediaItem.Builder()
+                .setMediaId(descriptionAudio.id)
+                .setUri(descriptionAudio.uri)
+                .build()
+            mediaController.setMediaItem(mediaItem)
+            mediaController.playWhenReady = true
+            mediaController.play()
+            viewModel.audioState.currentAudio = descriptionAudio
+        }
+
+        viewModel.audioState.isPlaying = true
+
     }
 
     private fun pauseAudio(descriptionAudio: Audio) {
-
+        mediaController.pause()
+        viewModel.audioState.isPlaying = false
     }
+
 
 
 
@@ -257,9 +251,6 @@ class ProfileMainFragment : Fragment() {
                 val followingState by viewModel.followingState.observeAsState()
                 val posts by viewModel.posts.collectAsState()
                 val loadingProfile by viewModel.loadingProfile.collectAsState()
-                val settingUpAudio by viewModel.settingUpAudio.collectAsState()
-
-                val audioPlaybackState by viewModel.audioState.collectAsState()
 
                 // use this to show or hide all audio related UI
                 val mediaControllerIsAvailable by viewModel.mediaControllerIsAvailable.collectAsState()
@@ -301,7 +292,7 @@ class ProfileMainFragment : Fragment() {
                 val newProfilePicture by viewModel.newProfileImage.collectAsState()
                 val uploadingProfilePicture by viewModel.uploadingProfilePicture.collectAsState()
 
-                var showAudioRecorder by remember { mutableStateOf(false) }
+                val showAudioRecorder by viewModel.showAudioRecorder.collectAsState()
 
                 LaunchedEffect(profile) {
                     showAddPostButton = profile?.isUserItself == true
@@ -310,6 +301,20 @@ class ProfileMainFragment : Fragment() {
                         showChangeProfileImage = profile?.isUserItself == true,
                         showRemoveImage = profile?.isUserItself == true
                     )
+                }
+
+                LaunchedEffect(viewModel.audioState.isPlaying) {
+                    while(viewModel.audioState.isPlaying) {
+                        delay(500.milliseconds)
+                        viewModel.audioState.duration = mediaController.duration
+                        viewModel.audioState.progress = mediaController.currentPosition
+                    }
+                }
+
+                fun onAddAudioDescription() {
+                    mediaRecorder = if (Build.VERSION.SDK_INT >= 31) MediaRecorder(requireContext()) else MediaRecorder()
+                    recordOutputFile = File(directory, "${System.currentTimeMillis()}.3gp")
+                    viewModel.showAudioRecorder.value = true
                 }
 
                 val followingText = when(followingState) {
@@ -328,9 +333,6 @@ class ProfileMainFragment : Fragment() {
 
                     null -> ""
                 }
-
-
-
 
                 IsolaattiTheme {
                     Scaffold(
@@ -430,25 +432,169 @@ class ProfileMainFragment : Fragment() {
                         }
 
                         if(showAudioRecorder) {
-                            ModalBottomSheet(onDismissRequest = { showAudioRecorder = false }) {
-                                AudioRecorder(
-                                    onDismiss = {},
-                                    onPlay = TODO(),
-                                    onPause = TODO(),
-                                    onStopRecording = TODO(),
-                                    onPauseRecording = TODO(),
-                                    onStartRecording = TODO(),
-                                    isRecording = TODO(),
-                                    recordIsStopped = TODO(),
-                                    recordIsPaused = TODO(),
-                                    isPlaying = TODO(),
-                                    isLoading = TODO(),
-                                    durationSeconds = TODO(),
-                                    position = TODO(),
-                                    onSeek = TODO(),
-                                    modifier = TODO()
-                                )
+                            val setAudioRecorderModalBottomSheetState = rememberModalBottomSheetState()
+
+                            LaunchedEffect(viewModel.audioRecorderState.isPlaying) {
+                                while(viewModel.audioRecorderState.isPlaying) {
+                                    delay(500.milliseconds)
+                                    viewModel.audioRecorderState.position = mediaController.currentPosition
+                                }
                             }
+
+
+                            fun dismiss() {
+                                viewModel.showAudioRecorder.value = false
+
+                                // stop playback
+                                mediaController.stop()
+                                mediaController.clearMediaItems()
+
+                                // delete file
+                                lifecycleScope.launch(Dispatchers.IO) {
+                                    if(recordOutputFile.exists()) {
+                                        recordOutputFile.delete()
+                                    }
+                                }
+
+                                // release media recorder
+                                mediaRecorder.release()
+
+                                // clear references
+                                viewModel.audioRecorderState.clearState()
+                                viewModel.audioDescriptionToUpload = null
+                            }
+
+                            ModalBottomSheet(
+                                onDismissRequest = {
+                                    viewModel.showAudioRecorder.value = false
+                                    dismiss()
+                                },
+                                sheetState = setAudioRecorderModalBottomSheetState
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.set_audio_description),
+                                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                                    textAlign = TextAlign.Center,
+                                    fontSize = 18.sp
+                                )
+                                val error by viewModel.setAudioDescriptionError.collectAsState()
+
+                                if(error) {
+                                    Box(
+                                        Modifier.background(MaterialTheme.colorScheme.errorContainer)
+                                            .fillMaxWidth()
+                                            .padding(8.dp)
+                                    ) {
+                                        Text(stringResource(R.string.error_uploading_audio), modifier = Modifier.padding(8.dp))
+                                    }
+                                }
+                                AudioRecorder(
+                                    onDismiss = { dismiss() },
+                                    onPlay = {
+                                        if(mediaController.isCommandAvailable(Player.COMMAND_PREPARE)) {
+                                            mediaController.prepare()
+                                        }
+
+                                        if(viewModel.ended) {
+                                            mediaController.seekTo(0L)
+                                        }
+                                        mediaController.playWhenReady = true
+                                    },
+                                    onPause = {
+                                        mediaController.pause()
+                                    },
+                                    onStopRecording = {
+                                        mediaRecorder.stop()
+                                        val audioUri = recordOutputFile.toUri()
+                                        mediaController.setMediaItem(
+                                            MediaItem.Builder()
+                                                .setUri(audioUri)
+                                                .setMediaMetadata(MediaMetadata.Builder()
+                                                    .setTitle(getString(R.string.just_recorded_audio_title))
+                                                    .build())
+                                                .build()
+                                        )
+                                        viewModel.audioDescriptionToUpload = audioUri
+                                        viewModel.audioRecorderState.recordIsStopped = true
+                                        viewModel.audioRecorderState.isRecording = false
+                                        viewModel.audioRecorderState.recordIsPaused = false
+                                        viewModel.audioRecorderState.durationMilliseconds = mediaController.duration
+                                    },
+                                    onPauseRecording = {
+                                        mediaRecorder.pause()
+                                        viewModel.audioRecorderState.recordIsStopped = false
+                                        viewModel.audioRecorderState.isRecording = true
+                                        viewModel.audioRecorderState.recordIsPaused = true
+                                    },
+                                    onStartRecording = { fromPause ->
+
+                                        if(fromPause) {
+                                            mediaRecorder.resume()
+                                        } else {
+                                            mediaRecorder.run {
+                                                setAudioSource(MediaRecorder.AudioSource.MIC)
+                                                setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
+                                                setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+                                                if (Build.VERSION.SDK_INT >= 26) {
+                                                    setOutputFile(recordOutputFile)
+                                                } else {
+                                                    setOutputFile(recordOutputFile.path)
+                                                }
+
+                                                prepare()
+                                                start()
+                                            }
+                                        }
+
+                                        viewModel.audioRecorderState.recordIsStopped = false
+                                        viewModel.audioRecorderState.isRecording = true
+                                        viewModel.audioRecorderState.recordIsPaused = false
+                                    },
+                                    state = viewModel.audioRecorderState,
+                                    onSeek = { ms ->
+                                        mediaController.seekTo(ms.toLong())
+                                    },
+                                    modifier = Modifier.fillMaxWidth().padding(8.dp)
+                                )
+
+                                AnimatedVisibility(visible = viewModel.audioRecorderState.recordIsStopped) {
+                                    val uploading by viewModel.uploadingAudio.collectAsState()
+
+                                    Row(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+                                        OutlinedButton(
+                                            onClick = {
+                                                viewModel.audioRecorderState.clearState()
+                                                mediaController.clearMediaItems()
+
+                                                // delete file
+                                                lifecycleScope.launch(Dispatchers.IO) {
+                                                    if(recordOutputFile.exists()) {
+                                                        recordOutputFile.delete()
+                                                    }
+                                                }
+                                            }
+                                        ) {
+                                            Text(stringResource(R.string.reset))
+                                        }
+                                        Spacer(Modifier.width(8.dp))
+                                        Button(
+                                            modifier = Modifier.weight(1f),
+                                            enabled = !uploading,
+                                            onClick = {
+                                                viewModel.setAudioDescriptionProfile()
+                                            }
+                                        ) {
+                                            if(uploading) {
+                                                CircularProgressIndicator(Modifier.size(ButtonDefaults.IconSize))
+                                            }
+                                            Text(stringResource(R.string.save))
+                                        }
+                                    }
+                                }
+
+                            }
+
+
                         }
 
                         PullToRefreshBox(
@@ -490,74 +636,57 @@ class ProfileMainFragment : Fragment() {
                                             onFollowChange = { follow ->
                                                 viewModel.followUser()
                                             },
-                                            audioPlayer = {
+                                            audioPlayer = { descriptionAudio ->
                                                 if(mediaControllerIsAvailable) {
-                                                    when {
-                                                        settingUpAudio -> {
-                                                            AudioRecorder(
-                                                                modifier = Modifier.fillMaxWidth(),
-                                                                onDismiss = {
-                                                                    viewModel.settingUpAudio.value = false
-                                                                },
-                                                                onPlay = {
-                                                                    playRecordedAudio()
-                                                                },
-                                                                onPause = {
-                                                                    pauseRecordedAudio()
-                                                                },
-                                                                onStopRecording = {
-                                                                    stopRecording()
-                                                                },
-                                                                onPauseRecording = {
-                                                                    pauseRecording()
-                                                                },
-                                                                onStartRecording = {
-                                                                    startRecording {
+                                                    AudioPlayer(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        positionMs = viewModel.audioState.progress,
+                                                        isPlaying = viewModel.audioState.isPlaying && (viewModel.audioState.currentAudio == it.descriptionAudio),
+                                                        durationMs = viewModel.audioState.duration,
+                                                        isLoading = false,
+                                                        onPlay = {
+                                                            playAudio(descriptionAudio)
+                                                        },
+                                                        onPause = {
+                                                            pauseAudio(descriptionAudio)
+                                                        },
+                                                        onSeek = { ms ->
+                                                            seekTo(ms)
+                                                        },
+                                                        options = {
+                                                            if(it.isUserItself) {
+                                                                var expanded by remember { mutableStateOf(false) }
 
-                                                                    }
-                                                                },
-                                                                state = viewModel.audioRecorderState,
-                                                                onSeek = {
-
-                                                                }
-                                                            )
-                                                        }
-                                                        it.descriptionAudio != null -> {
-                                                            AudioPlayer(
-                                                                modifier = Modifier.fillMaxWidth().height(120.dp),
-                                                                positionMs = 2000L,
-                                                                isPlaying = false,
-                                                                durationMs = 30_000L,
-                                                                isLoading = false,
-                                                                onPlay = {
-                                                                    playAudio(it.descriptionAudio)
-                                                                },
-                                                                onPause = {
-                                                                    pauseAudio(it.descriptionAudio)
-                                                                },
-                                                                onSeek = { ms ->
-                                                                    seekTo(ms)
-                                                                }
-                                                            )
-                                                        }
-                                                        it.isUserItself -> {
-                                                            Card(Modifier.fillMaxWidth().height(120.dp).padding(16.dp)) {
-                                                                Column(modifier = Modifier.fillMaxWidth().padding(8.dp),
-                                                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                                                    verticalArrangement = Arrangement.Center
-                                                                ) {
-                                                                    Text(stringResource(R.string.setup_your_profile_audio))
-                                                                    TextButton(
+                                                                Box {
+                                                                    FilledTonalIconButton(
+                                                                        modifier = Modifier.padding(4.dp),
                                                                         onClick = {
-                                                                            viewModel.settingUpAudio.value = true
+                                                                            expanded = true
                                                                         }
                                                                     ) {
-                                                                        Text("Record audio")
+                                                                        Icon(Icons.Default.MoreVert, stringResource(R.string.audio_options))
+                                                                    }
+
+                                                                    DropdownMenu(expanded, onDismissRequest = { expanded = false }) {
+                                                                        DropdownMenuItem(
+                                                                            text = { Text(stringResource(R.string.set_audio_description)) },
+                                                                            onClick = {
+                                                                                expanded = false
+                                                                                onAddAudioDescription()
+                                                                            }
+                                                                        )
+                                                                        DropdownMenuItem(
+                                                                            text = { Text(stringResource(R.string.remove)) },
+                                                                            onClick = {
+                                                                                expanded = false
+                                                                            }
+                                                                        )
                                                                     }
                                                                 }
+
                                                             }
                                                         }
-                                                    }
+                                                    )
                                                 }
 
                                             },
@@ -565,9 +694,7 @@ class ProfileMainFragment : Fragment() {
                                                 editProfile.launch(it)
                                             },
                                             onAddAudioDescription = {
-                                                mediaRecorder = if (Build.VERSION.SDK_INT >= 31) MediaRecorder(requireContext()) else MediaRecorder()
-                                                showAudioRecorder = true
-
+                                                onAddAudioDescription()
                                             }
                                         )
                                     }
@@ -633,6 +760,31 @@ class ProfileMainFragment : Fragment() {
         }
     }
 
+    private val playerListener: Player.Listener = object: Player.Listener {
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            viewModel.audioRecorderState.isPlaying = isPlaying
+            viewModel.audioState.isPlaying = isPlaying
+        }
+
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            when(playbackState) {
+                Player.STATE_READY -> {
+                    viewModel.ended = false
+                    viewModel.audioRecorderState.isLoading = false
+                    viewModel.audioRecorderState.durationMilliseconds = this@ProfileMainFragment.mediaController.duration
+                }
+                Player.STATE_ENDED -> {
+                    viewModel.ended = true
+                }
+                Player.STATE_BUFFERING -> {
+                    viewModel.audioRecorderState.isLoading = true
+                }
+
+                Player.STATE_IDLE -> {}
+            }
+        }
+    }
+
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -640,6 +792,8 @@ class ProfileMainFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             mediaController = mediaControllerFuture.await()
             viewModel.mediaControllerIsAvailable.value = true
+
+            mediaController.addListener(playerListener)
 
             // check audios directory
             directory = File(requireContext().filesDir, "recordings")

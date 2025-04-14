@@ -17,5 +17,5 @@ data class UserProfileDto(
     val profileImageId: String?,
     val descriptionText: String?,
     val descriptionAudioId: String?,
-    val audio: AudioDto?
+    val descriptionAudio: AudioDto?
 )

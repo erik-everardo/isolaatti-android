@@ -41,7 +41,8 @@ fun AudioPlayer(
     durationMs: Long,
     onPlay: () -> Unit = {},
     onPause: () -> Unit = {},
-    onSeek: (position: Float) -> Unit = {}
+    onSeek: (position: Float) -> Unit = {},
+    options: @Composable () -> Unit = {}
 ) {
 
 
@@ -79,11 +80,13 @@ fun AudioPlayer(
                         onSeek(value)
                     },
                     modifier = Modifier.padding(horizontal = 4.dp).weight(1f),
-                    valueRange = 0f..durationMs.toFloat()
+                    valueRange = 0f..durationMs.toFloat().coerceAtLeast(0f)
                 )
+
             }
 
             Text("${positionMs.milliseconds.clockFormat()}/${durationMs.milliseconds.clockFormat()}")
+            options()
         }
 
     }

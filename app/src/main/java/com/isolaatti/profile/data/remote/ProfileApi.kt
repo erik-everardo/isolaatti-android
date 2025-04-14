@@ -1,11 +1,14 @@
 package com.isolaatti.profile.data.remote
 
+import com.isolaatti.audio.common.data.AudioDto
+import okhttp3.MultipartBody
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.Part
 import retrofit2.http.Path
-import retrofit2.http.Query
 
 interface ProfileApi {
 
@@ -18,5 +21,9 @@ interface ProfileApi {
 
     @POST("EditProfile/RemoveProfileImage")
     fun removeCurrentProfilePicture(): Call<Void>
+
+    @Multipart
+    @POST("EditProfile/SetAudioDescription")
+    fun updateAudioDescription(@Part file: MultipartBody.Part, @Part duration: MultipartBody.Part): Call<AudioDto>
 
 }

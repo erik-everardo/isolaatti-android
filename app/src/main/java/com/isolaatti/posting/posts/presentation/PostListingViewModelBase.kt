@@ -1,6 +1,7 @@
 package com.isolaatti.posting.posts.presentation
 
 import android.util.Log
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -45,11 +46,13 @@ abstract class PostListingViewModelBase : ViewModel() {
 
     val mediaControllerIsAvailable: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
-    val audioState: MutableStateFlow<AudioPlaybackState> = MutableStateFlow(AudioPlaybackState())
+    val audioState = AudioPlaybackState()
 
     fun getLastId(): Long = try { posts.value?.last()?.id ?: 0 } catch (e: NoSuchElementException) { 0 }
 
     val audioRecorderState = AudioRecorderState()
+    var uploadingAudio: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
 
 
     abstract fun getFeed(refresh: Boolean, hashtag: String?)
@@ -123,17 +126,5 @@ abstract class PostListingViewModelBase : ViewModel() {
 
     fun onPostAddedAtTheBeginning(post: Post) {
         posts.value = listOf(post) + posts.value
-    }
-
-    fun setAudioToPlay(audio: Audio) {
-        audioState.value = AudioPlaybackState(currentAudio = audio)
-    }
-
-    fun setIsPlaying(isPlaying: Boolean) {
-        audioState.value = audioState.value.copy(isPlaying = isPlaying)
-    }
-
-    fun updateProgress(progress: Long, duration: Long) {
-        audioState.value = audioState.value.copy(progress = progress, duration = duration)
     }
 }

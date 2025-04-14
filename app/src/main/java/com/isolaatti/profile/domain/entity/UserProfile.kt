@@ -46,7 +46,7 @@ data class UserProfile(
                 profileImageId = userProfileDto.profileImageId,
                 descriptionText = userProfileDto.descriptionText,
                 descriptionAudioId = userProfileDto.descriptionAudioId,
-                descriptionAudio = userProfileDto.audio?.let { Audio.fromDto(it) }
+                descriptionAudio = userProfileDto.descriptionAudio?.let { Audio.fromDto(it) }
             )
         }
     }

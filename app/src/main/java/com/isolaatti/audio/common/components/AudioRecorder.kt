@@ -19,7 +19,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -50,15 +49,14 @@ class AudioRecorderState(
     isPlaying: Boolean = false,
     isLoading: Boolean = false,
     durationSeconds: Long = 0L,
-    position: Long = 0L,
-
+    position: Long = 0L
 ) {
     var isRecording by mutableStateOf(isRecording)
     var recordIsStopped by mutableStateOf(recordIsStopped)
     var recordIsPaused by mutableStateOf(recordIsPaused)
     var isPlaying by mutableStateOf(isPlaying)
     var isLoading by mutableStateOf(isLoading)
-    var durationSeconds by mutableStateOf(durationSeconds)
+    var durationMilliseconds by mutableStateOf(durationSeconds)
     var position by mutableStateOf(position)
 
     fun clearState() {
@@ -66,7 +64,7 @@ class AudioRecorderState(
         isRecording = false
         recordIsPaused = false
         isPlaying = false
-        durationSeconds = 0L
+        durationMilliseconds = 0L
         position = 0L
     }
 }
@@ -74,6 +72,7 @@ class AudioRecorderState(
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun AudioRecorder(
+    modifier: Modifier = Modifier,
     onDismiss: () -> Unit = {},
     onPlay: () -> Unit = {},
     onPause: () -> Unit = {},
@@ -82,7 +81,6 @@ fun AudioRecorder(
     onStartRecording: (fromPaused: Boolean) -> Unit,
     state: AudioRecorderState = AudioRecorderState(),
     onSeek: (position: Float) -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
 
 
@@ -174,7 +172,7 @@ fun AudioRecorder(
                             positionMs = state.position,
                             isLoading = state.isLoading,
                             isPlaying = state.isPlaying,
-                            durationMs = state.durationSeconds,
+                            durationMs = state.durationMilliseconds,
                             onPlay = onPlay,
                             onPause = onPause,
                             onSeek = onSeek

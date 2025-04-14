@@ -2,10 +2,6 @@ package com.isolaatti.profile.presentation
 
 import android.net.Uri
 import android.util.Log
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
@@ -18,6 +14,7 @@ import com.isolaatti.profile.domain.use_case.FollowUser
 import com.isolaatti.profile.domain.use_case.GetProfile
 import com.isolaatti.profile.domain.use_case.GetProfilePosts
 import com.isolaatti.profile.domain.use_case.RemoveProfilePicture
+import com.isolaatti.profile.domain.use_case.SetProfileAudio
 import com.isolaatti.profile.domain.use_case.SetProfileImage
 import com.isolaatti.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,7 +32,8 @@ class ProfileViewModel @Inject constructor(
     private val getProfilePostsUseCase: GetProfilePosts,
     private val setProfileImageUC: SetProfileImage,
     private val followUserUC: FollowUser,
-    private val removeProfilePictureUC: RemoveProfilePicture
+    private val removeProfilePictureUC: RemoveProfilePicture,
+    private val setProfileAudio: SetProfileAudio
 ) : PostListingViewModelBase() {
     private val _profile = MutableLiveData<UserProfile>()
     val profile: LiveData<UserProfile> get() = _profile
@@ -57,8 +55,12 @@ class ProfileViewModel @Inject constructor(
 
     val uploadingProfilePicture: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val errorProfilePicture: MutableStateFlow<Resource.Error<RemoteImage>?> = MutableStateFlow(null)
-    val settingUpAudio: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
+    var audioDescriptionToUpload: Uri? = null
+    var ended: Boolean = false
+
+    val showAudioRecorder = MutableStateFlow(false)
+    val setAudioDescriptionError = MutableStateFlow(false)
 
     // runs the lists of "Runnable" one by one and clears list. After this is executed,
     // caller should report as handled
@@ -211,6 +213,33 @@ class ProfileViewModel @Inject constructor(
                     }
                 }
             }.flowOn(Dispatchers.IO).launchIn(this)
+        }
+    }
+
+    fun setAudioDescriptionProfile() {
+        viewModelScope.launch {
+            audioDescriptionToUpload?.let {
+                setProfileAudio(it, audioRecorderState.durationMilliseconds).onEach { response ->
+                    when(response) {
+                        is Resource.Error -> {
+                            Log.d(TAG, "Error")
+                            setAudioDescriptionError.value = true
+                            uploadingAudio.value = false
+                        }
+                        is Resource.Loading -> {
+                            setAudioDescriptionError.value = false
+                            uploadingAudio.value = true
+                        }
+                        is Resource.Success -> {
+                            Log.d(TAG, "Success audio = ${response.data}")
+                            setAudioDescriptionError.value = false
+                            uploadingAudio.value = false
+                            showAudioRecorder.value = false
+                        }
+                    }
+                }.flowOn(Dispatchers.IO).launchIn(this)
+            }
+
         }
     }
 

@@ -11,14 +11,12 @@ import java.time.ZonedDateTime
 
 data class Audio(
     val id: String,
-    val name: String,
     val creationTime: ZonedDateTime,
     override val userId: Int,
-    val userName: String
 ): Ownable, Playable(), Serializable {
 
     override val uri: Uri get() {
-        return "${BASE_URL}audios/$id.webm".toUri()
+        return "${BASE_URL}audios/$id.aac".toUri()
     }
 
     override val thumbnail: String get() {
@@ -29,10 +27,8 @@ data class Audio(
         fun fromDto(audioDto: AudioDto): Audio {
             return Audio(
                 id = audioDto.id,
-                name = audioDto.name,
                 creationTime = audioDto.creationTime,
                 userId = audioDto.userId,
-                userName = audioDto.userName
             )
         }
     }

@@ -76,6 +76,7 @@ fun ProfileHeader(
     loading: Boolean = false,
     isOwnUser: Boolean,
     followingThisUser: Boolean,
+    audioPlayer: @Composable (Audio) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(modifier) {
@@ -133,11 +134,7 @@ fun ProfileHeader(
                         OutlinedCard(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
                             Column(modifier = Modifier.padding(8.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(stringResource(R.string.you_have_now_audio))
-                                FilledTonalButton(
-                                    onClick = {
-
-                                    }
-                                ) {
+                                FilledTonalButton(onClick = onAddAudioDescription) {
                                     Text(stringResource(R.string.set_audio_description))
                                 }
                             }
@@ -145,7 +142,7 @@ fun ProfileHeader(
                     }
 
                     audio != null -> {
-
+                        audioPlayer(audio)
                     }
                 }
 
@@ -191,6 +188,7 @@ fun ProfileHeaderPreview() {
         onFollowersClick = {},
         onFollowChange = {},
         onEditProfileClick = {},
-        onAddAudioDescription = {}
+        onAddAudioDescription = {},
+        audioPlayer = {}
     )
 }

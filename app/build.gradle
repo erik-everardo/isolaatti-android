@@ -15,7 +15,7 @@ plugins {
 
 android {
     namespace 'com.isolaatti'
-    compileSdk 34
+    compileSdk 35
     viewBinding {
         enabled = true
     }

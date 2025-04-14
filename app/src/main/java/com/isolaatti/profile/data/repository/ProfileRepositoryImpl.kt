@@ -3,8 +3,11 @@ package com.isolaatti.profile.data.repository
 import android.content.ContentResolver
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Build
 import android.util.Log
+import androidx.core.net.toFile
+import com.isolaatti.audio.common.domain.Audio
 import com.isolaatti.auth.data.local.UserInfoDao
 import com.isolaatti.auth.data.local.UserInfoEntity
 import com.isolaatti.images.common.data.remote.ImagesApi
@@ -18,10 +21,12 @@ import com.isolaatti.utils.Resource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.awaitResponse
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.IOException
 import java.io.InputStream
 import javax.inject.Inject
 
@@ -121,6 +126,29 @@ class ProfileRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Log.e("ProfileRepositoryImpl", e.message.toString())
             emit(Resource.Error(Resource.Error.ErrorType.NetworkError))
+        }
+    }
+
+    override fun setProfileAudio(audioFile: Uri, duration: Long): Flow<Resource<Audio>> = flow {
+        emit(Resource.Loading())
+
+        try {
+            val file = audioFile.toFile()
+            val response = profileApi.updateAudioDescription(
+                file = MultipartBody.Part.createFormData("audioFile", "profile-audio", file.asRequestBody()),
+                duration = MultipartBody.Part.createFormData("duration", duration.toString())
+            ).awaitResponse()
+
+            if(response.isSuccessful) {
+                emit(Resource.Success(Audio.fromDto(response.body()!!)))
+            } else {
+                emit(Resource.Error(Resource.Error.mapErrorCode(response.code())))
+            }
+
+
+
+        } catch(e: IOException) {
+            emit(Resource.Error(Resource.Error.ErrorType.OtherError))
         }
     }
 }
