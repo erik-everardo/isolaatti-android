@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -45,6 +46,7 @@ import com.isolaatti.utils.UrlGen.userProfileImage
 @Composable
 fun PostComponent(
     post: Post,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
     onLike: () -> Unit = {},
     onDislike: () -> Unit = {},
@@ -55,10 +57,17 @@ fun PostComponent(
     onUsernameClick: () -> Unit = {},
     onImageClick: (images: List<RemoteImage>, index: Int) -> Unit = {_, _ -> },
     onHashtagClick: (hashtag: String) -> Unit = {},
-    onPlay: (audio: Audio, positionMs: Long) -> Unit =  {_, _ -> },
-    modifier: Modifier = Modifier
+
+    isCurrentlyPlaying: Boolean = false,
+    audioIsPlaying: Boolean = false,
+    progress: Long = 0,
+    duration: Long = 0,
+    onPlay: () -> Unit =  {},
+    onPause: () -> Unit = {},
+    onSeek: (seconds: Float) -> Unit = {},
+
 ) {
-    Card(modifier = modifier.padding(8.dp).clickable { onClick() }) {
+    Card(modifier = modifier.padding(8.dp).clickable { onClick() }, shape = RectangleShape) {
         Row(modifier = Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
             AsyncImage(
                 model = userProfileImage(post.userId),
@@ -85,19 +94,14 @@ fun PostComponent(
         post.audio?.let {
             AudioPlayer(
                 modifier = Modifier.fillMaxWidth().height(80.dp),
-                positionMs = 2000L,
-                isPlaying = false,
-                durationMs = 30_000L,
+                positionMs = progress,
+                isPlaying = isCurrentlyPlaying && audioIsPlaying,
+                durationMs = duration,
                 isLoading = false,
-                onPlay = {
-
-                },
-                onPause = {
-
-                },
-                onSeek = {
-
-                }
+                focused = isCurrentlyPlaying,
+                onPlay = onPlay,
+                onPause = onPause,
+                onSeek = onSeek
             )
         }
 

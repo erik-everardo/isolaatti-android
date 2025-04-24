@@ -14,9 +14,9 @@ class MakePost @Inject constructor(private val postsRepository: PostsRepository)
         privacy: Int,
         content: String,
         images: List<LocalImage>,
-        audioId: String?,
+        audio: Uri?,
         squadId: String?
     ): Flow<Resource<PostingSteps>>  {
-        return postsRepository.makePost(CreatePostDto(privacy, content, audioId, squadId), images)
+        return postsRepository.makePost(CreatePostDto(privacy, content, squadId), images, audio)
     }
 }

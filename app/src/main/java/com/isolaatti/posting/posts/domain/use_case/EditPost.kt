@@ -12,9 +12,8 @@ class EditPost @Inject constructor(private val postsRepository: PostsRepository)
         postId: Long,
         privacy: Int,
         content: String,
-        audioId: String?,
         squadId: String?
     ): Flow<Resource<FeedDto.PostDto>> {
-        return postsRepository.editPost(EditPostDto(privacy, content, audioId, squadId, postId))
+        return postsRepository.editPost(EditPostDto(privacy, content, squadId, postId))
     }
 }

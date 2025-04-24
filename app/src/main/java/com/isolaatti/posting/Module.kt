@@ -1,6 +1,7 @@
 package com.isolaatti.posting
 
 import android.content.ContentResolver
+import com.isolaatti.audio.common.data.AudiosApi
 import com.isolaatti.connectivity.RetrofitClient
 import com.isolaatti.images.common.data.remote.ImagesApi
 import com.isolaatti.posting.posts.data.remote.FeedsApi
@@ -27,7 +28,7 @@ class Module {
     }
 
     @Provides
-    fun providePostsRepository(feedsApi: FeedsApi, postApi: PostApi, imagesApi: ImagesApi, contentResolver: ContentResolver): PostsRepository {
-        return PostsRepositoryImpl(feedsApi, postApi, imagesApi, contentResolver)
+    fun providePostsRepository(feedsApi: FeedsApi, postApi: PostApi, imagesApi: ImagesApi, audiosApi: AudiosApi, contentResolver: ContentResolver): PostsRepository {
+        return PostsRepositoryImpl(feedsApi, postApi, imagesApi, audiosApi, contentResolver)
     }
 }

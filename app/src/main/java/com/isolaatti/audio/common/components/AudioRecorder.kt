@@ -175,6 +175,7 @@ fun AudioRecorder(
                             durationMs = state.durationMilliseconds,
                             onPlay = onPlay,
                             onPause = onPause,
+                            focused = true,
                             onSeek = onSeek
                         )
                     }

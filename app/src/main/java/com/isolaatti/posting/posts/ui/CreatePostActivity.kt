@@ -236,10 +236,11 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                         CircularProgressIndicator()
                                         Text(
                                             when(postingStep) {
-                                                PostingSteps.PostContent -> getString(R.string.posting)
-                                                PostingSteps.UploadingPhotos -> getString(R.string.uploading_photos)
+                                                PostingSteps.PostContent -> stringResource(R.string.posting)
+                                                PostingSteps.UploadingPhotos -> stringResource(R.string.uploading_photos)
                                                 PostingSteps.Finished -> ""
                                                 PostingSteps.Unspecified -> ""
+                                                PostingSteps.UploadingAudio -> stringResource(R.string.uploading_audio)
                                             },
                                             modifier = Modifier.padding(4.dp)
                                         )

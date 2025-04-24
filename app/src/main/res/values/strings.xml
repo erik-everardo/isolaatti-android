@@ -237,6 +237,7 @@
     <string name="setup_your_profile_audio">Setup your profile audio</string>
     <string name="reset">Reset</string>
     <string name="error_uploading_audio">An error ocurred while uploading the audio</string>
+    <string name="uploading_audio">Uploading audio…</string>
     <string-array name="report_reasons">
         <item>Spam</item>
         <item>Explicit content</item>

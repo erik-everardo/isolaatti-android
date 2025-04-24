@@ -198,17 +198,13 @@ class ProfileMainFragment : Fragment() {
     private lateinit var directory: File
 
 
-    private fun pauseRecordedAudio() {
-
-    }
-
     private fun seekTo(ms: Float) {
-
+        mediaController.seekTo(ms.toLong())
     }
 
     private fun playAudio(descriptionAudio: Audio) {
 
-        if(mediaController.currentMediaItem?.mediaId == descriptionAudio.id) {
+        if(viewModel.audioState.currentAudio== descriptionAudio) {
             mediaController.play()
         } else {
             val mediaItem = MediaItem.Builder()
@@ -225,7 +221,7 @@ class ProfileMainFragment : Fragment() {
 
     }
 
-    private fun pauseAudio(descriptionAudio: Audio) {
+    private fun pauseAudio() {
         mediaController.pause()
         viewModel.audioState.isPlaying = false
     }
@@ -640,15 +636,16 @@ class ProfileMainFragment : Fragment() {
                                                 if(mediaControllerIsAvailable) {
                                                     AudioPlayer(
                                                         modifier = Modifier.fillMaxWidth(),
-                                                        positionMs = viewModel.audioState.progress,
+                                                        positionMs = if(viewModel.audioState.currentAudio == descriptionAudio) viewModel.audioState.progress else 0,
                                                         isPlaying = viewModel.audioState.isPlaying && (viewModel.audioState.currentAudio == it.descriptionAudio),
                                                         durationMs = viewModel.audioState.duration,
                                                         isLoading = false,
+                                                        focused = descriptionAudio == viewModel.audioState.currentAudio,
                                                         onPlay = {
                                                             playAudio(descriptionAudio)
                                                         },
                                                         onPause = {
-                                                            pauseAudio(descriptionAudio)
+                                                            pauseAudio()
                                                         },
                                                         onSeek = { ms ->
                                                             seekTo(ms)
@@ -712,19 +709,36 @@ class ProfileMainFragment : Fragment() {
                                         modifier = Modifier.animateItem(),
                                         post = post,
                                         onClick = {
-                                            PostViewerActivity.startActivity(requireContext(), post.id)
+                                            PostViewerActivity.startActivity(
+                                                requireContext(),
+                                                post.id
+                                            )
                                         },
                                         onComments = {
-                                            val modalBottomSheet = BottomSheetPostComments.getInstance(post.id)
-                                            modalBottomSheet.show(requireActivity().supportFragmentManager, BottomSheetPostComments.TAG)
+                                            val modalBottomSheet =
+                                                BottomSheetPostComments.getInstance(post.id)
+                                            modalBottomSheet.show(
+                                                requireActivity().supportFragmentManager,
+                                                BottomSheetPostComments.TAG
+                                            )
                                         },
                                         onOptions = {
-                                            optionsViewModel.setOptions(Options.POST_OPTIONS, CALLER_ID, post)
+                                            optionsViewModel.setOptions(
+                                                Options.POST_OPTIONS,
+                                                CALLER_ID,
+                                                post
+                                            )
                                             val modalBottomSheet = BottomSheetPostOptionsFragment()
-                                            modalBottomSheet.show(requireActivity().supportFragmentManager, BottomSheetPostOptionsFragment.TAG)
+                                            modalBottomSheet.show(
+                                                requireActivity().supportFragmentManager,
+                                                BottomSheetPostOptionsFragment.TAG
+                                            )
                                         },
                                         onInfo = {
-                                            PostInfoActivity.startActivity(requireContext(), post.id)
+                                            PostInfoActivity.startActivity(
+                                                requireContext(),
+                                                post.id
+                                            )
                                         },
                                         onLike = {
                                             viewModel.likePost(post.id)
@@ -735,21 +749,47 @@ class ProfileMainFragment : Fragment() {
                                         onShare = {
                                             val intent = Intent.createChooser(Intent().apply {
                                                 action = Intent.ACTION_SEND
-                                                putExtra(Intent.EXTRA_TEXT, "${BuildConfig.backend}/pub/${post.id}")
+                                                putExtra(
+                                                    Intent.EXTRA_TEXT,
+                                                    "${BuildConfig.backend}/pub/${post.id}"
+                                                )
                                                 type = "text/plain"
                                             }, getString(R.string.share_post))
                                             startActivity(intent)
                                         },
                                         onImageClick = { images, index ->
-                                            PictureViewerActivity.startActivityWithImages(requireContext(), images.toTypedArray(), index)
+                                            PictureViewerActivity.startActivityWithImages(
+                                                requireContext(),
+                                                images.toTypedArray(),
+                                                index
+                                            )
                                         },
                                         onUsernameClick = {
-                                            if(profile?.userId == post.userId) return@PostComponent
-                                            ProfileActivity.startActivity(requireContext(), post.userId)
+                                            if (profile?.userId == post.userId) return@PostComponent
+                                            ProfileActivity.startActivity(
+                                                requireContext(),
+                                                post.userId
+                                            )
                                         },
                                         onHashtagClick = { hashtag ->
-                                            HashtagsPostsActivity.startActivity(requireContext(), hashtag)
-                                        }
+                                            HashtagsPostsActivity.startActivity(
+                                                requireContext(),
+                                                hashtag
+                                            )
+                                        },
+                                        isCurrentlyPlaying = post.audio == viewModel.audioState.currentAudio,
+                                        audioIsPlaying = viewModel.audioState.isPlaying,
+                                        duration = if(viewModel.audioState.currentAudio == post.audio) viewModel.audioState.duration else viewModel.audioState.duration,
+                                        progress = if(viewModel.audioState.currentAudio == post.audio) viewModel.audioState.progress else 0,
+                                        onPlay = {
+                                            post.audio?.let { playAudio(it) }
+                                        },
+                                        onPause = {
+                                            pauseAudio()
+                                        },
+                                        onSeek = {
+                                            seekTo(it)
+                                        },
                                     )
                                 }
                             }
@@ -775,6 +815,8 @@ class ProfileMainFragment : Fragment() {
                 }
                 Player.STATE_ENDED -> {
                     viewModel.ended = true
+                    viewModel.audioState.progress = 0
+                    viewModel.audioState.currentAudio = null
                 }
                 Player.STATE_BUFFERING -> {
                     viewModel.audioRecorderState.isLoading = true

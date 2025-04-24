@@ -60,7 +60,6 @@ class CreatePostViewModel @Inject constructor(
     val audioAttachment: MutableLiveData<Playable?> = MutableLiveData()
 
     private var audioDraft: Long? = null
-    private var audioId: String? = null
 
     val audioRecorderState = AudioRecorderState()
     var ended: Boolean = false
@@ -79,7 +78,7 @@ class CreatePostViewModel @Inject constructor(
                 privacy = EditPostDto.PRIVACY_ISOLAATTI,
                 content = liveContent.value ?: "",
                 images = photos.value.filterIsInstance<LocalImage>(),
-                audioId = audioId,
+                audio = audioToUpload,
                 squadId = null
             ).onEach {
                 when(it) {
@@ -116,7 +115,7 @@ class CreatePostViewModel @Inject constructor(
 
     private fun sendEditDiscussion(postId: Long) {
         viewModelScope.launch {
-            editPost(postId, EditPostDto.PRIVACY_ISOLAATTI, liveContent.value ?: "", audioId, null).onEach {
+            editPost(postId, EditPostDto.PRIVACY_ISOLAATTI, liveContent.value ?: "", null).onEach {
                 when(it) {
                     is Resource.Success -> {
                         sendingPost.postValue(false)

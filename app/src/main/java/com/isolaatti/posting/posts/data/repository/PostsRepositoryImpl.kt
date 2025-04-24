@@ -6,7 +6,9 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.util.Log
+import androidx.core.net.toFile
 import com.google.gson.Gson
+import com.isolaatti.audio.common.data.AudiosApi
 import com.isolaatti.images.common.data.remote.ImageDto
 import com.isolaatti.images.common.data.remote.ImagesApi
 import com.isolaatti.images.common.domain.entity.LocalImage
@@ -26,7 +28,9 @@ import com.isolaatti.profile.domain.entity.ProfileListItem
 import com.isolaatti.utils.Resource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.awaitResponse
 import java.io.ByteArrayOutputStream
@@ -37,6 +41,7 @@ class PostsRepositoryImpl @Inject constructor(
     private val feedsApi: FeedsApi,
     private val postApi: PostApi,
     private val imagesApi: ImagesApi,
+    private val audiosApi: AudiosApi,
     private val contentResolver: ContentResolver
 ) : PostsRepository {
     companion object {
@@ -82,12 +87,17 @@ class PostsRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun makePost(createPostDto: CreatePostDto, images: List<LocalImage>): Flow<Resource<PostingSteps>> = flow {
+    override fun makePost(createPostDto: CreatePostDto, images: List<LocalImage>, audio: Uri?): Flow<Resource<PostingSteps>> = flow {
         emit(Resource.Loading())
         try {
             val hasImages = images.isNotEmpty()
+            val hasAudio = audio != null
+
+            var imagesError = false
+            var audioError = false
+
             val result = postApi.makePost(
-                if(hasImages) {
+                if(hasImages || hasAudio) {
                     createPostDto.copy(isDraft = true)
                 } else {
                     createPostDto
@@ -142,27 +152,60 @@ class PostsRepositoryImpl @Inject constructor(
                         }
                     }
 
-                    // undo post and emit error
-                    if(successfulImageUploads.size != images.size) {
+                    imagesError = successfulImageUploads.size != images.size
+                }
+
+                if(hasAudio) {
+                    emit(Resource.Success(PostingSteps.UploadingAudio))
+                    val file = audio.toFile()
+                    val postId = result.body()?.post?.id
+                    if(postId == null) {
+                        audioError = true
+                    } else {
+                        val response = audiosApi.uploadFile(
+                            MultipartBody.Part.createFormData(
+                                AudiosApi.AudioParam, // api parameter name
+                                audio.lastPathSegment,
+                                file.asRequestBody("audio/aac".toMediaType()) // actual file to be sent
+                            ),
+                            MultipartBody.Part.createFormData(AudiosApi.PostIdParam, postId.toString()),
+                            MultipartBody.Part.createFormData(AudiosApi.DurationParam, "0")
+                        ).awaitResponse()
+
+                        audioError = !response.isSuccessful
+                    }
+
+                }
+
+                if((hasAudio && audioError) || (hasImages && imagesError)) {
+                    val postId = result.body()?.post?.id
+                    if(postId != null) {
                         postApi.deletePost(DeletePostDto(postId)).awaitResponse()
                         emit(Resource.Error(Resource.Error.ErrorType.ServerError, "Some images were not processed correctly"))
-                    } else {
-                        val setIsDraftCall = postApi.setIsDraft(postId, false).awaitResponse()
-
-                        if(setIsDraftCall.isSuccessful) {
-                            emit(Resource.Success(PostingSteps.Finished))
-                        } else {
-                            val code = setIsDraftCall.code()
-                            Log.e(LOG_TAG, "Could not set as \"not draft\"")
-                            emit(Resource.Error(Resource.Error.mapErrorCode(code), "Could not set as \"not draft\""))
-                        }
-
                     }
-                } else {
-                    emit(Resource.Success(PostingSteps.Finished))
                     return@flow
                 }
 
+                val postId = result.body()?.post?.id
+
+                if(postId == null) {
+                    emit(Resource.Error())
+                    return@flow
+                }
+
+                val setIsDraftCall = postApi.setIsDraft(postId, false).awaitResponse()
+
+                if(setIsDraftCall.isSuccessful) {
+                    emit(Resource.Success(PostingSteps.Finished))
+                } else {
+                    val code = setIsDraftCall.code()
+                    Log.e(LOG_TAG, "Could not set as \"not draft\"")
+                    emit(Resource.Error(Resource.Error.mapErrorCode(code), "Could not set as \"not draft\""))
+                }
+
+
+                emit(Resource.Success(PostingSteps.Finished))
+                return@flow
             }
             emit(Resource.Error(Resource.Error.mapErrorCode(result.code())))
         } catch(e: Exception) {

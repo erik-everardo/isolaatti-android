@@ -128,7 +128,10 @@ class PostListingFragment : Fragment() {
                                     },
                                     onHashtagClick = { hashtag ->
                                         HashtagsPostsActivity.startActivity(requireContext(), hashtag)
-                                    }
+                                    },
+                                    onPlay = {},
+                                    onPause = {},
+                                    onSeek = {}
                                 )
                             }
                         }

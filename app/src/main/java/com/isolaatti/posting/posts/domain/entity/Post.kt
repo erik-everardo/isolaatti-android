@@ -19,7 +19,6 @@ class Post(
     override val userId: Int,
     val privacy: Int,
     val date: String,
-    var audioId: String? = null,
     val squadId: String? = null,
     numberOfLikes: Int,
     numberOfComments: Int,
@@ -47,7 +46,6 @@ class Post(
         parcel.readInt(),
         parcel.readString()!!,
         parcel.readString(),
-        parcel.readString(),
         parcel.readInt(),
         parcel.readInt(),
         parcel.readString()!!,
@@ -67,14 +65,13 @@ class Post(
                     textContent = it.post.textContent,
                     privacy = it.post.privacy,
                     date = it.post.date,
-                    audioId = it.post.audioId,
                     squadId = it.post.squadId,
                     numberOfComments = it.numberOfComments,
                     numberOfLikes = it.numberOfLikes,
                     userName = it.userName,
                     squadName = it.squadName,
                     liked = it.liked,
-                    audio = it.audio?.let { audioDto -> Audio.fromDto(audioDto) },
+                    audio = it.post.audio?.let { audioDto -> Audio.fromDto(audioDto) },
                     images = it.post.images.map { imageDto -> RemoteImage(imageDto.id) }
                 )
             }.toMutableList()
@@ -87,7 +84,6 @@ class Post(
                 textContent = postDto.post.textContent,
                 privacy = postDto.post.privacy,
                 date = postDto.post.date,
-                audioId = postDto.post.audioId,
                 squadId = postDto.post.squadId,
                 numberOfComments = postDto.numberOfComments,
                 numberOfLikes = postDto.numberOfLikes,
@@ -116,7 +112,6 @@ class Post(
         parcel.writeInt(userId)
         parcel.writeInt(privacy)
         parcel.writeString(date)
-        parcel.writeString(audioId)
         parcel.writeString(squadId)
         parcel.writeInt(numberOfLikes)
         parcel.writeInt(numberOfComments)

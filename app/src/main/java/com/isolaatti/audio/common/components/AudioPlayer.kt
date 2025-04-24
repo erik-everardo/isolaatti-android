@@ -41,6 +41,7 @@ fun AudioPlayer(
     durationMs: Long,
     onPlay: () -> Unit = {},
     onPause: () -> Unit = {},
+    focused: Boolean,
     onSeek: (position: Float) -> Unit = {},
     options: @Composable () -> Unit = {}
 ) {
@@ -76,6 +77,7 @@ fun AudioPlayer(
                     onValueChange = {
                         value = it
                     },
+                    enabled = focused,
                     onValueChangeFinished = {
                         onSeek(value)
                     },

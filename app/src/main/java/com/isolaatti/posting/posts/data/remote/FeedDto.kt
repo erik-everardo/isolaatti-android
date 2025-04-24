@@ -24,7 +24,6 @@ data class FeedDto(
         val userName: String,
         val squadName: String?,
         var liked: Boolean,
-        var audio: AudioDto?
     ){
 
         val list: MutableList<ImageDto> = mutableListOf()
@@ -35,7 +34,7 @@ data class FeedDto(
             val userId: Int,
             val privacy: Int,
             val date: String,
-            var audioId: String?,
+            var audio: AudioDto?,
             val squadId: String?,
             val linkedDiscussionId: Long,
             val linkedCommentId: Long,
