@@ -4,6 +4,7 @@ import com.isolaatti.audio.common.data.AudioDto
 import okhttp3.MultipartBody
 import retrofit2.Call
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.POST
@@ -21,6 +22,9 @@ interface ProfileApi {
 
     @POST("EditProfile/RemoveProfileImage")
     fun removeCurrentProfilePicture(): Call<Void>
+
+    @DELETE("EditProfile/Audio")
+    fun deleteAudioDescription(): Call<Void>
 
     @Multipart
     @POST("EditProfile/SetAudioDescription")

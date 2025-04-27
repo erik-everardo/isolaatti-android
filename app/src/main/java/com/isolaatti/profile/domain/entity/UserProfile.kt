@@ -21,7 +21,6 @@ data class UserProfile(
     val thisUserIsFollowingMe: Boolean,
     val profileImageId: String?,
     var descriptionText: String?,
-    val descriptionAudioId: String?,
     val descriptionAudio: Audio?
 ) : Ownable, Serializable {
 
@@ -45,7 +44,6 @@ data class UserProfile(
                 thisUserIsFollowingMe = userProfileDto.thisUserIsFollowingMe,
                 profileImageId = userProfileDto.profileImageId,
                 descriptionText = userProfileDto.descriptionText,
-                descriptionAudioId = userProfileDto.descriptionAudioId,
                 descriptionAudio = userProfileDto.descriptionAudio?.let { Audio.fromDto(it) }
             )
         }

@@ -186,6 +186,7 @@
     <string name="select_audio">Select audio</string>
     <string name="delete_audio_message">Do you really want to remove this audio? Discussions with this audio linked will still be pointing to it.</string>
     <string name="delete_audio_title">Remove audio?</string>
+    <string name="delete_profile_audio">Do you really want to delete your profile audio?</string>
     <string name="push_notifications_dialog_title">Push notifications</string>
     <string name="push_notifications_dialog_message">Receive notifications to stay informed about your profile activity</string>
     <string name="push_notifications_dialog_rejected_message">You won\'t receive notifications. You can change this on your device settings.</string>

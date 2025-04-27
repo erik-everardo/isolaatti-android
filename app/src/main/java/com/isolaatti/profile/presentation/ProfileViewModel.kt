@@ -10,6 +10,7 @@ import com.isolaatti.images.common.domain.entity.LocalImage
 import com.isolaatti.images.common.domain.entity.RemoteImage
 import com.isolaatti.posting.posts.presentation.PostListingViewModelBase
 import com.isolaatti.profile.domain.entity.UserProfile
+import com.isolaatti.profile.domain.use_case.DeleteProfileAudio
 import com.isolaatti.profile.domain.use_case.FollowUser
 import com.isolaatti.profile.domain.use_case.GetProfile
 import com.isolaatti.profile.domain.use_case.GetProfilePosts
@@ -20,9 +21,11 @@ import com.isolaatti.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -33,10 +36,11 @@ class ProfileViewModel @Inject constructor(
     private val setProfileImageUC: SetProfileImage,
     private val followUserUC: FollowUser,
     private val removeProfilePictureUC: RemoveProfilePicture,
-    private val setProfileAudio: SetProfileAudio
+    private val setProfileAudio: SetProfileAudio,
+    private val deleteProfileAudio: DeleteProfileAudio
 ) : PostListingViewModelBase() {
-    private val _profile = MutableLiveData<UserProfile>()
-    val profile: LiveData<UserProfile> get() = _profile
+    private val _profile = MutableStateFlow<UserProfile?>(null)
+    val profile: StateFlow<UserProfile?> get() = _profile
     val loadingProfile: MutableStateFlow<Boolean> = MutableStateFlow(true)
 
     var profileId: Int  = 0
@@ -88,7 +92,7 @@ class ProfileViewModel @Inject constructor(
                     }
                     is Resource.Success -> {
                         loadingProfile.value = false
-                        _profile.postValue(it.data!!)
+                        _profile.value = it.data!!
                         followingState.postValue(
                             it.data.let { user-> getFollowingState(user.followingThisUser, user.thisUserIsFollowingMe) }
                         )
@@ -124,7 +128,7 @@ class ProfileViewModel @Inject constructor(
                             errorProfilePicture.value = null
                             uploadingProfilePicture.value = false
                             showConfirmChangeProfilePictureBottomSheet.value = false
-                            _profile.postValue(_profile.value?.copy(profileImageId = resource.data?.id))
+                            _profile.value = _profile.value?.copy(profileImageId = resource.data?.id)
                         }
                     }
 
@@ -147,7 +151,7 @@ class ProfileViewModel @Inject constructor(
                     }
                     is Resource.Success -> {
                         followingLoading.postValue(false)
-                        _profile.postValue(currentProfile.apply { followingThisUser = !following })
+                        _profile.value = currentProfile.apply { followingThisUser = !following }
                         followingState.postValue(getFollowingState(!following, currentProfile.thisUserIsFollowingMe))
                     }
                 }
@@ -209,7 +213,7 @@ class ProfileViewModel @Inject constructor(
                     is Resource.Error -> {}
                     is Resource.Loading -> {}
                     is Resource.Success -> {
-                        _profile.postValue(_profile.value?.copy(profileImageId = null))
+                        _profile.value = _profile.value?.copy(profileImageId = null)
                     }
                 }
             }.flowOn(Dispatchers.IO).launchIn(this)
@@ -219,7 +223,7 @@ class ProfileViewModel @Inject constructor(
     fun setAudioDescriptionProfile() {
         viewModelScope.launch {
             audioDescriptionToUpload?.let {
-                setProfileAudio(it, audioRecorderState.durationMilliseconds).onEach { response ->
+                setProfileAudio(it, 0).onEach { response ->
                     when(response) {
                         is Resource.Error -> {
                             Log.d(TAG, "Error")
@@ -235,11 +239,30 @@ class ProfileViewModel @Inject constructor(
                             setAudioDescriptionError.value = false
                             uploadingAudio.value = false
                             showAudioRecorder.value = false
+                            _profile.update {
+                                it?.copy(descriptionAudio = response.data)
+                            }
                         }
                     }
                 }.flowOn(Dispatchers.IO).launchIn(this)
             }
 
+        }
+    }
+
+    fun removeAudioProfile() {
+        viewModelScope.launch {
+            deleteProfileAudio().onEach { resource ->
+                when(resource) {
+                    is Resource.Error<*> -> {}
+                    is Resource.Loading<*> -> {}
+                    is Resource.Success<*> -> {
+                        _profile.update {
+                            it?.copy(descriptionAudio = null)
+                        }
+                    }
+                }
+            }.flowOn(Dispatchers.IO).launchIn(this)
         }
     }
 

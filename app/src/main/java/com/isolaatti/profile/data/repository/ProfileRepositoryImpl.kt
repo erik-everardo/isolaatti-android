@@ -151,4 +151,21 @@ class ProfileRepositoryImpl @Inject constructor(
             emit(Resource.Error(Resource.Error.ErrorType.OtherError))
         }
     }
+
+    override fun removeProfileAudio(): Flow<Resource<Boolean>> = flow {
+        emit(Resource.Loading())
+
+        try {
+            val response = profileApi.deleteAudioDescription().awaitResponse()
+
+            if(response.isSuccessful) {
+                emit(Resource.Success(true))
+            } else {
+                emit(Resource.Error(Resource.Error.mapErrorCode(response.code())))
+            }
+        } catch (e: Exception) {
+            Log.e("ProfileRepositoryImpl", e.message.toString())
+            emit(Resource.Error(Resource.Error.ErrorType.NetworkError))
+        }
+    }
 }

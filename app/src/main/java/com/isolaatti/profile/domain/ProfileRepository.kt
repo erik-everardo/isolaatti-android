@@ -19,4 +19,6 @@ interface ProfileRepository {
     fun removeProfileImage(): Flow<Resource<Boolean>>
 
     fun setProfileAudio(audioFile: Uri, duration: Long): Flow<Resource<Audio>>
+
+    fun removeProfileAudio(): Flow<Resource<Boolean>>
 }

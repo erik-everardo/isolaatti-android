@@ -32,6 +32,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -47,6 +48,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -243,7 +245,7 @@ class ProfileMainFragment : Fragment() {
             setContent {
                 val isRefreshing by viewModel.isRefreshing.collectAsState()
                 val lazyColumState = rememberLazyListState()
-                val profile by viewModel.profile.observeAsState()
+                val profile by viewModel.profile.collectAsState()
                 val followingState by viewModel.followingState.observeAsState()
                 val posts by viewModel.posts.collectAsState()
                 val loadingProfile by viewModel.loadingProfile.collectAsState()
@@ -289,6 +291,8 @@ class ProfileMainFragment : Fragment() {
                 val uploadingProfilePicture by viewModel.uploadingProfilePicture.collectAsState()
 
                 val showAudioRecorder by viewModel.showAudioRecorder.collectAsState()
+
+                var showRemoveAudioDialog by remember { mutableStateOf(false) }
 
                 LaunchedEffect(profile) {
                     showAddPostButton = profile?.isUserItself == true
@@ -425,6 +429,36 @@ class ProfileMainFragment : Fragment() {
                                     loading = uploadingProfilePicture
                                 )
                             }
+                        }
+
+                        if(showRemoveAudioDialog) {
+                            AlertDialog(
+                                onDismissRequest = {
+                                    showRemoveAudioDialog = false
+                                },
+                                text = {
+                                    Text(stringResource(R.string.delete_profile_audio))
+                                },
+                                confirmButton = {
+                                    Button(
+                                        onClick = {
+                                            viewModel.removeAudioProfile()
+                                            showRemoveAudioDialog = false
+                                        }
+                                    ) {
+                                        Text(stringResource(R.string.delete))
+                                    }
+                                },
+                                dismissButton = {
+                                    TextButton(
+                                        onClick = {
+                                            showRemoveAudioDialog = false
+                                        }
+                                    ) {
+                                        Text(stringResource(R.string.cancel))
+                                    }
+                                }
+                            )
                         }
 
                         if(showAudioRecorder) {
@@ -675,7 +709,9 @@ class ProfileMainFragment : Fragment() {
                                                                         DropdownMenuItem(
                                                                             text = { Text(stringResource(R.string.remove)) },
                                                                             onClick = {
+                                                                                showRemoveAudioDialog = true
                                                                                 expanded = false
+
                                                                             }
                                                                         )
                                                                     }
