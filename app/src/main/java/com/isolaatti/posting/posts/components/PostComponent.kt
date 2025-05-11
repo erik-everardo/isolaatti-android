@@ -39,6 +39,7 @@ import com.isolaatti.audio.common.components.AudioPlayer
 import com.isolaatti.audio.common.domain.Audio
 import com.isolaatti.audio.player.AudioPlaybackState
 import com.isolaatti.images.common.domain.entity.RemoteImage
+import com.isolaatti.posting.posts.domain.PostPrivacy
 import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.utils.UrlGen.userProfileImage
 
@@ -192,5 +193,5 @@ fun PostComponent(
 @Composable
 @Preview(device = Devices.PIXEL_5)
 fun PostPreview() {
-    PostComponent(Post(id = 0L, textContent = "Test", userId = 1, privacy = 2, date = "Date", images = emptyList(), liked = false, userName = "Username", numberOfLikes = 2, numberOfComments = 3))
+    PostComponent(Post(id = 0L, textContent = "Test", userId = 1, privacy = PostPrivacy.Isolaatti, date = "Date", images = emptyList(), liked = false, userName = "Username", numberOfLikes = 2, numberOfComments = 3))
 }

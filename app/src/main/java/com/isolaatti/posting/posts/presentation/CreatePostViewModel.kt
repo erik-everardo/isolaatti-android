@@ -18,11 +18,14 @@ import com.isolaatti.images.common.domain.entity.Image
 import com.isolaatti.images.common.domain.entity.LocalImage
 import com.isolaatti.images.common.domain.entity.RemoteImage
 import com.isolaatti.posting.posts.data.remote.EditPostDto
+import com.isolaatti.posting.posts.domain.PostPrivacy
 import com.isolaatti.posting.posts.domain.PostingSteps
+import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.posting.posts.domain.use_case.EditPost
 import com.isolaatti.posting.posts.domain.use_case.LoadSinglePost
 import com.isolaatti.posting.posts.domain.use_case.MakePost
 import com.isolaatti.utils.Resource
+import com.isolaatti.utils.ResourceWithSteps
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +33,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
@@ -45,27 +49,38 @@ class CreatePostViewModel @Inject constructor(
         const val LOG_TAG = "CreatePostViewModel"
     }
 
-    val validation: MutableLiveData<Boolean> = MutableLiveData(false)
-    val error: MutableLiveData<Resource.Error.ErrorType?> = MutableLiveData()
+    val error: MutableLiveData<ResourceWithSteps.Error.ErrorType?> = MutableLiveData()
     val sendingPost: MutableLiveData<Boolean?> = MutableLiveData(null)
-    val postToEdit: MutableLiveData<EditPostDto> = MutableLiveData()
     val liveContent: MutableLiveData<String> = MutableLiveData()
     private val _photos: MutableStateFlow<List<Image>> = MutableStateFlow(emptyList())
     val photos: StateFlow<List<Image>> get() = _photos
     var audioToUpload: Uri? = null
 
+    var posted: Post? = null
+
+    val audioRecorderIsVisible = MutableStateFlow(false)
+
     private val _postingStep = MutableStateFlow(PostingSteps.Unspecified)
     val postingStep: StateFlow<PostingSteps> get() = _postingStep
-
-    val audioAttachment: MutableLiveData<Playable?> = MutableLiveData()
-
-    private var audioDraft: Long? = null
 
     val audioRecorderState = AudioRecorderState()
     var ended: Boolean = false
 
+    val thereIsContent: Boolean get() {
+        return true
+    }
 
+    // put existing audio when editing post
+    val existingAudio: MutableStateFlow<Audio?> = MutableStateFlow(null)
 
+    // this value is checked when sending edited post.
+    // if new audio is going to uploaded, do not send this to backend, uploading new audio will trigger
+    // old audio deletion
+    private var mustRemoveAudio: Boolean = false
+
+    private val imagesToRemove: MutableList<RemoteImage> = mutableListOf()
+
+    val loading: MutableStateFlow<Boolean> = MutableStateFlow(false)
     /**
      * postDiscussion() and editDiscussion() will check for audios pending to upload (drafts). It will
      * upload it (if any) and then send the request to post.
@@ -75,26 +90,27 @@ class CreatePostViewModel @Inject constructor(
         Log.d(LOG_TAG, "postDiscussion#send()")
         viewModelScope.launch {
             makePost(
-                privacy = EditPostDto.PRIVACY_ISOLAATTI,
+                privacy = PostPrivacy.Isolaatti,
                 content = liveContent.value ?: "",
                 images = photos.value.filterIsInstance<LocalImage>(),
                 audio = audioToUpload,
                 squadId = null
             ).onEach {
                 when(it) {
-                    is Resource.Success -> {
-                        if(it.data == PostingSteps.Finished) {
+                    is ResourceWithSteps.Success -> {
+                        if(it.step == PostingSteps.Finished) {
+                            posted = it.data
                             sendingPost.postValue(false)
                         }
 
-                        _postingStep.value = it.data!!
+                        _postingStep.value = it.step
 
                     }
-                    is Resource.Error -> {
+                    is ResourceWithSteps.Error -> {
                         sendingPost.postValue(false)
                         error.postValue(it.errorType)
                     }
-                    is Resource.Loading -> {
+                    is ResourceWithSteps.Loading -> {
                         sendingPost.postValue(true)
                     }
                 }
@@ -105,26 +121,32 @@ class CreatePostViewModel @Inject constructor(
 
         viewModelScope.launch {
 
-            if(audioDraft != null) {
-
-            } else {
-                sendDiscussion()
-            }
+            sendDiscussion()
         }
     }
 
     private fun sendEditDiscussion(postId: Long) {
         viewModelScope.launch {
-            editPost(postId, EditPostDto.PRIVACY_ISOLAATTI, liveContent.value ?: "", null).onEach {
+            editPost(
+                postId = postId,
+                privacy = PostPrivacy.Isolaatti,
+                images = photos.value.filterIsInstance<LocalImage>(),
+                imagesToRemove = imagesToRemove,
+                audio = audioToUpload,
+                content = liveContent.value ?: "",
+                removeOldAudio = mustRemoveAudio  && audioToUpload == null,
+                squadId = null
+            ).onEach {
                 when(it) {
-                    is Resource.Success -> {
+                    is ResourceWithSteps.Success -> {
+                        posted = it.data
                         sendingPost.postValue(false)
                     }
-                    is Resource.Error -> {
+                    is ResourceWithSteps.Error -> {
                         sendingPost.postValue(null)
                         error.postValue(it.errorType)
                     }
-                    is Resource.Loading -> {
+                    is ResourceWithSteps.Loading -> {
                         sendingPost.postValue(true)
                     }
                 }
@@ -135,62 +157,76 @@ class CreatePostViewModel @Inject constructor(
     fun editDiscussion(postId: Long) {
 
         viewModelScope.launch {
-            if(audioDraft != null) {
-
-            } else {
-                sendEditDiscussion(postId)
-            }
+            sendEditDiscussion(postId)
         }
     }
 
     fun loadDiscussion(postId: Long) {
         viewModelScope.launch {
             loadPost(postId).onEach { postRes ->
-                if(postRes is Resource.Success) {
-                    postRes.data?.let {
-                        //postToEdit.postValue(EditPostDto(PRIVACY_ISOLAATTI, content = it.textContent, postId = it.id))
-                        //it.audio?.let { audio -> audioAttachment.postValue(audio) }
+                when(postRes) {
+                    is Resource.Error -> {
+                        loading.value = false
+                    }
+                    is Resource.Loading -> {
+                        loading.value = true
+                    }
+                    is Resource.Success -> {
+                        postRes.data?.let {
 
-                        _photos.value = it.images
+                            _photos.value = it.images
 
-                        liveContent.postValue(it.textContent)
+                            if(it.audio != null) {
+                                existingAudio.value = it.audio
+                            }
+
+                            liveContent.postValue(it.textContent)
+                            loading.value = false
+                        }
                     }
                 }
             }.flowOn(Dispatchers.IO).launchIn(this)
         }
     }
 
-
-    // call this when user selects an existing audio (not a draft)
-    fun putAudio(audio: Audio) {
-        audioAttachment.value = audio
+    fun markCurrentAudioForDeletion() {
+        viewModelScope.launch {
+            existingAudio.value = null
+            mustRemoveAudio = true
+        }
     }
 
-    // clear user input
-    fun removeAudio() {
-        audioAttachment.value = null
+    fun setToReplaceAudio() {
+        viewModelScope.launch {
+            existingAudio.value = null
+            mustRemoveAudio = true
+            audioRecorderIsVisible.value = true
+        }
     }
 
     fun addPicture(uri: LocalImage) {
         _photos.value = listOf(uri) + _photos.value
     }
 
-    fun removePicture(index: Int) {
-        val image = _photos.value.getOrNull(index)
-        if(image == null) {
-            return
-        }
-
-        when(image) {
-            is LocalImage -> {
-                _photos.value = _photos.value.toMutableList().apply {
-                    removeAt(index)
+    fun removePicture(image: Image) {
+        viewModelScope.launch {
+            when(image) {
+                is LocalImage -> {
+                    _photos.value = _photos.value.toMutableList().apply {
+                        remove(image)
+                    }
+                }
+                is RemoteImage -> {
+                    _photos.update {
+                        it.toMutableList().apply {
+                            remove(image)
+                        }
+                    }
+                    imagesToRemove.add(image)
                 }
             }
-            is RemoteImage -> {
-                image.delete = true
-            }
         }
+
 
     }
 }

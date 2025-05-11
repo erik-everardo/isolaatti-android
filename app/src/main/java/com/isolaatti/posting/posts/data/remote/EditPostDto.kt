@@ -4,7 +4,9 @@ data class EditPostDto(
     val privacy: Int,
     val content: String,
     val squadId: String? = null,
-    val postId: Long
+    val postId: Long,
+    val removeAudio: Boolean,
+    val isDraft: Boolean
 ) {
     companion object {
         const val PRIVACY_PRIVATE = 1

@@ -12,12 +12,13 @@ import com.isolaatti.common.Ownable
 import com.isolaatti.common.hashtagRegex
 import com.isolaatti.images.common.domain.entity.RemoteImage
 import com.isolaatti.posting.posts.data.remote.FeedDto
+import com.isolaatti.posting.posts.domain.PostPrivacy
 
 class Post(
     val id: Long,
     textContent: String,
     override val userId: Int,
-    val privacy: Int,
+    val privacy: PostPrivacy,
     val date: String,
     val squadId: String? = null,
     numberOfLikes: Int,
@@ -43,7 +44,7 @@ class Post(
         parcel.readLong(),
         parcel.readString()!!,
         parcel.readInt(),
-        parcel.readInt(),
+        PostPrivacy.fromInt(parcel.readInt()),
         parcel.readString()!!,
         parcel.readString(),
         parcel.readInt(),
@@ -63,7 +64,7 @@ class Post(
                     id = it.post.id,
                     userId = it.post.userId,
                     textContent = it.post.textContent,
-                    privacy = it.post.privacy,
+                    privacy = PostPrivacy.fromInt(it.post.privacy),
                     date = it.post.date,
                     squadId = it.post.squadId,
                     numberOfComments = it.numberOfComments,
@@ -71,7 +72,7 @@ class Post(
                     userName = it.userName,
                     squadName = it.squadName,
                     liked = it.liked,
-                    audio = it.post.audio?.let { audioDto -> Audio.fromDto(audioDto) },
+                    audio = if(it.post.hasAudio) Audio.fromDto(it) else null,
                     images = it.post.images.map { imageDto -> RemoteImage(imageDto.id) }
                 )
             }.toMutableList()
@@ -82,7 +83,7 @@ class Post(
                 id = postDto.post.id,
                 userId = postDto.post.userId,
                 textContent = postDto.post.textContent,
-                privacy = postDto.post.privacy,
+                privacy = PostPrivacy.fromInt(postDto.post.privacy),
                 date = postDto.post.date,
                 squadId = postDto.post.squadId,
                 numberOfComments = postDto.numberOfComments,
@@ -90,6 +91,7 @@ class Post(
                 userName = postDto.userName,
                 squadName = postDto.squadName,
                 liked = postDto.liked,
+                audio = if(postDto.post.hasAudio) Audio.fromDto(postDto) else null,
                 images = postDto.post.images.map { imageDto -> RemoteImage(imageDto.id) }
             )
         }
@@ -110,7 +112,7 @@ class Post(
         parcel.writeLong(id)
         parcel.writeString(textContent)
         parcel.writeInt(userId)
-        parcel.writeInt(privacy)
+        parcel.writeInt(privacy.toInt())
         parcel.writeString(date)
         parcel.writeString(squadId)
         parcel.writeInt(numberOfLikes)

@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -39,7 +40,9 @@ abstract class PostListingViewModelBase : ViewModel() {
 
     val loadingPosts = MutableLiveData(false)
 
-    val noMoreContent = MutableLiveData(false)
+    val refreshing = MutableStateFlow(false)
+
+    val noMoreContent = MutableStateFlow(false)
 
     val errorLoading: MutableLiveData<Resource.Error.ErrorType?> = MutableLiveData()
     var isLoadingFromScrolling = false
@@ -121,7 +124,16 @@ abstract class PostListingViewModelBase : ViewModel() {
     }
 
     fun onPostUpdate(post: Post) {
-
+        viewModelScope.launch {
+            posts.update {
+                it.toMutableList().apply {
+                    val index = indexOfFirst { it.id == post.id }
+                    if(index != -1) {
+                        set(index, post)
+                    }
+                }
+            }
+        }
     }
 
     fun onPostAddedAtTheBeginning(post: Post) {

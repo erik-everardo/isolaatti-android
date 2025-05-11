@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.isolaatti.followers.domain.FollowingState
 import com.isolaatti.images.common.domain.entity.LocalImage
 import com.isolaatti.images.common.domain.entity.RemoteImage
+import com.isolaatti.posting.posts.domain.FeedPageSize
 import com.isolaatti.posting.posts.presentation.PostListingViewModelBase
 import com.isolaatti.profile.domain.entity.UserProfile
 import com.isolaatti.profile.domain.use_case.DeleteProfileAudio
@@ -174,7 +175,7 @@ class ProfileViewModel @Inject constructor(
                         }
 
                         posts.value += feedDtoResource.data ?: emptyList()
-                        noMoreContent.postValue(feedDtoResource.data?.size == 0)
+                        noMoreContent.value = ((feedDtoResource.data?.size ?: 0) < FeedPageSize)
                     }
 
                     is Resource.Loading -> {

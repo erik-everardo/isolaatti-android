@@ -44,7 +44,7 @@ data class UserProfile(
                 thisUserIsFollowingMe = userProfileDto.thisUserIsFollowingMe,
                 profileImageId = userProfileDto.profileImageId,
                 descriptionText = userProfileDto.descriptionText,
-                descriptionAudio = userProfileDto.descriptionAudio?.let { Audio.fromDto(it) }
+                descriptionAudio = if(userProfileDto.hasAudio) Audio.fromDto(userProfileDto) else null
             )
         }
     }

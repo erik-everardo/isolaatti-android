@@ -1,6 +1,5 @@
 package com.isolaatti.profile.data.remote
 
-import com.isolaatti.audio.common.data.AudioDto
 
 data class UserProfileDto(
     val id: Int,
@@ -17,5 +16,5 @@ data class UserProfileDto(
     val profileImageId: String?,
     val descriptionText: String?,
     val descriptionAudioId: String?,
-    val descriptionAudio: AudioDto?
+    val hasAudio: Boolean
 )

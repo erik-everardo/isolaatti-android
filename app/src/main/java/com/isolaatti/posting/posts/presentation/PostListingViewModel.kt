@@ -22,14 +22,17 @@ class PostListingViewModel @Inject constructor(private val postsRepository: Post
                 when (listResource) {
                     is Resource.Success -> {
                         loadingPosts.postValue(false)
+                        refreshing.value = false
                         posts.value += listResource.data ?: emptyList()
 
-                        noMoreContent.postValue(listResource.data?.size == 0)
+                        noMoreContent.value = (listResource.data?.size == 0)
                     }
 
                     is Resource.Loading -> {
                         if(!refresh)
                             loadingPosts.postValue(true)
+                        else
+                            refreshing.value = true
                     }
 
                     is Resource.Error -> {

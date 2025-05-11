@@ -16,7 +16,7 @@ import com.isolaatti.utils.UrlGen
  */
 data class RemoteImage(
     val id: String
-): Deletable(), Parcelable, Image {
+): Parcelable, Image {
     val imageUrl: String get() = UrlGen.imageUrl(id)
     val smallImageUrl : String get() = UrlGen.imageUrl(id, UrlGen.IMAGE_MODE_SMALL)
     val reducedImageUrl: String get() = UrlGen.imageUrl(id, UrlGen.IMAGE_MODE_REDUCED)

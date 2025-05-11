@@ -2,6 +2,7 @@ package com.isolaatti.posting.posts.ui
 
 import android.app.Activity
 import android.content.ComponentName
+import android.content.Intent
 import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Build
@@ -12,25 +13,33 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -58,6 +67,7 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
 import com.isolaatti.MyApplication
 import com.isolaatti.R
+import com.isolaatti.audio.common.components.AudioPlayer
 import com.isolaatti.audio.common.components.AudioRecorder
 import com.isolaatti.audio.player.MediaService
 import com.isolaatti.common.IsolaattiBaseActivity
@@ -148,12 +158,40 @@ class CreatePostActivity : IsolaattiBaseActivity() {
 
     private lateinit var recordOutputFile: File
 
+    fun onDismissRecorder() {
 
+        // stop playback
+        mediaController.stop()
+        mediaController.clearMediaItems()
+
+        // delete file
+        lifecycleScope.launch(Dispatchers.IO) {
+            if(recordOutputFile.exists()) {
+                recordOutputFile.delete()
+            }
+        }
+
+        // release media recorder
+        mediaRecorder.release()
+
+        // clear references
+        viewModel.audioRecorderState.clearState()
+        viewModel.audioToUpload = null
+    }
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        intent.extras?.let {
+            mode = it.getInt(EXTRA_KEY_MODE, EXTRA_MODE_CREATE)
+            postId = it.getLong(EXTRA_KEY_POST_ID)
+        }
+
+        if(mode == EXTRA_MODE_EDIT && postId != 0L) {
+            viewModel.loadDiscussion(postId)
+        }
 
         val sessionToken = SessionToken(this, ComponentName(this, MediaService::class.java))
         mediaControllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
@@ -188,247 +226,420 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                     mode == EXTRA_MODE_EDIT && postId != 0L
                 }
 
-
+                var showExitConfirmationDialog by remember { mutableStateOf(false) }
+                var showDiscardAudioConfirmationDialog by remember { mutableStateOf(false) }
+                var showExistingAudioDeletionConfirmationDialog by remember { mutableStateOf(false) }
+                var showReplaceAudioConfirmationDialog by remember { mutableStateOf(false) }
+                val loading by viewModel.loading.collectAsState()
 
                 IsolaattiTheme {
-                    Scaffold(
-                        topBar = {
-                            CenterAlignedTopAppBar(
-                                title = { Text(stringResource(if(editMode) R.string.edit else R.string.new_post)) },
-                                navigationIcon = {
-                                    IconButton(
-                                        onClick = {
-                                            exit()
-                                        }
-                                    ) {
-                                        Icon(Icons.Default.Close, null)
-                                    }
-                                },
-                                actions = {
-                                    Button(
-                                        enabled = text.isNotBlank() || pictures.isNotEmpty(),
-                                        onClick = {
-                                            if(editMode) {
-                                                viewModel.editDiscussion(postId)
-                                            } else {
-                                                viewModel.postDiscussion()
-                                            }
-
-                                        }
-                                    ) {
-                                        Text(stringResource(if(editMode) R.string.save else R.string.post))
-                                    }
-                                }
-                            )
+                    if(loading) {
+                        Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxSize()) {
+                            CircularProgressIndicator()
                         }
-                    ) {
-                        val scrollState = rememberScrollState()
-
-                        val posting by viewModel.sendingPost.observeAsState()
-                        var audioRecorderIsVisible by remember { mutableStateOf(false) }
-
-                        if(posting == true) {
-                            val postingStep by viewModel.postingStep.collectAsState()
-                            AlertDialog(
-                                onDismissRequest = {},
-                                text = {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        CircularProgressIndicator()
-                                        Text(
-                                            when(postingStep) {
-                                                PostingSteps.PostContent -> stringResource(R.string.posting)
-                                                PostingSteps.UploadingPhotos -> stringResource(R.string.uploading_photos)
-                                                PostingSteps.Finished -> ""
-                                                PostingSteps.Unspecified -> ""
-                                                PostingSteps.UploadingAudio -> stringResource(R.string.uploading_audio)
-                                            },
-                                            modifier = Modifier.padding(4.dp)
-                                        )
-                                    }
-                                },
-                                dismissButton = null,
-                                title = {
-                                    Text(getString(R.string.posting))
-                                },
-                                confirmButton = {}
-                            )
-                        } else if(posting == false){
-                            finish()
-                        }
-                        Column(modifier = Modifier.padding(it).verticalScroll(scrollState)) {
-
-
-
-                            OutlinedTextField(
-                                value = text,
-                                onValueChange = { textFieldValue ->
-                                    viewModel.liveContent.postValue(textFieldValue)
-                                },
-                                modifier = Modifier
-                                    .padding(horizontal = 8.dp)
-                                    .fillMaxWidth()
-                                    .focusRequester(focusRequester),
-                                placeholder = { Text(stringResource(R.string.what_do_you_want_to_talk_about_you_can_record_an_audio_if_you_want)) },
-                                colors = OutlinedTextFieldDefaults
-                                    .colors(
-                                        focusedBorderColor = Color.Transparent,
-                                        unfocusedBorderColor = Color.Transparent
-                                    ),
-                                trailingIcon = {
-                                    IconButton(
-                                        onClick = {
-                                            audioRecorderIsVisible = !audioRecorderIsVisible
-                                            mediaRecorder = if (Build.VERSION.SDK_INT >= 31) MediaRecorder(this@CreatePostActivity) else MediaRecorder()
-                                        }
-                                    ) {
-                                        Icon(painterResource(id = R.drawable.baseline_mic_24), null)
-                                    }
-                                }
-                            )
-
-                            LaunchedEffect(Unit) {
-                                focusRequester.requestFocus()
-                            }
-
-                            AnimatedVisibility(audioRecorderIsVisible) {
-
-
-                                LaunchedEffect(viewModel.audioRecorderState.isPlaying) {
-                                    while(viewModel.audioRecorderState.isPlaying) {
-                                        delay(500.milliseconds)
-                                        viewModel.audioRecorderState.position = mediaController.currentPosition
-                                    }
-                                }
-
-                                AudioRecorder(
-                                    modifier = Modifier.padding(16.dp),
-                                    onDismiss = {
-                                        audioRecorderIsVisible = false
-
-                                        // stop playback
-                                        mediaController.stop()
-                                        mediaController.clearMediaItems()
-
-                                        // delete file
-                                        lifecycleScope.launch(Dispatchers.IO) {
-                                            if(recordOutputFile.exists()) {
-                                                recordOutputFile.delete()
-                                            }
-                                        }
-
-                                        // release media recorder
-                                        mediaRecorder.release()
-
-                                        // clear references
-                                        viewModel.audioRecorderState.clearState()
-                                        viewModel.audioToUpload = null
-                                    },
-                                    onPlay = {
-                                        if(mediaController.isCommandAvailable(Player.COMMAND_PREPARE)) {
-                                            mediaController.prepare()
-                                        }
-
-                                        if(viewModel.ended) {
-                                            mediaController.seekTo(0L)
-                                        }
-                                        mediaController.playWhenReady = true
-                                    },
-                                    onPause = {
-                                        mediaController.pause()
-                                    },
-                                    onStartRecording = { fromPause ->
-
-                                        if(fromPause) {
-                                            mediaRecorder.resume()
-                                        } else {
-                                            mediaRecorder.run {
-                                                setAudioSource(MediaRecorder.AudioSource.MIC)
-                                                setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
-                                                setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
-                                                if (Build.VERSION.SDK_INT >= 26) {
-                                                    setOutputFile(recordOutputFile)
+                    } else {
+                        Scaffold(
+                            topBar = {
+                                CenterAlignedTopAppBar(
+                                    title = { Text(stringResource(if(editMode) R.string.edit else R.string.new_post)) },
+                                    navigationIcon = {
+                                        IconButton(
+                                            onClick = {
+                                                if(viewModel.thereIsContent) {
+                                                    showExitConfirmationDialog = true
                                                 } else {
-                                                    setOutputFile(recordOutputFile.path)
+                                                    exit()
                                                 }
 
-                                                prepare()
-                                                start()
                                             }
+                                        ) {
+                                            Icon(Icons.Default.Close, null)
                                         }
-
-                                        viewModel.audioRecorderState.recordIsStopped = false
-                                        viewModel.audioRecorderState.isRecording = true
-                                        viewModel.audioRecorderState.recordIsPaused = false
-
-
-
                                     },
-                                    onPauseRecording = {
-                                        mediaRecorder.pause()
-                                        viewModel.audioRecorderState.recordIsStopped = false
-                                        viewModel.audioRecorderState.isRecording = true
-                                        viewModel.audioRecorderState.recordIsPaused = true
+                                    actions = {
+                                        Button(
+                                            enabled = text.isNotBlank() || pictures.isNotEmpty(),
+                                            onClick = {
+                                                if(editMode) {
+                                                    viewModel.editDiscussion(postId)
+                                                } else {
+                                                    viewModel.postDiscussion()
+                                                }
+
+                                            }
+                                        ) {
+                                            Text(stringResource(if(editMode) R.string.save else R.string.post))
+                                        }
+                                    }
+                                )
+                            }
+                        ) {
+                            val scrollState = rememberScrollState()
+
+                            val posting by viewModel.sendingPost.observeAsState()
+                            val audioRecorderIsVisible by viewModel.audioRecorderIsVisible.collectAsState()
+                            val existingAudio by viewModel.existingAudio.collectAsState()
+
+                            if(posting == true) {
+                                val postingStep by viewModel.postingStep.collectAsState()
+                                AlertDialog(
+                                    onDismissRequest = {},
+                                    text = {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            CircularProgressIndicator()
+                                            Text(
+                                                when(postingStep) {
+                                                    PostingSteps.PostContent -> stringResource(R.string.posting)
+                                                    PostingSteps.UploadingPhotos -> stringResource(R.string.uploading_photos)
+                                                    PostingSteps.Finished -> ""
+                                                    PostingSteps.Unspecified -> ""
+                                                    PostingSteps.UploadingAudio -> stringResource(R.string.uploading_audio)
+                                                },
+                                                modifier = Modifier.padding(4.dp)
+                                            )
+                                        }
                                     },
-                                    onStopRecording = {
-                                        mediaRecorder.stop()
-                                        val audioUri = recordOutputFile.toUri()
-                                        mediaController.setMediaItem(
-                                            MediaItem.Builder()
-                                                .setUri(audioUri)
-                                                .setMediaMetadata(MediaMetadata.Builder()
-                                                    .setTitle(getString(R.string.just_recorded_audio_title))
-                                                    .build())
-                                                .build()
-                                        )
-                                        viewModel.audioToUpload = audioUri
-                                        viewModel.audioRecorderState.recordIsStopped = true
-                                        viewModel.audioRecorderState.isRecording = false
-                                        viewModel.audioRecorderState.recordIsPaused = false
+                                    dismissButton = null,
+                                    title = {
+                                        Text(getString(R.string.posting))
                                     },
-                                    state = viewModel.audioRecorderState,
-                                    onSeek = { ms ->
-                                        mediaController.seekTo(ms.toLong())
+                                    confirmButton = {}
+                                )
+                            } else if(posting == false){
+                                setResult(RESULT_OK, Intent().apply { putExtra(EXTRA_KEY_POST_POSTED, viewModel.posted) })
+                                finish()
+                            }
+
+                            if(showExitConfirmationDialog) {
+                                AlertDialog(
+                                    onDismissRequest = {
+                                        showExitConfirmationDialog = false
+                                    },
+                                    text = {
+                                        Text(stringResource(R.string.discard_post_confirm_message))
+                                    },
+                                    confirmButton = {
+                                        Button(
+                                            onClick = {
+                                                exit()
+                                            }
+                                        ) {
+                                            Text(stringResource(R.string.accept))
+                                        }
+                                    },
+                                    dismissButton = {
+                                        TextButton(
+                                            onClick = {
+                                                showExitConfirmationDialog = false
+                                            }
+                                        ) {
+                                            Text(stringResource(R.string.cancel))
+                                        }
+                                    }
+                                )
+                            }
+
+                            if(showDiscardAudioConfirmationDialog) {
+                                AlertDialog(
+                                    onDismissRequest = {
+                                        showDiscardAudioConfirmationDialog = false
+                                    },
+                                    text = {
+                                        Text(stringResource(R.string.discard_audio_confirm_message))
+                                    },
+                                    confirmButton = {
+                                        Button(
+                                            onClick = {
+                                                viewModel.audioRecorderIsVisible.value = false
+                                                onDismissRecorder()
+                                                showDiscardAudioConfirmationDialog = false
+                                            }
+                                        ) {
+                                            Text(stringResource(R.string.accept))
+                                        }
+                                    },
+                                    dismissButton = {
+                                        TextButton(
+                                            onClick = {
+                                                showDiscardAudioConfirmationDialog = false
+                                            }
+                                        ) {
+                                            Text(stringResource(R.string.cancel))
+                                        }
+                                    }
+                                )
+                            }
+
+                            if(showExistingAudioDeletionConfirmationDialog) {
+                                AlertDialog(
+                                    onDismissRequest = {
+                                        showExistingAudioDeletionConfirmationDialog = false
+                                    },
+                                    text = {
+                                        Text(stringResource(R.string.remove_audio_confirm_message))
+                                    },
+                                    confirmButton = {
+                                        Button(
+                                            onClick = {
+                                                viewModel.markCurrentAudioForDeletion()
+                                                showExistingAudioDeletionConfirmationDialog = false
+                                            }
+                                        ) {
+                                            Text(stringResource(R.string.accept))
+                                        }
+                                    },
+                                    dismissButton = {
+                                        TextButton(
+                                            onClick = {
+                                                showExistingAudioDeletionConfirmationDialog = false
+                                            }
+                                        ) {
+                                            Text(stringResource(R.string.cancel))
+                                        }
+                                    }
+                                )
+                            }
+
+                            if(showReplaceAudioConfirmationDialog) {
+                                AlertDialog(
+                                    onDismissRequest = {
+                                        showReplaceAudioConfirmationDialog = false
+                                    },
+                                    text = {
+                                        Text(stringResource(R.string.replace_audio_confirmation_message))
+                                    },
+                                    confirmButton = {
+                                        Button(
+                                            onClick = {
+                                                viewModel.setToReplaceAudio()
+                                                showReplaceAudioConfirmationDialog = false
+                                            }
+                                        ) {
+                                            Text(stringResource(R.string.accept))
+                                        }
+                                    },
+                                    dismissButton = {
+                                        TextButton(
+                                            onClick = {
+                                                showReplaceAudioConfirmationDialog = false
+                                            }
+                                        ) {
+                                            Text(stringResource(R.string.cancel))
+                                        }
                                     }
                                 )
                             }
 
 
-                            PostAttachments(
-                                modifier = Modifier.padding(16.dp),
-                                images = pictures,
-                                deletable = true,
-                                imageAddable = true,
-                                onImageClick = {
+                            Column(modifier = Modifier
+                                .padding(it)
+                                .verticalScroll(scrollState)) {
 
-                                },
-                                onImageDeleteClick = {
-                                    viewModel.removePicture(it)
-                                },
-                                onTakePicture = {
-                                    cameraPhotoUri = makePhotoUri()
-                                    takePhotoLauncher.launch(cameraPhotoUri!!)
-                                },
-                                onUploadPicture = {
-                                    choosePictureLauncher.launch(
-                                        PickVisualMediaRequest(
-                                            ActivityResultContracts.PickVisualMedia.ImageOnly)
+
+
+
+                                OutlinedTextField(
+                                    value = text,
+                                    onValueChange = { textFieldValue ->
+                                        viewModel.liveContent.postValue(textFieldValue)
+                                    },
+                                    modifier = Modifier
+                                        .padding(horizontal = 8.dp)
+                                        .fillMaxWidth()
+                                        .focusRequester(focusRequester),
+                                    placeholder = { Text(stringResource(R.string.what_do_you_want_to_talk_about_you_can_record_an_audio_if_you_want)) },
+                                    colors = OutlinedTextFieldDefaults
+                                        .colors(
+                                            focusedBorderColor = Color.Transparent,
+                                            unfocusedBorderColor = Color.Transparent
+                                        ),
+                                    trailingIcon = {
+                                        IconButton(
+                                            enabled = existingAudio == null,
+                                            onClick = {
+                                                when {
+                                                    audioRecorderIsVisible && (viewModel.audioRecorderState.isRecording || viewModel.audioToUpload != null) -> {
+                                                        showDiscardAudioConfirmationDialog = true
+                                                    }
+                                                    audioRecorderIsVisible -> {
+                                                        viewModel.audioRecorderIsVisible.value = false
+                                                    }
+                                                    !audioRecorderIsVisible -> {
+                                                        mediaRecorder = if (Build.VERSION.SDK_INT >= 31) MediaRecorder(this@CreatePostActivity) else MediaRecorder()
+                                                        viewModel.audioRecorderIsVisible.value = true
+                                                    }
+                                                }
+
+                                            }
+                                        ) {
+                                            Icon(painterResource(id = R.drawable.baseline_mic_24), null)
+                                        }
+                                    }
+                                )
+
+                                LaunchedEffect(Unit) {
+                                    focusRequester.requestFocus()
+                                }
+
+                                AnimatedVisibility(existingAudio != null) {
+                                    OutlinedCard(Modifier.padding(16.dp)) {
+                                        Row(Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                            Text("Existing audio", modifier = Modifier.weight(1f))
+                                            IconButton(
+                                                modifier = Modifier.padding(end = 4.dp),
+                                                onClick = {
+                                                    showExistingAudioDeletionConfirmationDialog = true
+                                                }
+                                            ) {
+                                                Icon(Icons.Default.Delete, stringResource(R.string.delete))
+                                            }
+                                            FilledTonalButton(
+                                                onClick = {
+                                                    showReplaceAudioConfirmationDialog = true
+                                                }
+                                            ) {
+                                                Text(stringResource(R.string.replace))
+                                            }
+                                        }
+                                        AudioPlayer(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(80.dp),
+                                            positionMs = 0,
+                                            isPlaying = false,
+                                            durationMs = 1,
+                                            isLoading = false,
+                                            focused = false,
+                                            onPlay = { },
+                                            onPause = {},
+                                            onSeek = {  }
+                                        )
+
+                                    }
+
+                                }
+
+                                AnimatedVisibility(audioRecorderIsVisible) {
+
+
+                                    LaunchedEffect(viewModel.audioRecorderState.isPlaying) {
+                                        while(viewModel.audioRecorderState.isPlaying) {
+                                            delay(200.milliseconds)
+                                            viewModel.audioRecorderState.position = mediaController.currentPosition
+                                        }
+                                    }
+
+                                    AudioRecorder(
+                                        modifier = Modifier.padding(16.dp),
+                                        onDismiss = {
+
+                                            if((viewModel.audioRecorderState.isRecording || viewModel.audioToUpload != null)) {
+                                                showDiscardAudioConfirmationDialog = true
+                                            } else {
+                                                viewModel.audioRecorderIsVisible.value = false
+                                            }
+                                        },
+                                        onPlay = {
+                                            if(mediaController.isCommandAvailable(Player.COMMAND_PREPARE)) {
+                                                mediaController.prepare()
+                                            }
+
+                                            if(viewModel.ended) {
+                                                mediaController.seekTo(0L)
+                                            }
+                                            mediaController.playWhenReady = true
+                                        },
+                                        onPause = {
+                                            mediaController.pause()
+                                        },
+                                        onStartRecording = { fromPause ->
+
+                                            if(fromPause) {
+                                                mediaRecorder.resume()
+                                            } else {
+                                                mediaRecorder.run {
+                                                    setAudioSource(MediaRecorder.AudioSource.MIC)
+                                                    setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
+                                                    setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+                                                    if (Build.VERSION.SDK_INT >= 26) {
+                                                        setOutputFile(recordOutputFile)
+                                                    } else {
+                                                        setOutputFile(recordOutputFile.path)
+                                                    }
+
+                                                    prepare()
+                                                    start()
+                                                }
+                                            }
+
+                                            viewModel.audioRecorderState.recordIsStopped = false
+                                            viewModel.audioRecorderState.isRecording = true
+                                            viewModel.audioRecorderState.recordIsPaused = false
+
+
+
+                                        },
+                                        onPauseRecording = {
+                                            mediaRecorder.pause()
+                                            viewModel.audioRecorderState.recordIsStopped = false
+                                            viewModel.audioRecorderState.isRecording = true
+                                            viewModel.audioRecorderState.recordIsPaused = true
+                                        },
+                                        onStopRecording = {
+                                            mediaRecorder.stop()
+                                            val audioUri = recordOutputFile.toUri()
+                                            mediaController.setMediaItem(
+                                                MediaItem.Builder()
+                                                    .setUri(audioUri)
+                                                    .setMediaMetadata(MediaMetadata.Builder()
+                                                        .setTitle(getString(R.string.just_recorded_audio_title))
+                                                        .build())
+                                                    .build()
+                                            )
+                                            viewModel.audioToUpload = audioUri
+                                            viewModel.audioRecorderState.recordIsStopped = true
+                                            viewModel.audioRecorderState.isRecording = false
+                                            viewModel.audioRecorderState.recordIsPaused = false
+                                        },
+                                        state = viewModel.audioRecorderState,
+                                        onSeek = { ms ->
+                                            mediaController.seekTo(ms.toLong())
+                                        }
                                     )
-                                },
-                            )
+                                }
+
+
+                                PostAttachments(
+                                    modifier = Modifier.padding(16.dp),
+                                    images = pictures,
+                                    deletable = true,
+                                    imageAddable = true,
+                                    onImageClick = {
+
+                                    },
+                                    onImageDeleteClick = {
+                                        viewModel.removePicture(it)
+                                    },
+                                    onTakePicture = {
+                                        cameraPhotoUri = makePhotoUri()
+                                        takePhotoLauncher.launch(cameraPhotoUri!!)
+                                    },
+                                    onUploadPicture = {
+                                        choosePictureLauncher.launch(
+                                            PickVisualMediaRequest(
+                                                ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                        )
+                                    },
+                                )
+                            }
                         }
                     }
+
                 }
 
             }
 
-            intent.extras?.let {
-                mode = it.getInt(EXTRA_KEY_MODE, EXTRA_MODE_CREATE)
-                postId = it.getLong(EXTRA_KEY_POST_ID)
-            }
 
-            if(mode == EXTRA_MODE_EDIT && postId != 0L) {
-                viewModel.loadDiscussion(postId)
-            }
 
         }
     }

@@ -45,7 +45,7 @@ fun PostAttachments(
     deletable: Boolean,
     imageAddable: Boolean,
     onImageClick: (index: Int) -> Unit,
-    onImageDeleteClick: (index: Int) -> Unit = {},
+    onImageDeleteClick: (Image) -> Unit = {},
     onTakePicture: () -> Unit = {},
     onUploadPicture: () -> Unit = {},
 ) {
@@ -88,6 +88,8 @@ fun PostAttachments(
         }
         items(count = images.size) { index ->
 
+            val image = images[index]
+
             Card(modifier = Modifier
                 .padding(horizontal = 4.dp)
                 .size(120.dp),
@@ -100,14 +102,14 @@ fun PostAttachments(
                 ) {
                     if(deletable) {
                         FilledTonalIconButton(
-                            onClick = { onImageDeleteClick(index) },
+                            onClick = { onImageDeleteClick(image) },
                             modifier = Modifier.zIndex(2f)
                         ) {
                             Icon(imageVector = Icons.Default.Close, contentDescription = null)
                         }
                     }
 
-                    when(val image = images[index]) {
+                    when(image) {
                         is LocalImage -> {
                             AsyncImage(
                                 model = image.uri,
@@ -117,14 +119,12 @@ fun PostAttachments(
                             )
                         }
                         is RemoteImage -> {
-                            if(!image.delete) {
-                                AsyncImage(
-                                    model = image.reducedImageUrl,
-                                    contentDescription = null,
-                                    modifier = Modifier.fillMaxSize().zIndex(1f),
-                                    contentScale = ContentScale.Crop,
-                                )
-                            }
+                            AsyncImage(
+                                model = image.reducedImageUrl,
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize().zIndex(1f),
+                                contentScale = ContentScale.Crop,
+                            )
                         }
                     }
                 }

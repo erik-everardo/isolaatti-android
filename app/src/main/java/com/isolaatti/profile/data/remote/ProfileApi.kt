@@ -1,6 +1,5 @@
 package com.isolaatti.profile.data.remote
 
-import com.isolaatti.audio.common.data.AudioDto
 import okhttp3.MultipartBody
 import retrofit2.Call
 import retrofit2.http.Body
@@ -28,6 +27,6 @@ interface ProfileApi {
 
     @Multipart
     @POST("EditProfile/SetAudioDescription")
-    fun updateAudioDescription(@Part file: MultipartBody.Part, @Part duration: MultipartBody.Part): Call<AudioDto>
+    fun updateAudioDescription(@Part file: MultipartBody.Part, @Part duration: MultipartBody.Part): Call<Void>
 
 }

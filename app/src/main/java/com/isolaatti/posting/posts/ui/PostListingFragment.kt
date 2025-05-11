@@ -6,10 +6,15 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.ScrollableDefaults
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -20,19 +25,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import com.isolaatti.BuildConfig
 import com.isolaatti.R
-import com.isolaatti.audio.common.components.AudioRecorderState
-import com.isolaatti.audio.common.domain.Audio
 import com.isolaatti.common.Dialogs
 import com.isolaatti.common.ErrorMessageViewModel
 import com.isolaatti.common.IsolaattiTheme
-import com.isolaatti.common.OnUserInteractedWithPostCallback
-import com.isolaatti.common.Ownable
 import com.isolaatti.common.options_bottom_sheet.domain.OptionClicked
 import com.isolaatti.common.options_bottom_sheet.domain.Options
 import com.isolaatti.common.options_bottom_sheet.presentation.BottomSheetPostOptionsViewModel
@@ -81,8 +84,9 @@ class PostListingFragment : Fragment() {
         return ComposeView(requireContext()).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
-                var isRefreshing by remember { mutableStateOf(false) }
+                val isRefreshing by viewModel.refreshing.collectAsState()
                 val posts by viewModel.posts.collectAsState(emptyList())
+                val noMoreContent by viewModel.noMoreContent.collectAsState()
                 IsolaattiTheme {
                     PullToRefreshBox(isRefreshing, onRefresh = {viewModel.getFeed(true, null)}) {
                         LazyColumn(flingBehavior = ScrollableDefaults.flingBehavior()) {
@@ -134,6 +138,23 @@ class PostListingFragment : Fragment() {
                                     onSeek = {}
                                 )
                             }
+
+                            if(!noMoreContent && !isRefreshing) {
+                                item {
+                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                                        Button(
+                                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                            onClick = {
+                                                viewModel.getFeed(false, null)
+                                            }
+                                        ) {
+                                            Text(stringResource(R.string.load_more))
+                                        }
+                                    }
+                                }
+                            }
+
+
                         }
                     }
                 }
@@ -151,52 +172,6 @@ class PostListingFragment : Fragment() {
         optionsViewModel.optionClicked.observe(viewLifecycleOwner, optionsObserver)
     }
 
-    /*
-    override fun onLiked(postId: Long) = viewModel.likePost(postId)
-
-    override fun onUnLiked(postId: Long) = viewModel.unLikePost(postId)
-
-    override fun onOptions(post: Ownable) {
-
-    }
-
-    override fun onComment(postId: Long) {
-
-    }
-
-    override fun onOpenPost(postId: Long) {
-        PostViewerActivity.startActivity(requireContext(), postId)
-    }
-
-    override fun onPlay(audio: Audio) {
-    }
-
-    override fun onMoreInfo(postId: Long) {
-
-    }
-
-    override fun onShare(postId: Long) {
-        val intent = Intent.createChooser(Intent().apply {
-            action = Intent.ACTION_SEND
-            putExtra(Intent.EXTRA_TEXT, "${BuildConfig.backend}/pub/${postId}")
-            type = "text/plain"
-        }, getString(R.string.share_post))
-        startActivity(intent)
-    }
-
-    override fun hashtagClicked(hashtag: String) {
-        HashtagsPostsActivity.startActivity(requireContext(), hashtag)
-    }
-
-    override fun onProfileClick(userId: Int) {
-        ProfileActivity.startActivity(requireContext(), userId)
-    }
-
-    override fun onLoadMore() {
-        viewModel.getFeed(false, hashtag)
-    }
-
-     */
 
     private val editDiscussion = registerForActivityResult(EditPostContract()) {
         if(it != null) {

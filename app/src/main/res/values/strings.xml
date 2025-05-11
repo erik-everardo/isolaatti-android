@@ -239,6 +239,11 @@
     <string name="reset">Reset</string>
     <string name="error_uploading_audio">An error ocurred while uploading the audio</string>
     <string name="uploading_audio">Uploading audio…</string>
+    <string name="discard_audio_confirm_message">Do you really wish to discard this audio?</string>
+    <string name="discard_post_confirm_message">Do you really wish to discard the post you are composing?</string>
+    <string name="replace">Replace</string>
+    <string name="remove_audio_confirm_message">Do you wish to remove this audio? This won\'t be deleted until you save your post!</string>
+    <string name="replace_audio_confirmation_message">"Replace audio? "</string>
     <string-array name="report_reasons">
         <item>Spam</item>
         <item>Explicit content</item>

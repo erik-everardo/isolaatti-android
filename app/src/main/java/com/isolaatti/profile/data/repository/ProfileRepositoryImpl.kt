@@ -17,6 +17,7 @@ import com.isolaatti.profile.data.remote.ProfileApi
 import com.isolaatti.profile.data.remote.UpdateProfileDto
 import com.isolaatti.profile.domain.ProfileRepository
 import com.isolaatti.profile.domain.entity.UserProfile
+import com.isolaatti.settings.domain.UserIdSetting
 import com.isolaatti.utils.Resource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -29,12 +30,15 @@ import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import javax.inject.Inject
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class ProfileRepositoryImpl @Inject constructor(
     private val profileApi: ProfileApi,
     private val userInfoDao: UserInfoDao,
     private val imagesApi: ImagesApi,
-    private val contentResolver: ContentResolver
+    private val contentResolver: ContentResolver,
+    private val userIdSettings: UserIdSetting
 ) : ProfileRepository {
     override fun getProfile(userId: Int): Flow<Resource<UserProfile>> = flow {
         try {
@@ -129,6 +133,7 @@ class ProfileRepositoryImpl @Inject constructor(
         }
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     override fun setProfileAudio(audioFile: Uri, duration: Long): Flow<Resource<Audio>> = flow {
         emit(Resource.Loading())
 
@@ -140,7 +145,14 @@ class ProfileRepositoryImpl @Inject constructor(
             ).awaitResponse()
 
             if(response.isSuccessful) {
-                emit(Resource.Success(Audio.fromDto(response.body()!!)))
+                val userId = userIdSettings.getUserIdAsync() ?: 0
+                emit(Resource.Success(
+                    Audio(
+                        id = Uuid.random().toString(),
+                        userId = userId,
+                        isProfileAudio = true
+                    )
+                ))
             } else {
                 emit(Resource.Error(Resource.Error.mapErrorCode(response.code())))
             }

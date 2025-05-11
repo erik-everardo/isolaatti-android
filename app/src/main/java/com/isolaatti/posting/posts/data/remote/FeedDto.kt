@@ -1,6 +1,5 @@
 package com.isolaatti.posting.posts.data.remote
 
-import com.isolaatti.audio.common.data.AudioDto
 import com.isolaatti.images.common.data.remote.ImageDto
 
 data class FeedDto(
@@ -34,7 +33,7 @@ data class FeedDto(
             val userId: Int,
             val privacy: Int,
             val date: String,
-            var audio: AudioDto?,
+            val hasAudio: Boolean,
             val squadId: String?,
             val linkedDiscussionId: Long,
             val linkedCommentId: Long,

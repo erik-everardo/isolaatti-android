@@ -17,6 +17,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -109,6 +110,7 @@ import com.isolaatti.posting.comments.ui.BottomSheetPostComments
 import com.isolaatti.posting.posts.components.PostComponent
 import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.posting.posts.presentation.CreatePostContract
+import com.isolaatti.posting.posts.presentation.EditPostContract
 import com.isolaatti.posting.posts.ui.PostInfoActivity
 import com.isolaatti.posting.posts.viewer.ui.PostViewerActivity
 import com.isolaatti.profile.presentation.EditProfileContract
@@ -168,6 +170,12 @@ class ProfileMainFragment : Fragment() {
     private val choosePictureLauncher = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) {
         if(it != null) {
             viewModel.onProfilePictureSelected(it)
+        }
+    }
+
+    private val editDiscussion = registerForActivityResult(EditPostContract()) {
+        if(it != null) {
+            viewModel.onPostUpdate(it)
         }
     }
 
@@ -293,6 +301,8 @@ class ProfileMainFragment : Fragment() {
                 val showAudioRecorder by viewModel.showAudioRecorder.collectAsState()
 
                 var showRemoveAudioDialog by remember { mutableStateOf(false) }
+
+                val noMoreContent by viewModel.noMoreContent.collectAsState()
 
                 LaunchedEffect(profile) {
                     showAddPostButton = profile?.isUserItself == true
@@ -828,6 +838,21 @@ class ProfileMainFragment : Fragment() {
                                         },
                                     )
                                 }
+
+                                if(!noMoreContent && !isRefreshing) {
+                                    item {
+                                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                                            Button(
+                                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                                onClick = {
+                                                    viewModel.getFeed(false, null)
+                                                }
+                                            ) {
+                                                Text(stringResource(R.string.load_more))
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -916,7 +941,7 @@ class ProfileMainFragment : Fragment() {
                             }
                             Options.Option.OPTION_EDIT -> {
                                 optionsViewModel.handle()
-                                //editDiscussion.launch(post.id)
+                                editDiscussion.launch(post.id)
                             }
                             Options.Option.OPTION_REPORT -> {
                                 NewReportBottomSheetDialogFragment

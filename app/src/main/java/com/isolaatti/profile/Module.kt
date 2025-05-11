@@ -8,6 +8,7 @@ import com.isolaatti.images.common.data.remote.ImagesApi
 import com.isolaatti.profile.data.remote.ProfileApi
 import com.isolaatti.profile.data.repository.ProfileRepositoryImpl
 import com.isolaatti.profile.domain.ProfileRepository
+import com.isolaatti.settings.domain.UserIdSetting
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -27,8 +28,8 @@ class Module {
     }
 
     @Provides
-    fun provideProfileRepository(profileApi: ProfileApi, userInfoDao: UserInfoDao, imagesApi: ImagesApi, contentResolver: ContentResolver): ProfileRepository {
-        return ProfileRepositoryImpl(profileApi, userInfoDao, imagesApi, contentResolver)
+    fun provideProfileRepository(profileApi: ProfileApi, userInfoDao: UserInfoDao, imagesApi: ImagesApi, contentResolver: ContentResolver, userIdSetting: UserIdSetting): ProfileRepository {
+        return ProfileRepositoryImpl(profileApi, userInfoDao, imagesApi, contentResolver, userIdSetting)
     }
 
 
