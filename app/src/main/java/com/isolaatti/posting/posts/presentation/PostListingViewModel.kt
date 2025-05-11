@@ -21,7 +21,7 @@ class PostListingViewModel @Inject constructor(private val postsRepository: Post
             postsRepository.getFeed(getLastId(), hashtag).onEach { listResource ->
                 when (listResource) {
                     is Resource.Success -> {
-                        loadingPosts.postValue(false)
+                        loadingPosts.value = false
                         refreshing.value = false
                         posts.value += listResource.data ?: emptyList()
 
@@ -30,7 +30,7 @@ class PostListingViewModel @Inject constructor(private val postsRepository: Post
 
                     is Resource.Loading -> {
                         if(!refresh)
-                            loadingPosts.postValue(true)
+                            loadingPosts.value = true
                         else
                             refreshing.value = true
                     }

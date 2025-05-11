@@ -171,7 +171,7 @@ class ProfileViewModel @Inject constructor(
                         if(refresh) {
                             isRefreshing.value = false
                         } else {
-                            loadingPosts.postValue(false)
+                            loadingPosts.value = false
                         }
 
                         posts.value += feedDtoResource.data ?: emptyList()
@@ -182,7 +182,7 @@ class ProfileViewModel @Inject constructor(
                         if(refresh) {
                             isRefreshing.value = true
                         } else {
-                            loadingPosts.postValue(true)
+                            loadingPosts.value = true
                         }
 
                     }
@@ -191,7 +191,7 @@ class ProfileViewModel @Inject constructor(
                         if(refresh) {
                             isRefreshing.value = true
                         } else {
-                            loadingPosts.postValue(true)
+                            loadingPosts.value = true
                         }
                         errorLoading.postValue(feedDtoResource.errorType)
                         toRetry.add {

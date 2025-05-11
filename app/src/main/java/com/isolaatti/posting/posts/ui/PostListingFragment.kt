@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -87,6 +88,8 @@ class PostListingFragment : Fragment() {
                 val isRefreshing by viewModel.refreshing.collectAsState()
                 val posts by viewModel.posts.collectAsState(emptyList())
                 val noMoreContent by viewModel.noMoreContent.collectAsState()
+                val loading by viewModel.loadingPosts.collectAsState()
+
                 IsolaattiTheme {
                     PullToRefreshBox(isRefreshing, onRefresh = {viewModel.getFeed(true, null)}) {
                         LazyColumn(flingBehavior = ScrollableDefaults.flingBehavior()) {
@@ -137,6 +140,14 @@ class PostListingFragment : Fragment() {
                                     onPause = {},
                                     onSeek = {}
                                 )
+                            }
+
+                            if(loading) {
+                                item {
+                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                                        CircularProgressIndicator()
+                                    }
+                                }
                             }
 
                             if(!noMoreContent && !isRefreshing) {

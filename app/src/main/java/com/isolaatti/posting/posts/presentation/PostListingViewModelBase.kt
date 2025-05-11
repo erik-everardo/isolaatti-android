@@ -38,11 +38,11 @@ abstract class PostListingViewModelBase : ViewModel() {
 
     val posts: MutableStateFlow<List<Post>> = MutableStateFlow(emptyList())
 
-    val loadingPosts = MutableLiveData(false)
+    val loadingPosts = MutableStateFlow(false)
 
     val refreshing = MutableStateFlow(false)
 
-    val noMoreContent = MutableStateFlow(false)
+    val noMoreContent = MutableStateFlow(true)
 
     val errorLoading: MutableLiveData<Resource.Error.ErrorType?> = MutableLiveData()
     var isLoadingFromScrolling = false
