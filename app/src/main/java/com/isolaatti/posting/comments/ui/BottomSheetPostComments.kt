@@ -149,21 +149,6 @@ class BottomSheetPostComments() : BottomSheetDialogFragment(), OnUserInteractedC
             viewModel.postComment(content.toString())
         }
 
-        viewBinding.addImageButton.setOnClickListener {
-            insertImage()
-        }
-
-        viewBinding.addLinkButton.setOnClickListener {
-            insertLink()
-        }
-
-        viewBinding.enlargeTextBoxSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
-            if(isChecked) {
-                viewBinding.newCommentTextField.editText?.setLines(5)
-            } else {
-                viewBinding.newCommentTextField.editText?.setLines(1)
-            }
-        }
     }
 
     private fun clearNewCommentUi() {
