@@ -42,6 +42,10 @@ import com.isolaatti.images.common.domain.entity.RemoteImage
 import com.isolaatti.posting.posts.domain.PostPrivacy
 import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.utils.UrlGen.userProfileImage
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,7 +89,7 @@ fun PostComponent(
                 Box(Modifier.clickable { onUsernameClick() }){
                     Text(post.userName, fontWeight = FontWeight.Bold, maxLines = 1, modifier = Modifier.padding(4.dp))
                 }
-                Text(post.date, maxLines = 1, modifier = Modifier.padding(horizontal = 4.dp))
+                Text(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).format(post.date.withZoneSameInstant(ZoneId.systemDefault())), maxLines = 1, modifier = Modifier.padding(horizontal = 4.dp))
             }
             FilledTonalIconButton(onClick = onOptions) {
                 Icon(painterResource(R.drawable.baseline_more_horiz_24), null)
@@ -193,5 +197,5 @@ fun PostComponent(
 @Composable
 @Preview(device = Devices.PIXEL_5)
 fun PostPreview() {
-    PostComponent(Post(id = 0L, textContent = "Test", userId = 1, privacy = PostPrivacy.Isolaatti, date = "Date", images = emptyList(), liked = false, userName = "Username", numberOfLikes = 2, numberOfComments = 3))
+    PostComponent(Post(id = 0L, textContent = "Test", userId = 1, privacy = PostPrivacy.Isolaatti, date = ZonedDateTime.now(), images = emptyList(), liked = false, userName = "Username", numberOfLikes = 2, numberOfComments = 3))
 }

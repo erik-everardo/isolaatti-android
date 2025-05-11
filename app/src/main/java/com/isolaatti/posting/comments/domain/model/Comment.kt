@@ -3,13 +3,14 @@ package com.isolaatti.posting.comments.domain.model
 import com.isolaatti.posting.comments.data.remote.CommentDto
 import com.isolaatti.posting.comments.data.remote.FeedCommentsDto
 import com.isolaatti.common.Ownable
+import java.time.ZonedDateTime
 
 data class Comment(
     val id: Long,
     val textContent: String,
     override val userId: Int,
     val postId: Long,
-    val date: String,
+    val date: ZonedDateTime,
     val username: String
 ) : Ownable {
     companion object {

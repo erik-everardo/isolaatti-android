@@ -13,13 +13,15 @@ import com.isolaatti.common.hashtagRegex
 import com.isolaatti.images.common.domain.entity.RemoteImage
 import com.isolaatti.posting.posts.data.remote.FeedDto
 import com.isolaatti.posting.posts.domain.PostPrivacy
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 class Post(
     val id: Long,
     textContent: String,
     override val userId: Int,
     val privacy: PostPrivacy,
-    val date: String,
+    val date: ZonedDateTime,
     val squadId: String? = null,
     numberOfLikes: Int,
     numberOfComments: Int,
@@ -45,7 +47,7 @@ class Post(
         parcel.readString()!!,
         parcel.readInt(),
         PostPrivacy.fromInt(parcel.readInt()),
-        parcel.readString()!!,
+        ZonedDateTime.parse(parcel.readString()!!),
         parcel.readString(),
         parcel.readInt(),
         parcel.readInt(),
@@ -113,7 +115,7 @@ class Post(
         parcel.writeString(textContent)
         parcel.writeInt(userId)
         parcel.writeInt(privacy.toInt())
-        parcel.writeString(date)
+        parcel.writeString(date.format(DateTimeFormatter.ISO_DATE_TIME))
         parcel.writeString(squadId)
         parcel.writeInt(numberOfLikes)
         parcel.writeInt(numberOfComments)

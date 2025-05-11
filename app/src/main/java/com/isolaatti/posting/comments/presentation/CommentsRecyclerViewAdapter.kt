@@ -11,6 +11,9 @@ import com.isolaatti.posting.comments.domain.model.Comment
 import com.isolaatti.common.OnUserInteractedCallback
 import com.isolaatti.utils.UrlGen
 import io.noties.markwon.Markwon
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 class CommentsRecyclerViewAdapter(
     private var list: List<Comment>,
@@ -42,7 +45,7 @@ class CommentsRecyclerViewAdapter(
     override fun onBindViewHolder(holder: CommentViewHolder, position: Int) {
         val comment = list[position]
 
-        holder.viewBinding.textViewDate.text = comment.date
+        holder.viewBinding.textViewDate.text = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).format(comment.date.withZoneSameInstant(ZoneId.systemDefault()))
         markwon.setMarkdown(holder.viewBinding.postContent, comment.textContent)
         holder.viewBinding.textViewUsername.text = comment.username
         holder.viewBinding.textViewUsername.setOnClickListener {

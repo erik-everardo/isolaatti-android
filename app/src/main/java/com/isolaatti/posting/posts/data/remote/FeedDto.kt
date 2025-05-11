@@ -1,6 +1,7 @@
 package com.isolaatti.posting.posts.data.remote
 
 import com.isolaatti.images.common.data.remote.ImageDto
+import java.time.ZonedDateTime
 
 data class FeedDto(
     val data: MutableList<PostDto>,
@@ -32,7 +33,7 @@ data class FeedDto(
             var textContent: String,
             val userId: Int,
             val privacy: Int,
-            val date: String,
+            val date: ZonedDateTime,
             val hasAudio: Boolean,
             val squadId: String?,
             val linkedDiscussionId: Long,
