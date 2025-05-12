@@ -1,6 +1,8 @@
 package com.isolaatti.posting.posts.ui
 
+import android.content.ComponentName
 import android.content.Intent
+import android.media.MediaRecorder
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -17,6 +19,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -32,8 +35,16 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
+import com.google.common.util.concurrent.ListenableFuture
 import com.isolaatti.BuildConfig
 import com.isolaatti.R
+import com.isolaatti.audio.common.domain.Audio
+import com.isolaatti.audio.player.MediaService
 import com.isolaatti.common.Dialogs
 import com.isolaatti.common.ErrorMessageViewModel
 import com.isolaatti.common.IsolaattiTheme
@@ -54,6 +65,13 @@ import com.isolaatti.profile.ui.ProfileActivity
 import com.isolaatti.reports.data.ContentType
 import com.isolaatti.reports.ui.NewReportBottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.guava.await
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
+import kotlin.time.Duration.Companion.milliseconds
 
 @AndroidEntryPoint
 class PostListingFragment : Fragment() {
@@ -68,12 +86,50 @@ class PostListingFragment : Fragment() {
     private val viewModel: PostListingViewModel by viewModels()
     val optionsViewModel: BottomSheetPostOptionsViewModel by activityViewModels()
 
+    private lateinit var mediaControllerFuture: ListenableFuture<MediaController>
+    private lateinit var mediaController: MediaController
+    private lateinit var mediaRecorder: MediaRecorder
+
+    // initialized in onViewCreated
+    private lateinit var directory: File
+
+    private fun seekTo(ms: Float) {
+        mediaController.seekTo(ms.toLong())
+    }
+
+    private fun playAudio(descriptionAudio: Audio) {
+
+        if(viewModel.audioState.currentAudio== descriptionAudio) {
+            mediaController.play()
+        } else {
+            val mediaItem = MediaItem.Builder()
+                .setMediaId(descriptionAudio.id)
+                .setUri(descriptionAudio.uri)
+                .build()
+            mediaController.setMediaItem(mediaItem)
+            mediaController.playWhenReady = true
+            mediaController.play()
+            viewModel.audioState.currentAudio = descriptionAudio
+        }
+
+        viewModel.audioState.isPlaying = true
+
+    }
+
+    private fun pauseAudio() {
+        mediaController.pause()
+        viewModel.audioState.isPlaying = false
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(LOG_TAG, "onCreate ; hashtag: $hashtag")
         hashtag = arguments?.getString(ARG_HASHTAG)
         viewModel.getFeed(false, hashtag)
+
+        viewModel.mediaControllerIsAvailable.value = false
+        val sessionToken = SessionToken(requireContext(), ComponentName(requireContext(), MediaService::class.java))
+        mediaControllerFuture = MediaController.Builder(requireContext(), sessionToken).buildAsync()
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -89,6 +145,14 @@ class PostListingFragment : Fragment() {
                 val posts by viewModel.posts.collectAsState(emptyList())
                 val noMoreContent by viewModel.noMoreContent.collectAsState()
                 val loading by viewModel.loadingPosts.collectAsState()
+
+                LaunchedEffect(viewModel.audioState.isPlaying) {
+                    while(viewModel.audioState.isPlaying) {
+                        delay(500.milliseconds)
+                        viewModel.audioState.duration = mediaController.duration
+                        viewModel.audioState.progress = mediaController.currentPosition
+                    }
+                }
 
                 IsolaattiTheme {
                     PullToRefreshBox(isRefreshing, onRefresh = {viewModel.getFeed(true, null)}) {
@@ -136,9 +200,19 @@ class PostListingFragment : Fragment() {
                                     onHashtagClick = { hashtag ->
                                         HashtagsPostsActivity.startActivity(requireContext(), hashtag)
                                     },
-                                    onPlay = {},
-                                    onPause = {},
-                                    onSeek = {}
+                                    onPlay = {
+                                        post.audio?.let { playAudio(it) }
+                                    },
+                                    onPause = {
+                                        pauseAudio()
+                                    },
+                                    onSeek = {
+                                        seekTo(it)
+                                    },
+                                    isCurrentlyPlaying = post.audio == viewModel.audioState.currentAudio,
+                                    audioIsPlaying = viewModel.audioState.isPlaying,
+                                    duration = if(viewModel.audioState.currentAudio == post.audio) viewModel.audioState.duration else viewModel.audioState.duration,
+                                    progress = if(viewModel.audioState.currentAudio == post.audio) viewModel.audioState.progress else 0,
                                 )
                             }
 
@@ -173,8 +247,55 @@ class PostListingFragment : Fragment() {
         }
     }
 
+    private val playerListener: Player.Listener = object: Player.Listener {
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            viewModel.audioRecorderState.isPlaying = isPlaying
+            viewModel.audioState.isPlaying = isPlaying
+        }
+
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            when(playbackState) {
+                Player.STATE_READY -> {
+                    viewModel.ended = false
+                    viewModel.audioRecorderState.isLoading = false
+                    viewModel.audioRecorderState.durationMilliseconds = this@PostListingFragment.mediaController.duration
+                }
+                Player.STATE_ENDED -> {
+                    viewModel.ended = true
+                    viewModel.audioState.progress = 0
+                    viewModel.audioState.currentAudio = null
+                }
+                Player.STATE_BUFFERING -> {
+                    viewModel.audioRecorderState.isLoading = true
+                }
+
+                Player.STATE_IDLE -> {}
+            }
+        }
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            mediaController = mediaControllerFuture.await()
+            viewModel.mediaControllerIsAvailable.value = true
+
+            mediaController.addListener(playerListener)
+
+            // check audios directory
+            directory = File(requireContext().filesDir, "recordings")
+
+            withContext(Dispatchers.IO) {
+                if(!directory.isDirectory) {
+                    if(directory.isFile) {
+                        directory.delete()
+                    }
+                    directory.mkdir()
+                }
+            }
+
+        }
 
         viewModel.errorLoading.observe(viewLifecycleOwner) {
             errorViewModel.error.postValue(it)

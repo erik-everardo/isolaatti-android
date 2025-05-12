@@ -56,7 +56,7 @@ abstract class PostListingViewModelBase : ViewModel() {
     val audioRecorderState = AudioRecorderState()
     var uploadingAudio: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
-
+    var ended: Boolean = false
 
     abstract fun getFeed(refresh: Boolean, hashtag: String?)
 

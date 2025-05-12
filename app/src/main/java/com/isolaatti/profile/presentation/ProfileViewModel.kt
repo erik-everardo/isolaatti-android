@@ -62,7 +62,7 @@ class ProfileViewModel @Inject constructor(
     val errorProfilePicture: MutableStateFlow<Resource.Error<RemoteImage>?> = MutableStateFlow(null)
 
     var audioDescriptionToUpload: Uri? = null
-    var ended: Boolean = false
+
 
     val showAudioRecorder = MutableStateFlow(false)
     val setAudioDescriptionError = MutableStateFlow(false)
