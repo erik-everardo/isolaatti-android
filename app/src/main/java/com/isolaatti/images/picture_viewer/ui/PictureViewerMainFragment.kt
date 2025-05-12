@@ -15,7 +15,7 @@ class PictureViewerMainFragment : Fragment() {
 
     private lateinit var binding: FragmentMainPictureViewerBinding
 
-    lateinit var images: Array<RemoteImage>
+    lateinit var images: ArrayList<RemoteImage>
 
     private val onPageChangeCallback = object: ViewPager2.OnPageChangeCallback() {
         override fun onPageSelected(position: Int) {
@@ -37,7 +37,7 @@ class PictureViewerMainFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        images = IntentCompat.getParcelableArrayExtra(requireActivity().intent, PictureViewerActivity.EXTRA_IMAGES, RemoteImage::class.java) as Array<RemoteImage>
+        images = IntentCompat.getParcelableArrayListExtra(requireActivity().intent, PictureViewerActivity.EXTRA_IMAGES, RemoteImage::class.java) ?: ArrayList()
         val position = requireActivity().intent.extras?.getInt(PictureViewerActivity.EXTRA_IMAGE_POSITiON) ?: 0
         val adapter = PictureViewerViewPagerAdapter(this, images)
         binding.viewpager.adapter = adapter

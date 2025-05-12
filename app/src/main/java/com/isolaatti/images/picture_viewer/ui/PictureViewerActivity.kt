@@ -26,7 +26,7 @@ class PictureViewerActivity : AppCompatActivity() {
         const val EXTRA_IMAGES = "images"
         const val EXTRA_IMAGE_POSITiON = "position"
 
-        fun startActivityWithImages(context: Context, images: Array<RemoteImage>, position: Int = 0) {
+        fun startActivityWithImages(context: Context, images: ArrayList<RemoteImage>, position: Int = 0) {
             if(images.isEmpty()) {
                 return
             }

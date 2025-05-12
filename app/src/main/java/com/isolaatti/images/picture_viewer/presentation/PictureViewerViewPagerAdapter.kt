@@ -5,7 +5,7 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.isolaatti.images.common.domain.entity.RemoteImage
 import com.isolaatti.images.picture_viewer.ui.PictureViewerImageWrapperFragment
 
-class PictureViewerViewPagerAdapter(fragment: Fragment, private val images: Array<RemoteImage>) : FragmentStateAdapter(fragment) {
+class PictureViewerViewPagerAdapter(fragment: Fragment, private val images: List<RemoteImage>) : FragmentStateAdapter(fragment) {
     override fun getItemCount(): Int {
         return images.size
     }
