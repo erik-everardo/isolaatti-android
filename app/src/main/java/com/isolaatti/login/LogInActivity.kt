@@ -5,8 +5,12 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.setPadding
 import androidx.core.widget.doOnTextChanged
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.isolaatti.R
@@ -25,7 +29,10 @@ class LogInActivity : AppCompatActivity() {
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+
 
         onBackPressedDispatcher.addCallback(this, object: OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -37,6 +44,12 @@ class LogInActivity : AppCompatActivity() {
 
         viewBinding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(viewBinding.root)
+
+        ViewCompat.setOnApplyWindowInsetsListener(viewBinding.root) { view, insets ->
+            val padding = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.setPadding(padding.left, padding.top, padding.right, padding.bottom)
+            insets
+        }
 
         viewModel.signInSuccess.observe(this) {success ->
             if(success) {

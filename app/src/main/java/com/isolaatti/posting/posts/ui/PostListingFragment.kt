@@ -192,7 +192,7 @@ class PostListingFragment : Fragment() {
                                         startActivity(intent)
                                     },
                                     onImageClick = { images, index ->
-                                        PictureViewerActivity.startActivityWithImages(requireContext(), images.toTypedArray(), index)
+                                        PictureViewerActivity.startActivityWithImages(requireContext(), ArrayList(images), index)
                                     },
                                     onUsernameClick = {
                                         ProfileActivity.startActivity(requireContext(), post.userId)

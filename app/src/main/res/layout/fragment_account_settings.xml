@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         app:navigationIcon="@drawable/baseline_arrow_back_24"
         app:title="Account settings"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent" />
 
     <ScrollView
         android:layout_width="match_parent"

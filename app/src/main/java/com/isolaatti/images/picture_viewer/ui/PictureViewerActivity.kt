@@ -3,6 +3,7 @@ package com.isolaatti.images.picture_viewer.ui
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import com.isolaatti.databinding.ActivityPictureViewerBinding
 import com.isolaatti.images.common.domain.entity.RemoteImage
@@ -11,6 +12,7 @@ class PictureViewerActivity : AppCompatActivity() {
     private lateinit var binding: ActivityPictureViewerBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         binding = ActivityPictureViewerBinding.inflate(layoutInflater)

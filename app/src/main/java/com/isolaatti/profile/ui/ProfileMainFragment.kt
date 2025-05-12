@@ -399,7 +399,7 @@ class ProfileMainFragment : Fragment() {
                                     when(action) {
                                         ProfilePictureBottomSheetActions.ViewImage -> {
                                             profile?.profileImage?.let {
-                                                PictureViewerActivity.startActivityWithImages(requireContext(), arrayOf(it))
+                                                PictureViewerActivity.startActivityWithImages(requireContext(), arrayListOf(it))
                                             }
                                         }
                                         ProfilePictureBottomSheetActions.ChangeImage -> {
@@ -806,7 +806,7 @@ class ProfileMainFragment : Fragment() {
                                         onImageClick = { images, index ->
                                             PictureViewerActivity.startActivityWithImages(
                                                 requireContext(),
-                                                images.toTypedArray(),
+                                                ArrayList(images),
                                                 index
                                             )
                                         },
