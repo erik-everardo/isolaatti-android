@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -34,6 +35,9 @@ import com.isolaatti.posting.posts.viewer.presentation.PostViewerViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.isolaatti.posting.comments.domain.model.Comment
+import com.isolaatti.posting.comments.ui.components.CommentComponent
+import java.time.ZonedDateTime
 
 class PostViewerActivity : IsolaattiBaseActivity() {
     companion object {
@@ -87,6 +91,7 @@ class PostViewerActivity : IsolaattiBaseActivity() {
         if(postId!! > 0) {
             viewModel.postId = postId
             viewModel.getPost()
+            viewModel.getComments()
         }
 
         setContent {
@@ -94,6 +99,8 @@ class PostViewerActivity : IsolaattiBaseActivity() {
 
 
             val post by viewModel.post.collectAsState()
+            val comments by viewModel.comments.collectAsState()
+
             Scaffold(
                 topBar = {
                     TopAppBar(
@@ -140,6 +147,14 @@ class PostViewerActivity : IsolaattiBaseActivity() {
                                     post = it
                                 )
                             }
+                        }
+
+                        items(count = comments.size) { index ->
+                            val comment = comments[index]
+                            CommentComponent(
+                                comment = comment,
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+                            )
                         }
                     }
                 }

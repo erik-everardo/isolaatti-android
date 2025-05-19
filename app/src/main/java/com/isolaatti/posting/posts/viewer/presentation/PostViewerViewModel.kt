@@ -4,6 +4,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.isolaatti.posting.comments.domain.CommentsRepository
+import com.isolaatti.posting.comments.domain.model.Comment
 import com.isolaatti.posting.comments.domain.use_case.GetComments
 import com.isolaatti.posting.likes.domain.repository.LikesRepository
 import com.isolaatti.posting.posts.domain.entity.Post
@@ -29,6 +30,9 @@ class PostViewerViewModel @Inject constructor(
     val post: StateFlow<Post?> get() = _post
     private val _post: MutableStateFlow<Post?> = MutableStateFlow(null)
     var postId: Long = 0
+
+    private val _comments: MutableStateFlow<List<Comment>> = MutableStateFlow(emptyList())
+    val comments: StateFlow<List<Comment>> get() = _comments
 
     private val toRetry: MutableList<Runnable> = mutableListOf()
 
@@ -66,7 +70,20 @@ class PostViewerViewModel @Inject constructor(
 
     fun getComments() {
         viewModelScope.launch {
+            commentsRepository.getComments(postId, null)
+                .onEach { resource ->
+                    when(resource) {
+                        is Resource.Error -> {
 
+                        }
+                        is Resource.Loading -> {}
+                        is Resource.Success -> {
+                            _comments.value = resource.data ?: emptyList()
+                        }
+                    }
+                }
+                .flowOn(Dispatchers.IO)
+                .launchIn(this)
         }
     }
 

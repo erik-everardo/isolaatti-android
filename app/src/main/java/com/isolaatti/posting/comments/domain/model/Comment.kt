@@ -11,7 +11,8 @@ data class Comment(
     override val userId: Int,
     val postId: Long,
     val date: ZonedDateTime,
-    val username: String
+    val username: String,
+    val isFromUserItself: Boolean
 ) : Ownable {
     companion object {
         fun fromCommentsDto(dtoList: FeedCommentsDto): List<Comment> {
@@ -22,7 +23,8 @@ data class Comment(
                     userId = it.comment.userId,
                     postId = it.comment.postId,
                     date = it.comment.date,
-                    username = it.username
+                    username = it.username,
+                    isFromUserItself = false
                 )
             }
         }
@@ -34,7 +36,8 @@ data class Comment(
                 userId = dto.comment.userId,
                 postId = dto.comment.postId,
                 date = dto.comment.date,
-                username = dto.username
+                username = dto.username,
+                isFromUserItself = false
             )
         }
     }
