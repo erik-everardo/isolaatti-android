@@ -13,11 +13,13 @@ fun IsolaattiTheme(content: @Composable () -> Unit) {
     val colorScheme = if(isSystemInDarkTheme()) {
         darkColorScheme(
             primary = colorResource(R.color.purple),
+            secondary = colorResource(R.color.purple_lighter),
             onSurface = colorResource(R.color.on_surface)
         )
     } else {
         lightColorScheme(
             primary = colorResource(R.color.purple),
+            secondary = colorResource(R.color.purple_lighter),
             onSurface = colorResource(R.color.on_surface)
         )
     }

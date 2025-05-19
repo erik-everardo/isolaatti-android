@@ -3,6 +3,7 @@ package com.isolaatti.posting.posts.viewer.presentation
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.isolaatti.posting.comments.domain.CommentsRepository
 import com.isolaatti.posting.comments.domain.use_case.GetComments
 import com.isolaatti.posting.likes.domain.repository.LikesRepository
 import com.isolaatti.posting.posts.domain.entity.Post
@@ -10,6 +11,8 @@ import com.isolaatti.posting.posts.domain.use_case.LoadSinglePost
 import com.isolaatti.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -17,14 +20,17 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class PostViewerViewModel @Inject constructor(private val loadSinglePost: LoadSinglePost, private val likesRepository: LikesRepository) : ViewModel() {
+class PostViewerViewModel @Inject constructor(
+    private val loadSinglePost: LoadSinglePost,
+    private val likesRepository: LikesRepository,
+    private val commentsRepository: CommentsRepository
+) : ViewModel() {
     val error: MutableLiveData<Resource.Error.ErrorType?> = MutableLiveData()
-    val post: MutableLiveData<Post> = MutableLiveData()
+    val post: StateFlow<Post?> get() = _post
+    private val _post: MutableStateFlow<Post?> = MutableStateFlow(null)
     var postId: Long = 0
 
     private val toRetry: MutableList<Runnable> = mutableListOf()
-
-    val postLiked: MutableLiveData<Boolean> = MutableLiveData()
 
 
     // runs the lists of "Runnable" one by one and clears list. After this is executed,
@@ -50,8 +56,7 @@ class PostViewerViewModel @Inject constructor(private val loadSinglePost: LoadSi
                     is Resource.Loading -> {}
                     is Resource.Success -> {
                         if(it.data != null) {
-                            post.postValue(it.data!!)
-                            postLiked.postValue(it.data.liked)
+                            _post.value = it.data
                         }
                     }
                 }
@@ -59,23 +64,26 @@ class PostViewerViewModel @Inject constructor(private val loadSinglePost: LoadSi
         }
     }
 
-    private fun updateLikesCount(likesCount: Int) {
-//        val updatedPost = post.value?.copy(numberOfLikes = likesCount)
-//        if(updatedPost != null) {
-//            post.postValue(updatedPost!!)
-//        }
+    fun getComments() {
+        viewModelScope.launch {
+
+        }
     }
 
     fun likeDislikePost() {
         viewModelScope.launch {
-            if(postLiked.value == true) {
+            if(_post.value?.liked == true) {
                 likesRepository.unLikePost(postId).onEach {
                     when(it) {
-                        is Resource.Error -> TODO()
-                        is Resource.Loading -> TODO()
+                        is Resource.Error -> {
+
+                        }
+                        is Resource.Loading -> {
+
+                        }
                         is Resource.Success -> {
-                            updateLikesCount(it.data?.likesCount ?: 0)
-                            postLiked.postValue(false)
+                            _post.value?.liked = false
+                            it.data?.likesCount?.let { _post.value?.numberOfLikes = it }
                         }
                     }
 
@@ -83,11 +91,15 @@ class PostViewerViewModel @Inject constructor(private val loadSinglePost: LoadSi
             } else {
                 likesRepository.likePost(postId).onEach {
                     when(it) {
-                        is Resource.Error -> TODO()
-                        is Resource.Loading -> TODO()
+                        is Resource.Error -> {
+
+                        }
+                        is Resource.Loading -> {
+
+                        }
                         is Resource.Success -> {
-                            updateLikesCount(it.data?.likesCount ?: 0)
-                            postLiked.postValue(true)
+                            _post.value?.liked = true
+                            it.data?.likesCount?.let { _post.value?.numberOfLikes = it }
                         }
                     }
                 }.flowOn(Dispatchers.IO).launchIn(this)

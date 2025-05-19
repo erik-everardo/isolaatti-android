@@ -2,6 +2,7 @@ package com.isolaatti.posting.posts.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,6 +17,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -148,7 +150,7 @@ fun PostComponent(
         }
 
         Row(modifier = Modifier.height(50.dp).padding(4.dp)) {
-            FilledTonalIconButton(
+            FilledTonalButton(
                 onClick = { if(post.liked) { onDislike() } else { onLike() } },
                 modifier = Modifier.padding(4.dp).weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -156,16 +158,16 @@ fun PostComponent(
                         painterResource(R.drawable.hands_clapping_solid),
                         null,
                         modifier = Modifier.padding(horizontal = 8.dp).size(30.dp),
-                        tint = if(post.liked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        tint = if(post.liked) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = post.numberOfLikes.toString(),
                         modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Start
                     )
                 }
             }
-            FilledTonalIconButton(onClick = onComments, modifier = Modifier.padding(4.dp).weight(1f)) {
+            FilledTonalButton(onClick = onComments, modifier = Modifier.padding(4.dp).weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         painterResource(R.drawable.comments_solid),
@@ -175,7 +177,7 @@ fun PostComponent(
                     Text(
                         text = post.numberOfComments.toString(),
                         modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Start
                     )
                 }
             }
@@ -186,7 +188,7 @@ fun PostComponent(
                 )
             }
             FilledTonalIconButton(onClick = onInfo, modifier = Modifier.padding(4.dp)) {
-                Icon(painterResource(R.drawable.baseline_info_24), null)
+                Icon(painterResource(R.drawable.baseline_bar_chart_24), null)
             }
         }
 

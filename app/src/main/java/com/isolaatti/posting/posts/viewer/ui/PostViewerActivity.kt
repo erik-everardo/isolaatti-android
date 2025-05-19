@@ -5,29 +5,35 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Modifier
 import androidx.core.app.TaskStackBuilder
-import androidx.core.content.res.ResourcesCompat
-import coil3.imageLoader
-import coil3.load
-import com.isolaatti.BuildConfig
 import com.isolaatti.R
 import com.isolaatti.common.IsolaattiBaseActivity
-import com.isolaatti.databinding.ActivityPostViewerBinding
-import com.isolaatti.posting.comments.ui.BottomSheetPostComments
-import com.isolaatti.posting.posts.ui.PostInfoActivity
+import com.isolaatti.posting.posts.components.PostComponent
 import com.isolaatti.posting.posts.viewer.presentation.PostViewerViewModel
-import com.isolaatti.profile.ui.ProfileActivity
-import com.isolaatti.utils.UrlGen
-import io.noties.markwon.AbstractMarkwonPlugin
-import io.noties.markwon.Markwon
-import io.noties.markwon.MarkwonConfiguration
-import io.noties.markwon.image.coil.CoilImagesPlugin
-import io.noties.markwon.image.destination.ImageDestinationProcessorRelativeToAbsolute
-import io.noties.markwon.linkify.LinkifyPlugin
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 
 class PostViewerActivity : IsolaattiBaseActivity() {
     companion object {
@@ -53,80 +59,8 @@ class PostViewerActivity : IsolaattiBaseActivity() {
     }
 
 
-    private lateinit var binding: ActivityPostViewerBinding
     private val viewModel: PostViewerViewModel by viewModels()
     private var postId: Long = 0
-    private lateinit var markwon: Markwon
-
-    private fun openComments() {
-        val modalBottomSheet = BottomSheetPostComments.getInstance(postId)
-        modalBottomSheet.show(supportFragmentManager, BottomSheetPostComments.TAG)
-    }
-
-    private fun setObservers() {
-        viewModel.error.observe(this) {
-            errorViewModel.error.postValue(it)
-            CoroutineScope(Dispatchers.Default).launch {
-                errorViewModel.retry.collect {
-                    viewModel.retry()
-                    errorViewModel.handleRetry()
-                }
-            }
-        }
-
-        viewModel.post.observe(this) {
-            binding.markwonContainer.text = it.textContent
-            binding.author.text = it.userName
-            binding.profileImageView.load(UrlGen.userProfileImage(it.userId), imageLoader)
-            binding.commentsInfo.text = getString(R.string.comments_info, it.numberOfComments)
-            binding.likesInfo.text = getString(R.string.likes_info, it.numberOfLikes)
-            binding.author.setOnClickListener {_ ->
-                ProfileActivity.startActivity(this@PostViewerActivity, it.userId)
-            }
-
-
-        }
-
-        viewModel.postLiked.observe(this) {
-            val color = if(it) R.color.purple_lighter else R.color.on_surface
-            val menuItem = binding.toolbar.menu.findItem(R.id.like)
-
-            menuItem.isEnabled = true
-            menuItem.icon?.setTint(ResourcesCompat.getColor(resources, color, null))
-
-
-        }
-
-    }
-
-    private fun setListeners() {
-        binding.toolbar.setOnMenuItemClickListener {
-            when(it.itemId) {
-                R.id.like -> {
-                    viewModel.likeDislikePost()
-                    true
-                }
-                R.id.comments -> {
-                    openComments()
-                    true
-                }
-                else -> false
-            }
-        }
-
-        binding.commentsInfo.setOnClickListener {
-            openComments()
-        }
-
-        binding.toolbar.setNavigationOnClickListener {
-            finish()
-        }
-
-        binding.likesInfo.setOnClickListener {
-            PostInfoActivity.startActivity(this, postId)
-        }
-
-    }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -138,30 +72,78 @@ class PostViewerActivity : IsolaattiBaseActivity() {
         }
     }
 
+    private fun exit() {
+
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         postId = intent.getLongExtra(POST_ID, 0)
         Log.d(LOG_TAG, "Post id: $postId")
 
-        binding = ActivityPostViewerBinding.inflate(layoutInflater)
-        markwon = Markwon.builder(this)
-            .usePlugin(object: AbstractMarkwonPlugin() {
-                override fun configureConfiguration(builder: MarkwonConfiguration.Builder) {
-                    builder
-                        .imageDestinationProcessor(
-                            ImageDestinationProcessorRelativeToAbsolute
-                            .create(BuildConfig.backend))
-                }
-            })
-            .usePlugin(LinkifyPlugin.create())
-            .build()
 
-        setContentView(binding.root)
         if(postId!! > 0) {
             viewModel.postId = postId
-            setObservers()
-            setListeners()
             viewModel.getPost()
+        }
+
+        setContent {
+
+
+
+            val post by viewModel.post.collectAsState()
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = {
+                            Text(stringResource(R.string.discussion))
+                        },
+                        navigationIcon = {
+                            IconButton(
+                                onClick = {}
+                            ) {
+                                Icon(Icons.Default.Close, null)
+                            }
+                        }
+                    )
+                },
+                bottomBar = {
+                    BottomAppBar(modifier = Modifier.height(140.dp)) {
+                        OutlinedTextField(
+                            value = "",
+                            onValueChange = {},
+                            label = { Text(stringResource(R.string.comment)) },
+                            modifier = Modifier.padding(16.dp).weight(1f),
+                        )
+                        IconButton(
+                            modifier = Modifier.padding(16.dp),
+                            onClick = {}
+                        ) {
+                            Icon(Icons.AutoMirrored.Default.Send, stringResource(R.string.send))
+                        }
+                    }
+                }
+            ) {
+                PullToRefreshBox(
+                    isRefreshing = false,
+                    onRefresh = {
+
+                    },
+                    modifier = Modifier.padding(it).fillMaxSize()
+                ) {
+                    LazyColumn() {
+                        post?.let {
+                            item {
+                                PostComponent(
+                                    post = it
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
 
     }

@@ -3,6 +3,7 @@ package com.isolaatti.posting.posts.ui
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.enableEdgeToEdge
 import com.google.android.material.tabs.TabLayoutMediator
 import com.isolaatti.R
 import com.isolaatti.common.IsolaattiBaseActivity
@@ -13,6 +14,7 @@ class PostInfoActivity : IsolaattiBaseActivity() {
     private lateinit var binding: ActivityPostInfoBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         binding = ActivityPostInfoBinding.inflate(layoutInflater)
