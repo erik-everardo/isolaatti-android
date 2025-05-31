@@ -1,6 +1,8 @@
 package com.isolaatti.posting.posts.data.remote
 
 import com.isolaatti.images.common.data.remote.ImageDto
+import com.isolaatti.profile.data.remote.ProfileListItemDto
+import com.isolaatti.profile.data.remote.UserProfileDto
 import java.time.ZonedDateTime
 
 data class FeedDto(
@@ -24,6 +26,7 @@ data class FeedDto(
         val userName: String,
         val squadName: String?,
         var liked: Boolean,
+        val participants: List<ProfileListItemDto>
     ){
 
         val list: MutableList<ImageDto> = mutableListOf()

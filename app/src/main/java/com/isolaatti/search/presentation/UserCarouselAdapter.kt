@@ -45,11 +45,7 @@ class UserCarouselAdapter(
         val user = getItem(position)
 
         holder.usersCarouselItemBinding.userCarouselName.text = user.name
-        if(user.profileImageId != null) {
-            holder.usersCarouselItemBinding.userCarouselImageView.load(UrlGen.imageUrl(user.profileImageId))
-        } else {
-            holder.usersCarouselItemBinding.userCarouselImageView.load(R.drawable.avatar)
-        }
+        holder.usersCarouselItemBinding.userCarouselImageView.load(UrlGen.userProfileImage(user.id))
 
         holder.usersCarouselItemBinding.userCarouselCard.setOnClickListener { onProfileClick(user.id) }
 

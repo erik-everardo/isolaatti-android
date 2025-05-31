@@ -9,6 +9,7 @@ import com.isolaatti.posting.comments.domain.use_case.GetComments
 import com.isolaatti.posting.likes.domain.repository.LikesRepository
 import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.posting.posts.domain.use_case.LoadSinglePost
+import com.isolaatti.profile.domain.entity.ProfileListItem
 import com.isolaatti.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -36,6 +37,15 @@ class PostViewerViewModel @Inject constructor(
 
     private val toRetry: MutableList<Runnable> = mutableListOf()
 
+    private val _noMoreComments: MutableStateFlow<Boolean?> = MutableStateFlow(null)
+    val noMoreComments: StateFlow<Boolean?> get() = _noMoreComments
+
+    val commentText: MutableStateFlow<String> = MutableStateFlow("")
+    private val _loadingComments: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val loadingComments: StateFlow<Boolean> get() = _loadingComments
+
+    private val _postLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val postLoading: StateFlow<Boolean> get() = _postLoading
 
     // runs the lists of "Runnable" one by one and clears list. After this is executed,
     // caller should report as handled
@@ -52,13 +62,17 @@ class PostViewerViewModel @Inject constructor(
             loadSinglePost(postId).onEach {
                 when(it) {
                     is Resource.Error -> {
+                        _postLoading.value = false
                         error.postValue(it.errorType)
                         toRetry.add {
                             getPost()
                         }
                     }
-                    is Resource.Loading -> {}
+                    is Resource.Loading -> {
+                        _postLoading.value = true
+                    }
                     is Resource.Success -> {
+                        _postLoading.value = false
                         if(it.data != null) {
                             _post.value = it.data
                         }
@@ -68,17 +82,28 @@ class PostViewerViewModel @Inject constructor(
         }
     }
 
-    fun getComments() {
+    fun getComments(refresh: Boolean) {
         viewModelScope.launch {
-            commentsRepository.getComments(postId, null)
+            val lastId = _comments.value.takeIf { it.isNotEmpty() && !refresh }?.last()?.id
+            commentsRepository.getComments(postId, lastId)
                 .onEach { resource ->
                     when(resource) {
                         is Resource.Error -> {
-
+                            _loadingComments.value = false
                         }
-                        is Resource.Loading -> {}
+                        is Resource.Loading -> {
+                            _loadingComments.value = true
+                        }
                         is Resource.Success -> {
-                            _comments.value = resource.data ?: emptyList()
+                            _loadingComments.value = false
+                            if(refresh) {
+                                _comments.value = resource.data ?: emptyList()
+                            } else {
+                                _comments.value = (_comments.value) + (resource.data ?: emptyList())
+                            }
+
+                            _noMoreComments.value = _comments.value.size >= (_post.value?.numberOfComments ?: 0)
+
                         }
                     }
                 }
@@ -122,5 +147,10 @@ class PostViewerViewModel @Inject constructor(
                 }.flowOn(Dispatchers.IO).launchIn(this)
             }
         }
+    }
+
+    fun refresh() {
+        getPost()
+        getComments(true)
     }
 }

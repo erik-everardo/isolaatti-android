@@ -13,6 +13,7 @@ import com.isolaatti.common.hashtagRegex
 import com.isolaatti.images.common.domain.entity.RemoteImage
 import com.isolaatti.posting.posts.data.remote.FeedDto
 import com.isolaatti.posting.posts.domain.PostPrivacy
+import com.isolaatti.profile.domain.entity.ProfileListItem
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
@@ -29,7 +30,8 @@ class Post(
     val squadName: String? = null,
     liked: Boolean,
     val audio: Audio? = null,
-    images: List<RemoteImage>
+    images: List<RemoteImage>,
+    val participants: List<ProfileListItem> = emptyList()
 ) : Ownable, Parcelable {
 
     var liked by mutableStateOf(liked)
@@ -55,7 +57,8 @@ class Post(
         parcel.readString(),
         parcel.readByte() != 0.toByte(),
         parcel.readSerializable() as?  Audio,
-        parcel.readParcelableArray(RemoteImage::class.java.classLoader)?.toList() as? List<RemoteImage> ?: emptyList()
+        parcel.readParcelableArray(RemoteImage::class.java.classLoader)?.toList() as? List<RemoteImage> ?: emptyList(),
+        parcel.readParcelableArray(ProfileListItem::class.java.classLoader)?.toList() as? List<ProfileListItem> ?: emptyList()
     ) {
     }
 
@@ -75,7 +78,8 @@ class Post(
                     squadName = it.squadName,
                     liked = it.liked,
                     audio = if(it.post.hasAudio) Audio.fromDto(it) else null,
-                    images = it.post.images.map { imageDto -> RemoteImage(imageDto.id) }
+                    images = it.post.images.map { imageDto -> RemoteImage(imageDto.id) },
+                    participants = emptyList()
                 )
             }.toMutableList()
         }
@@ -94,7 +98,8 @@ class Post(
                 squadName = postDto.squadName,
                 liked = postDto.liked,
                 audio = if(postDto.post.hasAudio) Audio.fromDto(postDto) else null,
-                images = postDto.post.images.map { imageDto -> RemoteImage(imageDto.id) }
+                images = postDto.post.images.map { imageDto -> RemoteImage(imageDto.id) },
+                participants = postDto.participants.map { ProfileListItem.fromDto(it) }
             )
         }
 

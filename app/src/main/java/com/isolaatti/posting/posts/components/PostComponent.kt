@@ -199,5 +199,5 @@ fun PostComponent(
 @Composable
 @Preview(device = Devices.PIXEL_5)
 fun PostPreview() {
-    PostComponent(Post(id = 0L, textContent = "Test", userId = 1, privacy = PostPrivacy.Isolaatti, date = ZonedDateTime.now(), images = emptyList(), liked = false, userName = "Username", numberOfLikes = 2, numberOfComments = 3))
+    PostComponent(Post(id = 0L, textContent = "Test", userId = 1, privacy = PostPrivacy.Isolaatti, date = ZonedDateTime.now(), images = emptyList(), liked = false, userName = "Username", numberOfLikes = 2, numberOfComments = 3, participants = emptyList()))
 }

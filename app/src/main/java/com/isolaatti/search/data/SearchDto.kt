@@ -4,7 +4,7 @@ package com.isolaatti.search.data
 enum class SearchResultType {
     Profile, Post, Hashtag, Unknown
 }
-data class ProfileSearchDto(val id: Int, val name: String, val imageId: String?, val following: Boolean)
+data class ProfileSearchDto(val id: Int, val name: String, val following: Boolean)
 data class SearchDto(val result: List<SearchResultDto>)
 
 data class SearchResultDto(

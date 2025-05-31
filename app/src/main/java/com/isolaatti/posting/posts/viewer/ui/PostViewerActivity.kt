@@ -8,6 +8,8 @@ import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,9 +19,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -34,9 +39,13 @@ import com.isolaatti.posting.posts.components.PostComponent
 import com.isolaatti.posting.posts.viewer.presentation.PostViewerViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.unit.dp
+import com.isolaatti.common.IsolaattiTheme
 import com.isolaatti.posting.comments.domain.model.Comment
 import com.isolaatti.posting.comments.ui.components.CommentComponent
+import com.isolaatti.posting.posts.components.PostParticipants
 import java.time.ZonedDateTime
 
 class PostViewerActivity : IsolaattiBaseActivity() {
@@ -55,7 +64,7 @@ class PostViewerActivity : IsolaattiBaseActivity() {
 
         fun getPendingIntent(context: Context, postId: Long): PendingIntent? {
             return TaskStackBuilder.create(context).run {
-                addNextIntentWithParentStack(Companion.getIntent(context, postId))
+                addNextIntentWithParentStack(getIntent(context, postId))
 
                 getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
             }
@@ -91,7 +100,7 @@ class PostViewerActivity : IsolaattiBaseActivity() {
         if(postId!! > 0) {
             viewModel.postId = postId
             viewModel.getPost()
-            viewModel.getComments()
+            viewModel.getComments(true)
         }
 
         setContent {
@@ -100,66 +109,144 @@ class PostViewerActivity : IsolaattiBaseActivity() {
 
             val post by viewModel.post.collectAsState()
             val comments by viewModel.comments.collectAsState()
+            val noMoreContent by viewModel.noMoreComments.collectAsState()
+            val loadingComments by viewModel.loadingComments.collectAsState()
+            val postLoading by viewModel.postLoading.collectAsState()
 
-            Scaffold(
-                topBar = {
-                    TopAppBar(
-                        title = {
-                            Text(stringResource(R.string.discussion))
-                        },
-                        navigationIcon = {
-                            IconButton(
-                                onClick = {}
-                            ) {
-                                Icon(Icons.Default.Close, null)
+            IsolaattiTheme {
+                Scaffold(
+                    topBar = {
+                        TopAppBar(
+                            title = {
+                                Text(stringResource(R.string.discussion))
+                            },
+                            navigationIcon = {
+                                IconButton(
+                                    onClick = {}
+                                ) {
+                                    Icon(Icons.Default.Close, null)
+                                }
                             }
-                        }
-                    )
-                },
-                bottomBar = {
-                    BottomAppBar(modifier = Modifier.height(140.dp)) {
-                        OutlinedTextField(
-                            value = "",
-                            onValueChange = {},
-                            label = { Text(stringResource(R.string.comment)) },
-                            modifier = Modifier.padding(16.dp).weight(1f),
                         )
-                        IconButton(
-                            modifier = Modifier.padding(16.dp),
-                            onClick = {}
-                        ) {
-                            Icon(Icons.AutoMirrored.Default.Send, stringResource(R.string.send))
+                    },
+                    bottomBar = {
+                        BottomAppBar(modifier = Modifier.height(140.dp)) {
+                            val commentText by viewModel.commentText.collectAsState()
+                            OutlinedTextField(
+                                value = commentText,
+                                onValueChange = {
+                                    viewModel.commentText.value = it
+                                },
+                                label = { Text(stringResource(R.string.comment)) },
+                                modifier = Modifier.padding(16.dp).weight(1f),
+                            )
+                            IconButton(
+                                modifier = Modifier.padding(16.dp),
+                                enabled = commentText.isNotBlank(),
+                                onClick = {
+
+                                }
+                            ) {
+                                Icon(Icons.AutoMirrored.Default.Send, stringResource(R.string.send))
+                            }
                         }
                     }
-                }
-            ) {
-                PullToRefreshBox(
-                    isRefreshing = false,
-                    onRefresh = {
-
-                    },
-                    modifier = Modifier.padding(it).fillMaxSize()
                 ) {
-                    LazyColumn() {
-                        post?.let {
-                            item {
-                                PostComponent(
-                                    post = it
-                                )
+                    PullToRefreshBox(
+                        isRefreshing = postLoading,
+                        onRefresh = {
+                            viewModel.refresh()
+                        },
+                        modifier = Modifier.padding(it).fillMaxSize()
+                    ) {
+                        LazyColumn() {
+                            post?.let {
+                                item {
+                                    PostComponent(
+                                        post = it,
+                                        modifier = TODO(),
+                                        onLike = TODO(),
+                                        onDislike = TODO(),
+                                        onShare = TODO(),
+                                        onInfo = TODO(),
+                                        onOptions = TODO(),
+                                        onUsernameClick = TODO(),
+                                        onImageClick = TODO(),
+                                        onHashtagClick = TODO(),
+                                        isCurrentlyPlaying = TODO(),
+                                        audioIsPlaying = TODO(),
+                                        progress = TODO(),
+                                        duration = TODO(),
+                                        onPlay = TODO(),
+                                        onPause = TODO(),
+                                        onSeek = TODO(),
+                                    )
+                                }
                             }
-                        }
 
-                        items(count = comments.size) { index ->
-                            val comment = comments[index]
-                            CommentComponent(
-                                comment = comment,
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
-                            )
+                            post?.participants?.let {
+                                if(it.isNotEmpty()) {
+                                    item {
+                                        Text(
+                                            text = stringResource(R.string.post_participants),
+                                            modifier = Modifier.padding(8.dp),
+                                            style = MaterialTheme.typography.titleLarge
+                                        )
+                                    }
+                                    item {
+                                        PostParticipants(it, onOpenProfile = {}, onFollow = {})
+                                    }
+                                }
+                            }
+
+                            if(comments.isNotEmpty()) {
+                                item {
+                                    Text(
+                                        text = stringResource(R.string.comments),
+                                        modifier = Modifier.padding(8.dp),
+                                        style = MaterialTheme.typography.titleLarge
+                                    )
+                                }
+                                items(count = comments.size) { index ->
+                                    val comment = comments[index]
+                                    CommentComponent(
+                                        comment = comment,
+                                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+                                    )
+                                }
+                                if(loadingComments) {
+                                    item {
+                                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                                            CircularProgressIndicator()
+                                        }
+                                    }
+                                }
+                                if(noMoreContent != null) {
+                                    item {
+                                        if(noMoreContent == true) {
+                                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                                                Text(stringResource(R.string.there_is_no_more_content_to_show))
+                                            }
+                                        } else {
+                                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                                                Button(
+                                                    enabled = !loadingComments,
+                                                    onClick = {
+                                                        viewModel.getComments(false)
+                                                    }
+                                                ) {
+                                                    Text(stringResource(R.string.load_more))
+                                                }
+                                            }
+
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
         }
-
     }
 }
