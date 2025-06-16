@@ -8,6 +8,6 @@ import javax.inject.Inject
 
 class PostComment @Inject constructor(private val commentsRepository: CommentsRepository) {
     operator fun invoke(content: String, postId: Long): Flow<Resource<Comment>> {
-        return commentsRepository.postComment(content, null, postId)
+        return commentsRepository.postComment(content, postId)
     }
 }

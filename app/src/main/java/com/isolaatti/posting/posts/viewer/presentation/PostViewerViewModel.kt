@@ -1,15 +1,16 @@
 package com.isolaatti.posting.posts.viewer.presentation
 
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.isolaatti.audio.player.AudioPlaybackState
 import com.isolaatti.posting.comments.domain.CommentsRepository
 import com.isolaatti.posting.comments.domain.model.Comment
-import com.isolaatti.posting.comments.domain.use_case.GetComments
 import com.isolaatti.posting.likes.domain.repository.LikesRepository
 import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.posting.posts.domain.use_case.LoadSinglePost
-import com.isolaatti.profile.domain.entity.ProfileListItem
+import com.isolaatti.posting.posts.presentation.PostListingViewModelBase.Companion.TAG
 import com.isolaatti.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -47,6 +48,13 @@ class PostViewerViewModel @Inject constructor(
     private val _postLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val postLoading: StateFlow<Boolean> get() = _postLoading
 
+    val audioState = AudioPlaybackState()
+
+    val commentPosted: MutableStateFlow<Boolean?> = MutableStateFlow(false)
+    val uploadingComment: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
+
+    var ended: Boolean = false
     // runs the lists of "Runnable" one by one and clears list. After this is executed,
     // caller should report as handled
     fun retry() {
@@ -112,42 +120,75 @@ class PostViewerViewModel @Inject constructor(
         }
     }
 
-    fun likeDislikePost() {
+    fun likePost() {
         viewModelScope.launch {
-            if(_post.value?.liked == true) {
-                likesRepository.unLikePost(postId).onEach {
-                    when(it) {
-                        is Resource.Error -> {
+            likesRepository.likePost(postId).onEach {like ->
 
-                        }
-                        is Resource.Loading -> {
-
-                        }
-                        is Resource.Success -> {
-                            _post.value?.liked = false
-                            it.data?.likesCount?.let { _post.value?.numberOfLikes = it }
-                        }
+                when(like) {
+                    is Resource.Error -> {
+                        Log.e(TAG, "Error likePost($postId) ${like.errorType} ${like.message}")
                     }
-
-                }.flowOn(Dispatchers.IO).launchIn(this)
-            } else {
-                likesRepository.likePost(postId).onEach {
-                    when(it) {
-                        is Resource.Error -> {
-
-                        }
-                        is Resource.Loading -> {
-
-                        }
-                        is Resource.Success -> {
-                            _post.value?.liked = true
-                            it.data?.likesCount?.let { _post.value?.numberOfLikes = it }
-                        }
+                    is Resource.Loading -> {
+                        Log.i(TAG, "Loading likePost($postId)")
                     }
-                }.flowOn(Dispatchers.IO).launchIn(this)
-            }
+                    is Resource.Success -> {
+                        _post.value?.liked = true
+                        _post.value?.numberOfLikes = like.data!!.likesCount
+                    }
+                }
+
+
+            }.flowOn(Dispatchers.IO).launchIn(this)
         }
     }
+
+    fun unLikePost() {
+        viewModelScope.launch {
+            likesRepository.unLikePost(postId).onEach {like ->
+
+                when(like) {
+                    is Resource.Error -> {
+                        Log.e(TAG, "Error unLikePost($postId) ${like.errorType} ${like.message}")
+                    }
+                    is Resource.Loading -> {
+                        Log.i(TAG, "Loading unLikePost($postId)")
+                    }
+                    is Resource.Success -> {
+                        _post.value?.liked = false
+                        _post.value?.numberOfLikes = like.data!!.likesCount
+                    }
+                }
+
+
+            }.flowOn(Dispatchers.IO).launchIn(this)
+        }
+    }
+
+    fun postComment() {
+        viewModelScope.launch {
+            commentsRepository.postComment(commentText.value, postId).onEach {
+                when (it) {
+                    is Resource.Success -> {
+                        uploadingComment.value = false
+                        commentPosted.value = true
+                        _comments.value = (listOf(it.data!!)) + _comments.value
+                        commentText.value = ""
+                    }
+
+                    is Resource.Loading -> {
+                        uploadingComment.value = true
+                    }
+
+                    is Resource.Error -> {
+                        uploadingComment.value = false
+                        commentPosted.value = false
+                    }
+                }
+            }.flowOn(Dispatchers.IO).launchIn(this)
+        }
+    }
+
+
 
     fun refresh() {
         getPost()

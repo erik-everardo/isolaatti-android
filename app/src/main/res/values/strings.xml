@@ -246,6 +246,7 @@
     <string name="replace_audio_confirmation_message">"Replace audio? "</string>
     <string name="comment">Comment</string>
     <string name="post_participants">Participants</string>
+    <string name="posting_comment">Posting comment</string>
     <string-array name="report_reasons">
         <item>Spam</item>
         <item>Explicit content</item>

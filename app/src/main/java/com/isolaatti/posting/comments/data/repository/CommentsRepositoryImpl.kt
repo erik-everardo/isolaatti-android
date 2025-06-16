@@ -42,10 +42,10 @@ class CommentsRepositoryImpl @Inject constructor(private val commentsApi: Commen
         }
     }
 
-    override fun postComment(content: String, audioId: String?, postId: Long): Flow<Resource<Comment>> = flow {
+    override fun postComment(content: String, postId: Long): Flow<Resource<Comment>> = flow {
         try {
             emit(Resource.Loading())
-            val commentToPostDto = CommentToPostDto(content, audioId)
+            val commentToPostDto = CommentToPostDto(content)
             val response = commentsApi.postComment(postId, commentToPostDto).awaitResponse()
             if(response.isSuccessful) {
                 val responseBody = response.body()
@@ -65,7 +65,7 @@ class CommentsRepositoryImpl @Inject constructor(private val commentsApi: Commen
     override fun editComment(commentId: Long, content: String, audioId: String?): Flow<Resource<Comment>> = flow {
         try {
             emit(Resource.Loading())
-            val commentToPostDto = CommentToPostDto(content, audioId)
+            val commentToPostDto = CommentToPostDto(content)
             val response = commentsApi.editComment(commentId, commentToPostDto).awaitResponse()
 
             if(response.isSuccessful) {
