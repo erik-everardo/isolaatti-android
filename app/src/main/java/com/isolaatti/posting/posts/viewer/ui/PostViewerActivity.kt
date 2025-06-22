@@ -10,6 +10,8 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,9 +22,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -34,7 +38,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberBottomSheetScaffoldState
@@ -48,7 +54,11 @@ import com.isolaatti.common.IsolaattiBaseActivity
 import com.isolaatti.posting.posts.components.PostComponent
 import com.isolaatti.posting.posts.viewer.presentation.PostViewerViewModel
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -65,10 +75,13 @@ import com.isolaatti.audio.player.MediaService
 import com.isolaatti.common.IsolaattiTheme
 import com.isolaatti.hashtags.ui.HashtagsPostsActivity
 import com.isolaatti.images.picture_viewer.ui.PictureViewerActivity
+import com.isolaatti.posting.PostEvents
 import com.isolaatti.posting.comments.ui.components.CommentComponent
 import com.isolaatti.posting.posts.components.PostParticipants
 import com.isolaatti.posting.posts.ui.PostInfoActivity
 import com.isolaatti.profile.ui.ProfileActivity
+import com.isolaatti.reports.data.ContentType
+import com.isolaatti.reports.ui.NewReportBottomSheetDialogFragment
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
@@ -190,11 +203,7 @@ class PostViewerActivity : IsolaattiBaseActivity() {
             }
 
             setContent {
-                val post by viewModel.post.collectAsState()
-                val comments by viewModel.comments.collectAsState()
-                val noMoreContent by viewModel.noMoreComments.collectAsState()
-                val loadingComments by viewModel.loadingComments.collectAsState()
-                val postLoading by viewModel.postLoading.collectAsState()
+                val state by viewModel.state.collectAsState()
 
                 val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(rememberStandardBottomSheetState(skipHiddenState = false))
 
@@ -210,6 +219,8 @@ class PostViewerActivity : IsolaattiBaseActivity() {
 
                 val coroutineScope = rememberCoroutineScope()
 
+                val commentsLazyListState = rememberLazyListState()
+
                 BackHandler(enabled = bottomSheetScaffoldState.bottomSheetState.isVisible) {
                     coroutineScope.launch {
                         bottomSheetScaffoldState.bottomSheetState.hide()
@@ -221,6 +232,71 @@ class PostViewerActivity : IsolaattiBaseActivity() {
                     SheetValue.Expanded -> 240.dp
                     SheetValue.PartiallyExpanded -> 240.dp
                 }
+
+                var commentsPositionToHighlight: Int? by remember { mutableStateOf(null) }
+
+                LaunchedEffect(Unit) {
+                    viewModel.events.collect {
+                        when(val event = it) {
+                            PostEvents.CommentEditError -> {
+                                bottomSheetScaffoldState.snackbarHostState
+                                    .showSnackbar(getString(R.string.comment_failed_to_edit))
+                            }
+                            is PostEvents.CommentEdited -> {
+                                bottomSheetScaffoldState.snackbarHostState.currentSnackbarData?.dismiss()
+
+
+                                val snackbarResult = bottomSheetScaffoldState.snackbarHostState
+                                    .showSnackbar(
+                                        message = getString(R.string.comment_edited),
+                                        actionLabel = if(event.position == -1) null else getString(R.string.go_to_comment),
+                                        duration = SnackbarDuration.Long
+                                    )
+
+                                if(snackbarResult == SnackbarResult.ActionPerformed) {
+                                    commentsLazyListState.animateScrollToItem(event.position)
+                                    commentsPositionToHighlight = event.position
+                                }
+                            }
+                            PostEvents.CommentRemoveError -> {
+                                bottomSheetScaffoldState.snackbarHostState
+                                    .showSnackbar(getString(R.string.comment_failed_to_remove))
+                            }
+                            PostEvents.CommentRemoved -> {
+                                bottomSheetScaffoldState.snackbarHostState
+                                    .showSnackbar(getString(R.string.comment_removed))
+                            }
+
+                            is PostEvents.CommentPosted -> {
+                                bottomSheetScaffoldState.snackbarHostState.currentSnackbarData?.dismiss()
+                                val snackbarResult = bottomSheetScaffoldState.snackbarHostState.showSnackbar(
+                                    actionLabel = if(event.position == -1) null else getString(R.string.go_to_comment),
+                                    message = getString(R.string.comment_posted),
+                                    duration = SnackbarDuration.Long
+                                )
+
+                                if(snackbarResult == SnackbarResult.ActionPerformed) {
+                                    commentsLazyListState.animateScrollToItem(event.position)
+                                    commentsPositionToHighlight = event.position
+                                }
+
+                            }
+
+                            PostEvents.PostingComment -> {
+                                bottomSheetScaffoldState.snackbarHostState.showSnackbar(
+                                    message = getString(R.string.posting_comment),
+                                    duration = SnackbarDuration.Indefinite
+                                )
+                            }
+                            PostEvents.EditingComment -> {
+                                bottomSheetScaffoldState.snackbarHostState.showSnackbar(
+                                    message = getString(R.string.posting_comment),
+                                    duration = SnackbarDuration.Indefinite
+                                )
+                            }
+                        }
+                    }
+                }
                 IsolaattiTheme {
                     BottomSheetScaffold(
                         scaffoldState = bottomSheetScaffoldState,
@@ -231,7 +307,9 @@ class PostViewerActivity : IsolaattiBaseActivity() {
                                 },
                                 navigationIcon = {
                                     IconButton(
-                                        onClick = {}
+                                        onClick = {
+                                            finish()
+                                        }
                                     ) {
                                         Icon(Icons.Default.Close, null)
                                     }
@@ -253,48 +331,54 @@ class PostViewerActivity : IsolaattiBaseActivity() {
                                     style = MaterialTheme.typography.titleLarge
                                 )
 
-                                val loading by viewModel.loadingComments.collectAsState()
 
                                 PullToRefreshBox(
-                                    isRefreshing = loading,
+                                    isRefreshing = state.refreshingComments,
                                     onRefresh = { viewModel.getComments(true) },
-                                    modifier = Modifier.weight(1f, true)
+                                    modifier = Modifier.weight(1f, true).fillMaxWidth()
                                 ) {
-                                    LazyColumn() {
-                                        if(comments.isNotEmpty()) {
 
-                                            items(count = comments.size) { index ->
-                                                val comment = comments[index]
+                                    LazyColumn(state = commentsLazyListState) {
+                                        if(state.comments.isNotEmpty()) {
+
+                                            items(count = state.comments.size, key = { state.comments[it].id }) { index ->
+                                                val comment = state.comments[index]
                                                 CommentComponent(
                                                     comment = comment,
-                                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).animateItem(),
                                                     onDelete = {
-
+                                                        viewModel.setCommentToDelete(comment)
                                                     },
                                                     onEdit = {
-
+                                                        viewModel.setCommentToEdit(comment)
                                                     },
                                                     onReport = {
-
+                                                        NewReportBottomSheetDialogFragment
+                                                            .newInstance(ContentType.Comment, comment.id.toString())
+                                                            .show(supportFragmentManager, NewReportBottomSheetDialogFragment.LOG_TAG)
                                                     },
                                                     onProfileClick = {
                                                         ProfileActivity.startActivity(this@PostViewerActivity, comment.userId)
+                                                    },
+                                                    highligth = commentsPositionToHighlight == index,
+                                                    finishedHighlight = {
+                                                        commentsPositionToHighlight = null
                                                     }
                                                 )
                                             }
-                                            if(loadingComments) {
+                                            if(state.loadingComments) {
                                                 item {
                                                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                                                         CircularProgressIndicator()
                                                     }
                                                 }
                                             }
-                                            if(noMoreContent != null) {
+                                            if(state.noMoreComments != null) {
                                                 item {
-                                                    if(noMoreContent != true) {
+                                                    if(state.noMoreComments != true) {
                                                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                                                             Button(
-                                                                enabled = !loadingComments,
+                                                                enabled = !state.loadingComments,
                                                                 onClick = {
                                                                     viewModel.getComments(false)
                                                                 }
@@ -310,31 +394,37 @@ class PostViewerActivity : IsolaattiBaseActivity() {
                                 }
 
                                 val commentText by viewModel.commentText.collectAsState()
-                                val uploadingComment by viewModel.uploadingComment.collectAsState()
-                                val commentPosted by viewModel.commentPosted.collectAsState()
+                                val commentInEdit by viewModel.commentInEdit.collectAsState()
 
-                                LaunchedEffect(uploadingComment, commentPosted) {
-                                    when {
-                                        uploadingComment -> {
-                                            bottomSheetScaffoldState.snackbarHostState.showSnackbar(
-                                                message = getString(R.string.posting_comment),
-                                                duration = SnackbarDuration.Indefinite
-                                            )
 
-                                        }
+                                AnimatedVisibility(commentInEdit) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .background(MaterialTheme.colorScheme.surface),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
 
-                                        commentPosted == true -> {
-                                            bottomSheetScaffoldState.snackbarHostState.currentSnackbarData?.dismiss()
-                                            bottomSheetScaffoldState.snackbarHostState.showSnackbar(
-                                                message = getString(R.string.comment_posted)
-                                            )
+                                        Text(
+                                            modifier = Modifier.weight(1f).padding(start = 16.dp),
+                                            text = stringResource(R.string.edit_comment_here),
+                                            style = MaterialTheme.typography.titleMedium
+                                        )
+                                        IconButton(
+                                            modifier = Modifier.padding(horizontal = 16.dp),
+                                            onClick = {
+                                                viewModel.cancelCommentToEdit()
+                                            }
+                                        ) {
+                                            Icon(Icons.Default.Close, null)
                                         }
                                     }
                                 }
-                                Row(modifier = Modifier) {
+
+                                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                                     OutlinedTextField(
                                         value = commentText,
-                                        enabled = !uploadingComment,
+                                        enabled = !state.uploadingComment,
                                         onValueChange = {
                                             viewModel.commentText.value = it
                                         },
@@ -343,9 +433,14 @@ class PostViewerActivity : IsolaattiBaseActivity() {
                                     )
                                     IconButton(
                                         modifier = Modifier.padding(16.dp),
-                                        enabled = commentText.isNotBlank() && !uploadingComment,
+                                        enabled = commentText.isNotBlank() && !state.uploadingComment,
                                         onClick = {
-                                            viewModel.postComment()
+                                            if(viewModel.commentInEdit.value) {
+                                                viewModel.editComment()
+                                            } else {
+                                                viewModel.postComment()
+                                            }
+
                                         }
                                     ) {
                                         Icon(Icons.AutoMirrored.Default.Send, stringResource(R.string.send))
@@ -356,15 +451,52 @@ class PostViewerActivity : IsolaattiBaseActivity() {
 
                         }
                     ) {
+
+                        if(state.showDeleteCommentDialog) {
+                            AlertDialog(
+                                title = {
+                                    Text(stringResource(R.string.delete_comment_question))
+                                },
+                                dismissButton = {
+                                    TextButton(
+                                        enabled = !state.deletingComment,
+                                        onClick = {
+                                            viewModel.cancelCommentToDelete()
+                                        }
+                                    ) {
+                                        Text(stringResource(R.string.cancel))
+                                    }
+                                },
+                                confirmButton = {
+                                    Button(
+                                        enabled = !state.deletingComment,
+                                        onClick = {
+                                            viewModel.deleteComment()
+                                        }
+                                    ) {
+                                        if(state.deletingComment) {
+                                            Text(stringResource(R.string.deleting_please_wait))
+                                        } else {
+                                            Text(stringResource(R.string.accept))
+                                        }
+
+                                    }
+                                },
+                                onDismissRequest = {
+                                    viewModel.cancelCommentToDelete()
+                                }
+                            )
+                        }
+
                         PullToRefreshBox(
-                            isRefreshing = postLoading,
+                            isRefreshing = state.postLoading,
                             onRefresh = {
                                 viewModel.refresh()
                             },
                             modifier = Modifier.padding(it).fillMaxSize()
                         ) {
                             LazyColumn() {
-                                post?.let {  post ->
+                                state.post?.let {  post ->
                                     item {
                                         PostComponent(
                                             modifier = Modifier.animateItem(),
@@ -420,7 +552,7 @@ class PostViewerActivity : IsolaattiBaseActivity() {
                                     }
                                 }
 
-                                post?.participants?.let {
+                                state.post?.participants?.let {
                                     if(it.isNotEmpty()) {
                                         item {
                                             Text(
@@ -430,7 +562,15 @@ class PostViewerActivity : IsolaattiBaseActivity() {
                                             )
                                         }
                                         item {
-                                            PostParticipants(it, onOpenProfile = {}, onFollow = {})
+                                            PostParticipants(
+                                                participants = it,
+                                                onOpenProfile = {
+                                                    ProfileActivity.startActivity(this@PostViewerActivity, it.id)
+                                                },
+                                                onFollow = {
+
+                                                }
+                                            )
                                         }
                                     }
                                 }

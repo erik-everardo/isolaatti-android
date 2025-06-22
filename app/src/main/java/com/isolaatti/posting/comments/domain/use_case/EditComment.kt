@@ -8,6 +8,6 @@ import javax.inject.Inject
 
 class EditComment @Inject constructor(private val commentsRepository: CommentsRepository) {
     operator fun invoke(commentId: Long, content: String, audioId: String?): Flow<Resource<Comment>> {
-        return commentsRepository.editComment(commentId,content,audioId)
+        return commentsRepository.editComment(commentId, content)
     }
 }

@@ -5,20 +5,26 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.isolaatti.audio.player.AudioPlaybackState
+import com.isolaatti.followers.domain.FollowersRepository
+import com.isolaatti.posting.PostEvents
 import com.isolaatti.posting.comments.domain.CommentsRepository
 import com.isolaatti.posting.comments.domain.model.Comment
 import com.isolaatti.posting.likes.domain.repository.LikesRepository
-import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.posting.posts.domain.use_case.LoadSinglePost
 import com.isolaatti.posting.posts.presentation.PostListingViewModelBase.Companion.TAG
+import com.isolaatti.posting.posts.viewer.ui.PostViewerState
+import com.isolaatti.profile.domain.entity.ProfileListItem
 import com.isolaatti.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -26,32 +32,32 @@ import javax.inject.Inject
 class PostViewerViewModel @Inject constructor(
     private val loadSinglePost: LoadSinglePost,
     private val likesRepository: LikesRepository,
-    private val commentsRepository: CommentsRepository
+    private val commentsRepository: CommentsRepository,
+    private val followersRepository: FollowersRepository
 ) : ViewModel() {
     val error: MutableLiveData<Resource.Error.ErrorType?> = MutableLiveData()
-    val post: StateFlow<Post?> get() = _post
-    private val _post: MutableStateFlow<Post?> = MutableStateFlow(null)
     var postId: Long = 0
 
-    private val _comments: MutableStateFlow<List<Comment>> = MutableStateFlow(emptyList())
-    val comments: StateFlow<List<Comment>> get() = _comments
+    private val _state = MutableStateFlow(PostViewerState())
+    val state: StateFlow<PostViewerState> = _state
+
 
     private val toRetry: MutableList<Runnable> = mutableListOf()
 
-    private val _noMoreComments: MutableStateFlow<Boolean?> = MutableStateFlow(null)
-    val noMoreComments: StateFlow<Boolean?> get() = _noMoreComments
+    private val _events: Channel<PostEvents> = Channel()
+    val events = _events.receiveAsFlow()
 
     val commentText: MutableStateFlow<String> = MutableStateFlow("")
-    private val _loadingComments: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val loadingComments: StateFlow<Boolean> get() = _loadingComments
 
-    private val _postLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val postLoading: StateFlow<Boolean> get() = _postLoading
 
     val audioState = AudioPlaybackState()
 
-    val commentPosted: MutableStateFlow<Boolean?> = MutableStateFlow(false)
-    val uploadingComment: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
+    private var commentToEdit: Comment? = null
+    val commentInEdit: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
+    private var commentToDelete: Comment? = null
+
 
 
     var ended: Boolean = false
@@ -67,22 +73,25 @@ class PostViewerViewModel @Inject constructor(
 
     fun getPost() {
         viewModelScope.launch {
-            loadSinglePost(postId).onEach {
-                when(it) {
+            loadSinglePost(postId).onEach { resrouce ->
+                when(resrouce) {
                     is Resource.Error -> {
-                        _postLoading.value = false
-                        error.postValue(it.errorType)
+                        _state.update {
+                            it.copy(postLoading = false)
+                        }
+                        error.postValue(resrouce.errorType)
                         toRetry.add {
                             getPost()
                         }
                     }
                     is Resource.Loading -> {
-                        _postLoading.value = true
+                        _state.update {
+                            it.copy(postLoading = true)
+                        }
                     }
                     is Resource.Success -> {
-                        _postLoading.value = false
-                        if(it.data != null) {
-                            _post.value = it.data
+                        _state.update {
+                            it.copy(postLoading = false, post = resrouce.data)
                         }
                     }
                 }
@@ -92,25 +101,34 @@ class PostViewerViewModel @Inject constructor(
 
     fun getComments(refresh: Boolean) {
         viewModelScope.launch {
-            val lastId = _comments.value.takeIf { it.isNotEmpty() && !refresh }?.last()?.id
+            val lastId = _state.value.comments.takeIf { it.isNotEmpty() && !refresh }?.last()?.id
             commentsRepository.getComments(postId, lastId)
                 .onEach { resource ->
                     when(resource) {
                         is Resource.Error -> {
-                            _loadingComments.value = false
+                            _state.update {
+                                it.copy(loadingComments = false)
+                            }
                         }
                         is Resource.Loading -> {
-                            _loadingComments.value = true
+                            _state.update {
+                                it.copy(loadingComments = !refresh, refreshingComments = refresh)
+                            }
                         }
                         is Resource.Success -> {
-                            _loadingComments.value = false
                             if(refresh) {
-                                _comments.value = resource.data ?: emptyList()
+                                _state.update {
+                                    it.copy(comments = resource.data ?: emptyList(), refreshingComments = false)
+                                }
                             } else {
-                                _comments.value = (_comments.value) + (resource.data ?: emptyList())
+                                _state.update {
+                                    it.copy(comments = (it.comments) + (resource.data ?: emptyList()), loadingComments = false)
+                                }
                             }
 
-                            _noMoreComments.value = _comments.value.size >= (_post.value?.numberOfComments ?: 0)
+                            _state.update {
+                                it.copy(noMoreComments = it.comments.size >= (it.post?.numberOfComments ?: 0))
+                            }
 
                         }
                     }
@@ -132,8 +150,14 @@ class PostViewerViewModel @Inject constructor(
                         Log.i(TAG, "Loading likePost($postId)")
                     }
                     is Resource.Success -> {
-                        _post.value?.liked = true
-                        _post.value?.numberOfLikes = like.data!!.likesCount
+                        _state.update {
+                            it.copy(
+                                post = it.post?.apply {
+                                    liked = true
+                                    numberOfLikes = like.data!!.likesCount
+                                }
+                            )
+                        }
                     }
                 }
 
@@ -154,8 +178,14 @@ class PostViewerViewModel @Inject constructor(
                         Log.i(TAG, "Loading unLikePost($postId)")
                     }
                     is Resource.Success -> {
-                        _post.value?.liked = false
-                        _post.value?.numberOfLikes = like.data!!.likesCount
+                        _state.update {
+                            it.copy(
+                                post = it.post?.apply {
+                                    liked = false
+                                    numberOfLikes = like.data!!.likesCount
+                                }
+                            )
+                        }
                     }
                 }
 
@@ -166,32 +196,189 @@ class PostViewerViewModel @Inject constructor(
 
     fun postComment() {
         viewModelScope.launch {
-            commentsRepository.postComment(commentText.value, postId).onEach {
-                when (it) {
+            commentsRepository.postComment(commentText.value, postId).onEach { resource ->
+                when (resource) {
                     is Resource.Success -> {
-                        uploadingComment.value = false
-                        commentPosted.value = true
-                        _comments.value = (listOf(it.data!!)) + _comments.value
+                        _state.update {
+                            it.copy(
+                                uploadingComment = false,
+                                comments = (listOf(resource.data!!)) + it.comments
+                            )
+                        }
+
+                        _events.send(PostEvents.CommentPosted(_state.value.comments.indexOf(resource.data!!)))
+
                         commentText.value = ""
                     }
 
                     is Resource.Loading -> {
-                        uploadingComment.value = true
+                        _state.update {
+                            it.copy(
+                                uploadingComment = true
+                            )
+                        }
                     }
 
                     is Resource.Error -> {
-                        uploadingComment.value = false
-                        commentPosted.value = false
+                        _state.update {
+                            it.copy(uploadingComment = false)
+                        }
                     }
                 }
             }.flowOn(Dispatchers.IO).launchIn(this)
         }
     }
 
+    fun editComment() {
+        val comment = commentToEdit
+        if(comment == null) {
+            return
+        }
+        viewModelScope.launch {
+            commentsRepository.editComment(comment.id, commentText.value).onEach { resource ->
+                when(resource) {
+                    is Resource.Error -> {
+                        _state.update {
+                            it.copy(uploadingComment = false)
+                        }
+                        _events.send(PostEvents.CommentEditError)
+                    }
+                    is Resource.Loading -> {
+                        _state.update {
+                            it.copy(uploadingComment = true)
+                        }
+                    }
+                    is Resource.Success -> {
+                        commentToEdit = null
+                        commentText.value = ""
+                        commentInEdit.value = false
+                        _state.update {
+                            val index = it.comments.indexOf(comment)
+                            it.copy(
+                                uploadingComment = false,
+                                comments = if(index == -1) {
+                                    it.comments
+                                } else {
+                                    it.comments.toMutableList().apply {
+                                        set(index, resource.data!!)
+                                    }
+                                }
+                            )
+                        }
+                        _events.send(PostEvents.CommentEdited(_state.value.comments.indexOf(resource.data!!)))
+                    }
+                }
+            }.flowOn(Dispatchers.IO).launchIn(this)
+        }
+    }
 
+    fun deleteComment() {
+        val comment = commentToDelete
+        if(comment == null) {
+            return
+        }
+        viewModelScope.launch {
+            commentsRepository.deleteComment(comment.id).onEach { resource ->
+                when(resource) {
+                    is Resource.Error -> {
+                        _events.send(PostEvents.CommentRemoveError)
+                        _state.update {
+                            it.copy(deletingComment = false)
+                        }
+                    }
+                    is Resource.Loading -> {
+                        Log.d(TAG, "Deleting comment $comment")
+                        _state.update {
+                            it.copy(deletingComment = true)
+                        }
+                    }
+                    is Resource.Success -> {
+                        _state.update {
+                            it.copy(
+                                comments = it.comments.toMutableList().apply { remove(comment) },
+                                showDeleteCommentDialog = false,
+                                deletingComment = false
+                            )
+                        }
+                        _events.send(PostEvents.CommentRemoved)
+                    }
+                }
+            }.flowOn(Dispatchers.IO).launchIn(this)
+        }
+    }
+
+    fun toggleFollowParticipant(profile: ProfileListItem) {
+        viewModelScope.launch {
+            if(profile.following == true) {
+                followersRepository.unfollowUser(profile.id).onEach { resource ->
+                    when(resource) {
+                        is Resource.Error -> {
+
+                        }
+                        is Resource.Loading -> {
+
+                        }
+                        is Resource.Success -> {
+
+                        }
+                    }
+                }.flowOn(Dispatchers.IO).launchIn(this)
+            } else {
+                followersRepository.unfollowUser(profile.id).onEach { resource ->
+                    when(resource) {
+                        is Resource.Error -> {
+
+                        }
+                        is Resource.Loading -> {
+
+                        }
+                        is Resource.Success -> {
+
+                        }
+                    }
+                }.flowOn(Dispatchers.IO).launchIn(this)
+            }
+        }
+    }
+
+
+    fun setCommentToEdit(comment: Comment) {
+        viewModelScope.launch {
+            commentToEdit = comment
+            commentInEdit.value = true
+
+            commentText.value = comment.textContent
+        }
+    }
+
+    fun cancelCommentToEdit() {
+        viewModelScope.launch {
+            commentToEdit = null
+            commentInEdit.value = false
+            commentText.value = ""
+        }
+    }
+
+    fun setCommentToDelete(comment: Comment) {
+        commentToDelete = comment
+        viewModelScope.launch {
+            _state.update {
+                it.copy(showDeleteCommentDialog = true)
+            }
+        }
+
+    }
+
+    fun cancelCommentToDelete() {
+        commentToDelete = null
+        viewModelScope.launch {
+            _state.update {
+                it.copy(showDeleteCommentDialog = false)
+            }
+        }
+    }
 
     fun refresh() {
         getPost()
-        getComments(true)
     }
 }

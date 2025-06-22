@@ -62,7 +62,7 @@ class CommentsRepositoryImpl @Inject constructor(private val commentsApi: Commen
         }
     }
 
-    override fun editComment(commentId: Long, content: String, audioId: String?): Flow<Resource<Comment>> = flow {
+    override fun editComment(commentId: Long, content: String): Flow<Resource<Comment>> = flow {
         try {
             emit(Resource.Loading())
             val commentToPostDto = CommentToPostDto(content)

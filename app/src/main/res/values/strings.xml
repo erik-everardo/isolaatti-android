@@ -247,6 +247,13 @@
     <string name="comment">Comment</string>
     <string name="post_participants">Participants</string>
     <string name="posting_comment">Posting comment</string>
+    <string name="delete_comment_question">Remove comment?</string>
+    <string name="edit_comment_here">Edit comment here</string>
+    <string name="comment_failed_to_remove">Couldn\'t remove comment</string>
+    <string name="comment_removed">Comment removed</string>
+    <string name="comment_failed_to_edit">Comment failed to edit</string>
+    <string name="comment_edited">Comment edited</string>
+    <string name="go_to_comment">Go to comment</string>
     <string-array name="report_reasons">
         <item>Spam</item>
         <item>Explicit content</item>

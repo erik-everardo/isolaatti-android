@@ -1,5 +1,16 @@
 package com.isolaatti.posting.comments.ui.components
 
+import androidx.compose.animation.animateColor
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.repeatable
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,6 +35,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -43,6 +56,7 @@ import coil3.compose.AsyncImage
 import com.isolaatti.R
 import com.isolaatti.posting.comments.domain.model.Comment
 import com.isolaatti.utils.UrlGen
+import io.noties.markwon.syntax.SyntaxHighlight
 import java.time.ZonedDateTime
 
 @Composable
@@ -52,7 +66,9 @@ fun CommentComponent(
     onDelete: () -> Unit = {},
     onEdit: () -> Unit = {},
     onReport: () -> Unit = {},
-    onProfileClick: () -> Unit = {}
+    onProfileClick: () -> Unit = {},
+    highligth: Boolean,
+    finishedHighlight: () -> Unit
 ) {
     val roundedCornerShape = if(comment.isFromUser) {
         RoundedCornerShape(
@@ -76,20 +92,33 @@ fun CommentComponent(
         Arrangement.Start
     }
 
+    val borderColor by animateColorAsState(
+        targetValue = if(highligth) MaterialTheme.colorScheme.primary else Color.Transparent,
+        animationSpec = repeatable(
+            iterations = 2,
+            animation = tween(easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        finishedListener = {
+            finishedHighlight()
+        }
+    )
+
+
     Row(modifier = modifier, horizontalArrangement = arrangement, verticalAlignment = Alignment.CenterVertically){
         if(comment.isFromUser) {
             Row(modifier = Modifier.padding(end = 8.dp)) {
-                IconButton(onClick = {}) {
+                IconButton(onClick = onEdit) {
                     Icon(Icons.Default.Edit, null)
                 }
-                IconButton(onClick = {}) {
+                IconButton(onClick = onDelete) {
                     Icon(Icons.Default.Delete, null)
                 }
             }
         }
         Card(modifier = Modifier.weight(1f, true),
-            shape = roundedCornerShape) {
-
+            shape = roundedCornerShape,
+            border = BorderStroke(width = 3.dp, color = borderColor)){
 
             Column() {
                 Row(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -105,7 +134,14 @@ fun CommentComponent(
                             },
                     )
                     Spacer(Modifier.width(8.dp))
-                    Text(comment.username, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = comment.username,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .clickable {
+                                onProfileClick()
+                            }
+                    )
                 }
                 Text(
                     text = comment.textContent,
@@ -128,6 +164,7 @@ fun CommentComponent(
                         text = { Text(stringResource(R.string.report)) },
                         onClick = {
                             expanded = false
+                            onReport()
                         }
                     )
                 }
@@ -167,6 +204,8 @@ fun CommentComponentPreview() {
             username = "Erik",
             isFromUser = false
         ),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        highligth = true,
+        finishedHighlight = {}
     )
 }
