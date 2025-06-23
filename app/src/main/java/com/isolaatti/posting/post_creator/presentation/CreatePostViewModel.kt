@@ -1,26 +1,17 @@
-package com.isolaatti.posting.posts.presentation
+package com.isolaatti.posting.post_creator.presentation
 
 import android.net.Uri
 import android.util.Log
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.isolaatti.audio.common.components.AudioRecorderState
 import com.isolaatti.audio.common.domain.Audio
-import com.isolaatti.audio.common.domain.Playable
 import com.isolaatti.images.common.domain.entity.Image
 import com.isolaatti.images.common.domain.entity.LocalImage
 import com.isolaatti.images.common.domain.entity.RemoteImage
-import com.isolaatti.posting.posts.data.remote.EditPostDto
 import com.isolaatti.posting.posts.domain.PostPrivacy
 import com.isolaatti.posting.posts.domain.PostingSteps
-import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.posting.posts.domain.use_case.EditPost
 import com.isolaatti.posting.posts.domain.use_case.LoadSinglePost
 import com.isolaatti.posting.posts.domain.use_case.MakePost
@@ -28,14 +19,15 @@ import com.isolaatti.utils.Resource
 import com.isolaatti.utils.ResourceWithSteps
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -50,13 +42,11 @@ class CreatePostViewModel @Inject constructor(
     }
 
     val error: MutableLiveData<ResourceWithSteps.Error.ErrorType?> = MutableLiveData()
-    val sendingPost: MutableLiveData<Boolean?> = MutableLiveData(null)
+    val sendingPost: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val liveContent: MutableLiveData<String> = MutableLiveData()
     private val _photos: MutableStateFlow<List<Image>> = MutableStateFlow(emptyList())
     val photos: StateFlow<List<Image>> get() = _photos
     var audioToUpload: Uri? = null
-
-    var posted: Post? = null
 
     val audioRecorderIsVisible = MutableStateFlow(false)
 
@@ -69,6 +59,9 @@ class CreatePostViewModel @Inject constructor(
     val thereIsContent: Boolean get() {
         return true
     }
+
+    private val _events = Channel<CreatePostEvents>()
+    val events = _events.receiveAsFlow()
 
     // put existing audio when editing post
     val existingAudio: MutableStateFlow<Audio?> = MutableStateFlow(null)
@@ -99,19 +92,19 @@ class CreatePostViewModel @Inject constructor(
                 when(it) {
                     is ResourceWithSteps.Success -> {
                         if(it.step == PostingSteps.Finished) {
-                            posted = it.data
-                            sendingPost.postValue(false)
+                            _events.send(CreatePostEvents.PostCreatedOrEdited(it.data!!))
+                            sendingPost.value = false
                         }
 
                         _postingStep.value = it.step
 
                     }
                     is ResourceWithSteps.Error -> {
-                        sendingPost.postValue(false)
+                        sendingPost.value = false
                         error.postValue(it.errorType)
                     }
                     is ResourceWithSteps.Loading -> {
-                        sendingPost.postValue(true)
+                        sendingPost.value = true
                     }
                 }
             }.flowOn(Dispatchers.IO).launchIn(this)
@@ -139,15 +132,18 @@ class CreatePostViewModel @Inject constructor(
             ).onEach {
                 when(it) {
                     is ResourceWithSteps.Success -> {
-                        posted = it.data
-                        sendingPost.postValue(false)
+                        if(it.step == PostingSteps.Finished) {
+                            sendingPost.value = false
+                            _events.send(CreatePostEvents.PostCreatedOrEdited(it.data!!))
+                        }
+                        _postingStep.value = it.step
                     }
                     is ResourceWithSteps.Error -> {
-                        sendingPost.postValue(null)
+                        sendingPost.value = false
                         error.postValue(it.errorType)
                     }
                     is ResourceWithSteps.Loading -> {
-                        sendingPost.postValue(true)
+                        sendingPost.value = true
                     }
                 }
             }.flowOn(Dispatchers.IO).launchIn(this)

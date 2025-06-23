@@ -1,4 +1,4 @@
-package com.isolaatti.posting.posts.viewer.presentation
+package com.isolaatti.posting.viewer.presentation
 
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
@@ -6,13 +6,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.isolaatti.audio.player.AudioPlaybackState
 import com.isolaatti.followers.domain.FollowersRepository
-import com.isolaatti.posting.PostEvents
+import com.isolaatti.posting.viewer.presentation.PostEvents
 import com.isolaatti.posting.comments.domain.CommentsRepository
 import com.isolaatti.posting.comments.domain.model.Comment
 import com.isolaatti.posting.likes.domain.repository.LikesRepository
-import com.isolaatti.posting.posts.domain.use_case.LoadSinglePost
+import com.isolaatti.posting.posts.domain.PostsRepository
+import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.posting.posts.presentation.PostListingViewModelBase.Companion.TAG
-import com.isolaatti.posting.posts.viewer.ui.PostViewerState
+import com.isolaatti.posting.viewer.ui.PostViewerState
 import com.isolaatti.profile.domain.entity.ProfileListItem
 import com.isolaatti.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -30,7 +31,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PostViewerViewModel @Inject constructor(
-    private val loadSinglePost: LoadSinglePost,
+    private val postsRepository: PostsRepository,
     private val likesRepository: LikesRepository,
     private val commentsRepository: CommentsRepository,
     private val followersRepository: FollowersRepository
@@ -58,6 +59,8 @@ class PostViewerViewModel @Inject constructor(
 
     private var commentToDelete: Comment? = null
 
+    var initialized = false
+
 
 
     var ended: Boolean = false
@@ -73,7 +76,7 @@ class PostViewerViewModel @Inject constructor(
 
     fun getPost() {
         viewModelScope.launch {
-            loadSinglePost(postId).onEach { resrouce ->
+            postsRepository.loadPost(postId).onEach { resrouce ->
                 when(resrouce) {
                     is Resource.Error -> {
                         _state.update {
@@ -394,5 +397,29 @@ class PostViewerViewModel @Inject constructor(
 
     fun refresh() {
         getPost()
+    }
+
+    fun deletePost(postId: Long) {
+        viewModelScope.launch {
+            postsRepository.deletePost(postId).onEach { resource ->
+                when(resource) {
+                    is Resource.Error -> {
+                        _events.send(PostEvents.ErrorDeletingPost)
+                    }
+                    is Resource.Loading -> {
+                        Log.d(TAG, "Removing post...")
+                    }
+                    is Resource.Success -> {
+                        _events.send(PostEvents.PostDeleted)
+                    }
+                }
+            }.flowOn(Dispatchers.IO).launchIn(this)
+        }
+    }
+
+    fun onPostUpdate(post: Post) {
+        _state.update {
+            it.copy(post = post)
+        }
     }
 }

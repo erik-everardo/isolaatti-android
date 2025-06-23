@@ -1,6 +1,5 @@
-package com.isolaatti.posting.posts.ui
+package com.isolaatti.posting.post_creator.ui
 
-import android.app.Activity
 import android.content.ComponentName
 import android.content.Intent
 import android.media.MediaRecorder
@@ -33,7 +32,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -42,11 +40,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -54,6 +50,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
@@ -73,9 +71,10 @@ import com.isolaatti.audio.player.MediaService
 import com.isolaatti.common.IsolaattiBaseActivity
 import com.isolaatti.common.IsolaattiTheme
 import com.isolaatti.images.common.domain.entity.LocalImage
+import com.isolaatti.posting.post_creator.presentation.CreatePostEvents
 import com.isolaatti.posting.posts.components.PostAttachments
 import com.isolaatti.posting.posts.domain.PostingSteps
-import com.isolaatti.posting.posts.presentation.CreatePostViewModel
+import com.isolaatti.posting.post_creator.presentation.CreatePostViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -116,7 +115,7 @@ class CreatePostActivity : IsolaattiBaseActivity() {
 
     private fun makePhotoUri(): Uri {
         val cacheFile = File(filesDir, "temp_picture_${Calendar.getInstance().timeInMillis}")
-        return FileProvider.getUriForFile(this, "${MyApplication.myApp.packageName}.provider", cacheFile)
+        return FileProvider.getUriForFile(this, "${MyApplication.Companion.myApp.packageName}.provider", cacheFile)
     }
 
     private var cameraPhotoUri: Uri? = null
@@ -206,8 +205,8 @@ class CreatePostActivity : IsolaattiBaseActivity() {
             val directory = File(this@CreatePostActivity.filesDir, "recordings")
 
             withContext(Dispatchers.IO) {
-                if(!directory.isDirectory) {
-                    if(directory.isFile) {
+                if (!directory.isDirectory) {
+                    if (directory.isFile) {
                         directory.delete()
                     }
                     directory.mkdir()
@@ -232,20 +231,43 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                 var showReplaceAudioConfirmationDialog by remember { mutableStateOf(false) }
                 val loading by viewModel.loading.collectAsState()
 
+                LaunchedEffect(Unit) {
+                    viewModel.events.collect { event ->
+                        when(event) {
+                            is CreatePostEvents.PostCreatedOrEdited -> {
+                                setResult(
+                                    RESULT_OK,
+                                    Intent().apply {
+                                        putExtra(
+                                            EXTRA_KEY_POST_POSTED,
+                                            event.post
+                                        )
+                                    })
+                                finish()
+                            }
+                        }
+
+                    }
+                }
+
                 IsolaattiTheme {
-                    if(loading) {
-                        Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxSize()) {
+                    if (loading) {
+                        Column(
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.Companion.CenterHorizontally,
+                            modifier = Modifier.Companion.fillMaxSize()
+                        ) {
                             CircularProgressIndicator()
                         }
                     } else {
                         Scaffold(
                             topBar = {
                                 CenterAlignedTopAppBar(
-                                    title = { Text(stringResource(if(editMode) R.string.edit else R.string.new_post)) },
+                                    title = { Text(stringResource(if (editMode) R.string.edit else R.string.new_post)) },
                                     navigationIcon = {
                                         IconButton(
                                             onClick = {
-                                                if(viewModel.thereIsContent) {
+                                                if (viewModel.thereIsContent) {
                                                     showExitConfirmationDialog = true
                                                 } else {
                                                     exit()
@@ -260,7 +282,7 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                         Button(
                                             enabled = text.isNotBlank() || pictures.isNotEmpty(),
                                             onClick = {
-                                                if(editMode) {
+                                                if (editMode) {
                                                     viewModel.editDiscussion(postId)
                                                 } else {
                                                     viewModel.postDiscussion()
@@ -268,7 +290,7 @@ class CreatePostActivity : IsolaattiBaseActivity() {
 
                                             }
                                         ) {
-                                            Text(stringResource(if(editMode) R.string.save else R.string.post))
+                                            Text(stringResource(if (editMode) R.string.save else R.string.post))
                                         }
                                     }
                                 )
@@ -276,26 +298,26 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                         ) {
                             val scrollState = rememberScrollState()
 
-                            val posting by viewModel.sendingPost.observeAsState()
+                            val posting by viewModel.sendingPost.collectAsState()
                             val audioRecorderIsVisible by viewModel.audioRecorderIsVisible.collectAsState()
                             val existingAudio by viewModel.existingAudio.collectAsState()
 
-                            if(posting == true) {
+                            if (posting) {
                                 val postingStep by viewModel.postingStep.collectAsState()
                                 AlertDialog(
                                     onDismissRequest = {},
                                     text = {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Row(verticalAlignment = Alignment.Companion.CenterVertically) {
                                             CircularProgressIndicator()
                                             Text(
-                                                when(postingStep) {
+                                                when (postingStep) {
                                                     PostingSteps.PostContent -> stringResource(R.string.posting)
                                                     PostingSteps.UploadingPhotos -> stringResource(R.string.uploading_photos)
                                                     PostingSteps.Finished -> ""
                                                     PostingSteps.Unspecified -> ""
                                                     PostingSteps.UploadingAudio -> stringResource(R.string.uploading_audio)
                                                 },
-                                                modifier = Modifier.padding(4.dp)
+                                                modifier = Modifier.Companion.padding(4.dp)
                                             )
                                         }
                                     },
@@ -305,12 +327,11 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                     },
                                     confirmButton = {}
                                 )
-                            } else if(posting == false){
-                                setResult(RESULT_OK, Intent().apply { putExtra(EXTRA_KEY_POST_POSTED, viewModel.posted) })
-                                finish()
+                            } else if (posting == false) {
+
                             }
 
-                            if(showExitConfirmationDialog) {
+                            if (showExitConfirmationDialog) {
                                 AlertDialog(
                                     onDismissRequest = {
                                         showExitConfirmationDialog = false
@@ -339,7 +360,7 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                 )
                             }
 
-                            if(showDiscardAudioConfirmationDialog) {
+                            if (showDiscardAudioConfirmationDialog) {
                                 AlertDialog(
                                     onDismissRequest = {
                                         showDiscardAudioConfirmationDialog = false
@@ -370,7 +391,7 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                 )
                             }
 
-                            if(showExistingAudioDeletionConfirmationDialog) {
+                            if (showExistingAudioDeletionConfirmationDialog) {
                                 AlertDialog(
                                     onDismissRequest = {
                                         showExistingAudioDeletionConfirmationDialog = false
@@ -400,7 +421,7 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                 )
                             }
 
-                            if(showReplaceAudioConfirmationDialog) {
+                            if (showReplaceAudioConfirmationDialog) {
                                 AlertDialog(
                                     onDismissRequest = {
                                         showReplaceAudioConfirmationDialog = false
@@ -431,11 +452,11 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                             }
 
 
-                            Column(modifier = Modifier
-                                .padding(it)
-                                .verticalScroll(scrollState)) {
-
-
+                            Column(
+                                modifier = Modifier.Companion
+                                    .padding(it)
+                                    .verticalScroll(scrollState)
+                            ) {
 
 
                                 OutlinedTextField(
@@ -443,15 +464,15 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                     onValueChange = { textFieldValue ->
                                         viewModel.liveContent.postValue(textFieldValue)
                                     },
-                                    modifier = Modifier
+                                    modifier = Modifier.Companion
                                         .padding(horizontal = 8.dp)
                                         .fillMaxWidth()
                                         .focusRequester(focusRequester),
                                     placeholder = { Text(stringResource(R.string.what_do_you_want_to_talk_about_you_can_record_an_audio_if_you_want)) },
                                     colors = OutlinedTextFieldDefaults
                                         .colors(
-                                            focusedBorderColor = Color.Transparent,
-                                            unfocusedBorderColor = Color.Transparent
+                                            focusedBorderColor = Color.Companion.Transparent,
+                                            unfocusedBorderColor = Color.Companion.Transparent
                                         ),
                                     trailingIcon = {
                                         IconButton(
@@ -461,18 +482,28 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                                     audioRecorderIsVisible && (viewModel.audioRecorderState.isRecording || viewModel.audioToUpload != null) -> {
                                                         showDiscardAudioConfirmationDialog = true
                                                     }
+
                                                     audioRecorderIsVisible -> {
-                                                        viewModel.audioRecorderIsVisible.value = false
+                                                        viewModel.audioRecorderIsVisible.value =
+                                                            false
                                                     }
+
                                                     !audioRecorderIsVisible -> {
-                                                        mediaRecorder = if (Build.VERSION.SDK_INT >= 31) MediaRecorder(this@CreatePostActivity) else MediaRecorder()
-                                                        viewModel.audioRecorderIsVisible.value = true
+                                                        mediaRecorder =
+                                                            if (Build.VERSION.SDK_INT >= 31) MediaRecorder(
+                                                                this@CreatePostActivity
+                                                            ) else MediaRecorder()
+                                                        viewModel.audioRecorderIsVisible.value =
+                                                            true
                                                     }
                                                 }
 
                                             }
                                         ) {
-                                            Icon(painterResource(id = R.drawable.baseline_mic_24), null)
+                                            Icon(
+                                                painterResource(id = R.drawable.baseline_mic_24),
+                                                null
+                                            )
                                         }
                                     }
                                 )
@@ -482,16 +513,26 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                 }
 
                                 AnimatedVisibility(existingAudio != null) {
-                                    OutlinedCard(Modifier.padding(16.dp)) {
-                                        Row(Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                            Text("Existing audio", modifier = Modifier.weight(1f))
+                                    OutlinedCard(Modifier.Companion.padding(16.dp)) {
+                                        Row(
+                                            Modifier.Companion.padding(8.dp),
+                                            verticalAlignment = Alignment.Companion.CenterVertically
+                                        ) {
+                                            Text(
+                                                "Existing audio",
+                                                modifier = Modifier.Companion.weight(1f)
+                                            )
                                             IconButton(
-                                                modifier = Modifier.padding(end = 4.dp),
+                                                modifier = Modifier.Companion.padding(end = 4.dp),
                                                 onClick = {
-                                                    showExistingAudioDeletionConfirmationDialog = true
+                                                    showExistingAudioDeletionConfirmationDialog =
+                                                        true
                                                 }
                                             ) {
-                                                Icon(Icons.Default.Delete, stringResource(R.string.delete))
+                                                Icon(
+                                                    Icons.Default.Delete,
+                                                    stringResource(R.string.delete)
+                                                )
                                             }
                                             FilledTonalButton(
                                                 onClick = {
@@ -502,7 +543,7 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                             }
                                         }
                                         AudioPlayer(
-                                            modifier = Modifier
+                                            modifier = Modifier.Companion
                                                 .fillMaxWidth()
                                                 .height(80.dp),
                                             positionMs = 0,
@@ -512,7 +553,7 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                             focused = false,
                                             onPlay = { },
                                             onPause = {},
-                                            onSeek = {  }
+                                            onSeek = { }
                                         )
 
                                     }
@@ -523,28 +564,29 @@ class CreatePostActivity : IsolaattiBaseActivity() {
 
 
                                     LaunchedEffect(viewModel.audioRecorderState.isPlaying) {
-                                        while(viewModel.audioRecorderState.isPlaying) {
+                                        while (viewModel.audioRecorderState.isPlaying) {
                                             delay(200.milliseconds)
-                                            viewModel.audioRecorderState.position = mediaController.currentPosition
+                                            viewModel.audioRecorderState.position =
+                                                mediaController.currentPosition
                                         }
                                     }
 
                                     AudioRecorder(
-                                        modifier = Modifier.padding(16.dp),
+                                        modifier = Modifier.Companion.padding(16.dp),
                                         onDismiss = {
 
-                                            if((viewModel.audioRecorderState.isRecording || viewModel.audioToUpload != null)) {
+                                            if ((viewModel.audioRecorderState.isRecording || viewModel.audioToUpload != null)) {
                                                 showDiscardAudioConfirmationDialog = true
                                             } else {
                                                 viewModel.audioRecorderIsVisible.value = false
                                             }
                                         },
                                         onPlay = {
-                                            if(mediaController.isCommandAvailable(Player.COMMAND_PREPARE)) {
+                                            if (mediaController.isCommandAvailable(Player.COMMAND_PREPARE)) {
                                                 mediaController.prepare()
                                             }
 
-                                            if(viewModel.ended) {
+                                            if (viewModel.ended) {
                                                 mediaController.seekTo(0L)
                                             }
                                             mediaController.playWhenReady = true
@@ -554,7 +596,7 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                         },
                                         onStartRecording = { fromPause ->
 
-                                            if(fromPause) {
+                                            if (fromPause) {
                                                 mediaRecorder.resume()
                                             } else {
                                                 mediaRecorder.run {
@@ -577,7 +619,6 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                             viewModel.audioRecorderState.recordIsPaused = false
 
 
-
                                         },
                                         onPauseRecording = {
                                             mediaRecorder.pause()
@@ -591,9 +632,11 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                             mediaController.setMediaItem(
                                                 MediaItem.Builder()
                                                     .setUri(audioUri)
-                                                    .setMediaMetadata(MediaMetadata.Builder()
-                                                        .setTitle(getString(R.string.just_recorded_audio_title))
-                                                        .build())
+                                                    .setMediaMetadata(
+                                                        MediaMetadata.Builder()
+                                                            .setTitle(getString(R.string.just_recorded_audio_title))
+                                                            .build()
+                                                    )
                                                     .build()
                                             )
                                             viewModel.audioToUpload = audioUri
@@ -610,7 +653,7 @@ class CreatePostActivity : IsolaattiBaseActivity() {
 
 
                                 PostAttachments(
-                                    modifier = Modifier.padding(16.dp),
+                                    modifier = Modifier.Companion.padding(16.dp),
                                     images = pictures,
                                     deletable = true,
                                     imageAddable = true,
@@ -627,7 +670,8 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                     onUploadPicture = {
                                         choosePictureLauncher.launch(
                                             PickVisualMediaRequest(
-                                                ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                                ActivityResultContracts.PickVisualMedia.ImageOnly
+                                            )
                                         )
                                     },
                                 )
@@ -645,7 +689,7 @@ class CreatePostActivity : IsolaattiBaseActivity() {
     }
 
     private fun exit() {
-        setResult(Activity.RESULT_CANCELED)
+        setResult(RESULT_CANCELED)
         finish()
     }
 

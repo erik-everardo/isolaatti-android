@@ -44,8 +44,8 @@
             android:theme="@style/Theme.Isolaatti"
             android:parentActivityName=".home.ui.HomeActivity"/>
         <activity android:name=".settings.ui.SettingsActivity" android:theme="@style/Theme.Isolaatti"/>
-        <activity android:name=".posting.posts.ui.CreatePostActivity" android:theme="@style/Theme.Isolaatti" android:windowSoftInputMode="adjustResize"/>
-        <activity android:name=".posting.posts.viewer.ui.PostViewerActivity" android:theme="@style/Theme.Isolaatti"
+        <activity android:name=".posting.post_creator.ui.CreatePostActivity" android:theme="@style/Theme.Isolaatti" android:windowSoftInputMode="adjustResize"/>
+        <activity android:name=".posting.viewer.ui.PostViewerActivity" android:theme="@style/Theme.Isolaatti"
             android:parentActivityName=".home.ui.HomeActivity"/>
         <activity android:name=".drafts.ui.DraftsActivity" android:theme="@style/Theme.Isolaatti"/>
         <activity android:name=".about.AboutActivity" android:theme="@style/Theme.Isolaatti"/>

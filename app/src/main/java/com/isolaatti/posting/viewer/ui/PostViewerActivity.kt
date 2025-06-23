@@ -1,4 +1,4 @@
-package com.isolaatti.posting.posts.viewer.ui
+package com.isolaatti.posting.viewer.ui
 
 import android.app.PendingIntent
 import android.content.ComponentName
@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -52,17 +53,19 @@ import androidx.core.app.TaskStackBuilder
 import com.isolaatti.R
 import com.isolaatti.common.IsolaattiBaseActivity
 import com.isolaatti.posting.posts.components.PostComponent
-import com.isolaatti.posting.posts.viewer.presentation.PostViewerViewModel
+import com.isolaatti.posting.viewer.presentation.PostViewerViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -72,12 +75,19 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.isolaatti.BuildConfig
 import com.isolaatti.audio.common.domain.Audio
 import com.isolaatti.audio.player.MediaService
+import com.isolaatti.common.Dialogs
 import com.isolaatti.common.IsolaattiTheme
+import com.isolaatti.common.options_bottom_sheet.domain.OptionClicked
+import com.isolaatti.common.options_bottom_sheet.domain.Options
+import com.isolaatti.common.options_bottom_sheet.presentation.BottomSheetPostOptionsViewModel
+import com.isolaatti.common.options_bottom_sheet.ui.BottomSheetPostOptionsFragment
 import com.isolaatti.hashtags.ui.HashtagsPostsActivity
 import com.isolaatti.images.picture_viewer.ui.PictureViewerActivity
-import com.isolaatti.posting.PostEvents
+import com.isolaatti.posting.viewer.presentation.PostEvents
 import com.isolaatti.posting.comments.ui.components.CommentComponent
 import com.isolaatti.posting.posts.components.PostParticipants
+import com.isolaatti.posting.posts.domain.entity.Post
+import com.isolaatti.posting.post_creator.presentation.EditPostContract
 import com.isolaatti.posting.posts.ui.PostInfoActivity
 import com.isolaatti.profile.ui.ProfileActivity
 import com.isolaatti.reports.data.ContentType
@@ -85,20 +95,25 @@ import com.isolaatti.reports.ui.NewReportBottomSheetDialogFragment
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
+import kotlin.getValue
 import kotlin.time.Duration.Companion.milliseconds
 
 class PostViewerActivity : IsolaattiBaseActivity() {
     companion object {
         const val POST_ID = "postId"
+        const val OPEN_COMMENTS_FULLY = "commentsFully"
         const val LOG_TAG = "PostViewerActivity"
 
-        fun getIntent(context: Context, postId: Long): Intent {
+        const val CALLER_ID = 50
+
+        fun getIntent(context: Context, postId: Long, openCommentsFully: Boolean = false): Intent {
             return Intent(context, PostViewerActivity::class.java).apply {
                 putExtra(POST_ID, postId)
+                putExtra(OPEN_COMMENTS_FULLY, openCommentsFully)
             }
         }
-        fun startActivity(context: Context, postId: Long) {
-            context.startActivity(getIntent(context, postId))
+        fun startActivity(context: Context, postId: Long, openCommentsFully: Boolean = false) {
+            context.startActivity(getIntent(context, postId, openCommentsFully))
         }
 
         fun getPendingIntent(context: Context, postId: Long): PendingIntent? {
@@ -116,6 +131,40 @@ class PostViewerActivity : IsolaattiBaseActivity() {
     private lateinit var mediaController: MediaController
     private lateinit var mediaControllerFuture: ListenableFuture<MediaController>
 
+    val optionsViewModel: BottomSheetPostOptionsViewModel by viewModels()
+
+    private val editDiscussion = registerForActivityResult(EditPostContract()) {
+        if(it != null) {
+            viewModel.onPostUpdate(it)
+        }
+    }
+
+    private val optionsObserver: Observer<OptionClicked?> = Observer { optionClicked ->
+        if(optionClicked?.callerId == CALLER_ID) {
+            // post id should come as payload
+            val post = optionClicked.payload as? Post ?: return@Observer
+            when(optionClicked.optionId) {
+                Options.Option.OPTION_DELETE -> {
+                    Dialogs.buildDeletePostDialog(this) { delete ->
+                        optionsViewModel.handle()
+                        if(delete) {
+                            viewModel.deletePost(post.id)
+                        }
+                    }.show()
+
+                }
+                Options.Option.OPTION_EDIT -> {
+                    optionsViewModel.handle()
+                    editDiscussion.launch(post.id)
+                }
+                Options.Option.OPTION_REPORT -> {
+                    optionsViewModel.handle()
+                    NewReportBottomSheetDialogFragment.newInstance(ContentType.Post, post.id.toString())
+                        .show(supportFragmentManager, NewReportBottomSheetDialogFragment.LOG_TAG)
+                }
+            }
+        }
+    }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -184,6 +233,9 @@ class PostViewerActivity : IsolaattiBaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        optionsViewModel.optionClicked.observe(this, optionsObserver)
+
         lifecycleScope.launch {
             val sessionToken = SessionToken(this@PostViewerActivity, ComponentName(this@PostViewerActivity, MediaService::class.java))
             mediaControllerFuture = MediaController.Builder(this@PostViewerActivity, sessionToken).buildAsync()
@@ -196,16 +248,26 @@ class PostViewerActivity : IsolaattiBaseActivity() {
             Log.d(LOG_TAG, "Post id: $postId")
 
 
-            if(postId!! > 0) {
+            if(postId!! > 0 && !viewModel.initialized) {
                 viewModel.postId = postId
                 viewModel.getPost()
                 viewModel.getComments(true)
+                viewModel.initialized = true
             }
 
             setContent {
                 val state by viewModel.state.collectAsState()
 
+                var showCommentsFully by rememberSaveable { mutableStateOf(intent.getBooleanExtra(OPEN_COMMENTS_FULLY, false)) }
+
                 val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(rememberStandardBottomSheetState(skipHiddenState = false))
+
+                LaunchedEffect(Unit) {
+                    if(showCommentsFully) {
+                        bottomSheetScaffoldState.bottomSheetState.expand()
+                        showCommentsFully = false
+                    }
+                }
 
                 LaunchedEffect(viewModel.audioState.isPlaying) {
                     while(viewModel.audioState.isPlaying) {
@@ -292,6 +354,17 @@ class PostViewerActivity : IsolaattiBaseActivity() {
                                 bottomSheetScaffoldState.snackbarHostState.showSnackbar(
                                     message = getString(R.string.posting_comment),
                                     duration = SnackbarDuration.Indefinite
+                                )
+                            }
+
+                            PostEvents.PostDeleted -> {
+                                Toast.makeText(this@PostViewerActivity, R.string.post_deleted, Toast.LENGTH_SHORT).show()
+                                finish()
+                            }
+
+                            PostEvents.ErrorDeletingPost -> {
+                                bottomSheetScaffoldState.snackbarHostState.showSnackbar(
+                                    message = getString(R.string.error_deleting_post)
                                 )
                             }
                         }
@@ -502,7 +575,9 @@ class PostViewerActivity : IsolaattiBaseActivity() {
                                             modifier = Modifier.animateItem(),
                                             post = post,
                                             onOptions = {
-
+                                                optionsViewModel.setOptions(Options.POST_OPTIONS, CALLER_ID, post)
+                                                val modalBottomSheet = BottomSheetPostOptionsFragment()
+                                                modalBottomSheet.show(supportFragmentManager, BottomSheetPostOptionsFragment.TAG)
                                             },
                                             onComments = {
                                                 coroutineScope.launch {

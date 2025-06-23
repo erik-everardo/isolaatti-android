@@ -254,6 +254,8 @@
     <string name="comment_failed_to_edit">Comment failed to edit</string>
     <string name="comment_edited">Comment edited</string>
     <string name="go_to_comment">Go to comment</string>
+    <string name="post_deleted">Post deleted</string>
+    <string name="error_deleting_post">Error deleting post</string>
     <string-array name="report_reasons">
         <item>Spam</item>
         <item>Explicit content</item>

@@ -22,10 +22,6 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -55,12 +51,11 @@ import com.isolaatti.common.options_bottom_sheet.ui.BottomSheetPostOptionsFragme
 import com.isolaatti.hashtags.ui.HashtagsPostsActivity
 import com.isolaatti.home.ui.FeedFragment
 import com.isolaatti.images.picture_viewer.ui.PictureViewerActivity
-import com.isolaatti.posting.comments.ui.BottomSheetPostComments
 import com.isolaatti.posting.posts.components.PostComponent
 import com.isolaatti.posting.posts.domain.entity.Post
-import com.isolaatti.posting.posts.presentation.EditPostContract
+import com.isolaatti.posting.post_creator.presentation.EditPostContract
 import com.isolaatti.posting.posts.presentation.PostListingViewModel
-import com.isolaatti.posting.posts.viewer.ui.PostViewerActivity
+import com.isolaatti.posting.viewer.ui.PostViewerActivity
 import com.isolaatti.profile.ui.ProfileActivity
 import com.isolaatti.reports.data.ContentType
 import com.isolaatti.reports.ui.NewReportBottomSheetDialogFragment
@@ -166,8 +161,11 @@ class PostListingFragment : Fragment() {
                                         PostViewerActivity.startActivity(requireContext(), post.id)
                                     },
                                     onComments = {
-                                        val modalBottomSheet = BottomSheetPostComments.getInstance(post.id)
-                                        modalBottomSheet.show(requireActivity().supportFragmentManager, BottomSheetPostComments.TAG)
+                                        PostViewerActivity.startActivity(
+                                            context = requireContext(),
+                                            postId = post.id,
+                                            openCommentsFully = true
+                                        )
                                     },
                                     onOptions = {
                                         optionsViewModel.setOptions(Options.POST_OPTIONS, FeedFragment.CALLER_ID, post)

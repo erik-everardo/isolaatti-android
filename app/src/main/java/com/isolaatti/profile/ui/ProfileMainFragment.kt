@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -106,13 +105,12 @@ import com.isolaatti.common.options_bottom_sheet.ui.BottomSheetPostOptionsFragme
 import com.isolaatti.followers.domain.FollowingState
 import com.isolaatti.hashtags.ui.HashtagsPostsActivity
 import com.isolaatti.images.picture_viewer.ui.PictureViewerActivity
-import com.isolaatti.posting.comments.ui.BottomSheetPostComments
 import com.isolaatti.posting.posts.components.PostComponent
 import com.isolaatti.posting.posts.domain.entity.Post
-import com.isolaatti.posting.posts.presentation.CreatePostContract
-import com.isolaatti.posting.posts.presentation.EditPostContract
+import com.isolaatti.posting.post_creator.presentation.CreatePostContract
+import com.isolaatti.posting.post_creator.presentation.EditPostContract
 import com.isolaatti.posting.posts.ui.PostInfoActivity
-import com.isolaatti.posting.posts.viewer.ui.PostViewerActivity
+import com.isolaatti.posting.viewer.ui.PostViewerActivity
 import com.isolaatti.profile.presentation.EditProfileContract
 import com.isolaatti.profile.presentation.ProfileViewModel
 import com.isolaatti.profile.ui.components.ConfirmChangeProfilePictureBottomSheet
@@ -761,11 +759,10 @@ class ProfileMainFragment : Fragment() {
                                             )
                                         },
                                         onComments = {
-                                            val modalBottomSheet =
-                                                BottomSheetPostComments.getInstance(post.id)
-                                            modalBottomSheet.show(
-                                                requireActivity().supportFragmentManager,
-                                                BottomSheetPostComments.TAG
+                                            PostViewerActivity.startActivity(
+                                                context = requireContext(),
+                                                postId = post.id,
+                                                openCommentsFully = true
                                             )
                                         },
                                         onOptions = {

@@ -6,7 +6,6 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.graphics.drawable.toBitmap
 import coil3.request.ImageRequest
 import coil3.request.fallback
 import coil3.toBitmap
@@ -17,7 +16,7 @@ import com.isolaatti.R
 import com.isolaatti.common.CoilImageLoader
 import com.isolaatti.notifications.domain.FollowNotification
 import com.isolaatti.notifications.domain.LikeNotification
-import com.isolaatti.posting.posts.viewer.ui.PostViewerActivity
+import com.isolaatti.posting.viewer.ui.PostViewerActivity
 import com.isolaatti.profile.ui.ProfileActivity
 import com.isolaatti.utils.UrlGen
 import dagger.hilt.android.AndroidEntryPoint

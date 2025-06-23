@@ -18,7 +18,7 @@ import com.google.android.material.chip.Chip
 import com.isolaatti.R
 import com.isolaatti.databinding.FragmentSearchBinding
 import com.isolaatti.hashtags.ui.HashtagsPostsActivity
-import com.isolaatti.posting.posts.viewer.ui.PostViewerActivity
+import com.isolaatti.posting.viewer.ui.PostViewerActivity
 import com.isolaatti.profile.domain.entity.ProfileListItem
 import com.isolaatti.profile.ui.ProfileActivity
 import com.isolaatti.search.data.HashtagsDto

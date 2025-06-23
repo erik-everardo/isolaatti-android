@@ -285,6 +285,7 @@ class PostsRepositoryImpl @Inject constructor(
         if(audio != null) {
             willDeleteAudio = false
             val file = audio.toFile()
+            emit(ResourceWithSteps.Success(null, PostingSteps.UploadingAudio))
             val uploadAudioResponse = audiosApi.uploadFile(
                 file = MultipartBody.Part.createFormData(AudiosApi.AudioParam, audio.lastPathSegment, file.asRequestBody("audio/aac".toMediaType()) ),
                 postId = MultipartBody.Part.createFormData(AudiosApi.PostIdParam, postId.toString()),
@@ -297,6 +298,7 @@ class PostsRepositoryImpl @Inject constructor(
             }
         }
 
+        emit(ResourceWithSteps.Success(null, PostingSteps.UploadingPhotos))
         uploadImages(postId, images)
 
         val editPostResponse = postApi.editPost(

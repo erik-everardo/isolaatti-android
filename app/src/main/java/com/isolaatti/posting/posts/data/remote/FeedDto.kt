@@ -26,7 +26,7 @@ data class FeedDto(
         val userName: String,
         val squadName: String?,
         var liked: Boolean,
-        val participants: List<ProfileListItemDto>
+        val participants: List<ProfileListItemDto>?
     ){
 
         val list: MutableList<ImageDto> = mutableListOf()

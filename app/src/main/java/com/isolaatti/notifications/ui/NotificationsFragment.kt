@@ -17,10 +17,9 @@ import com.isolaatti.notifications.domain.LikeNotification
 import com.isolaatti.notifications.domain.Notification
 import com.isolaatti.notifications.presentation.NotificationsAdapter
 import com.isolaatti.notifications.presentation.NotificationsViewModel
-import com.isolaatti.posting.posts.viewer.ui.PostViewerActivity
+import com.isolaatti.posting.viewer.ui.PostViewerActivity
 import com.isolaatti.profile.ui.ProfileActivity
 import dagger.hilt.android.AndroidEntryPoint
-import dagger.hilt.android.lifecycle.HiltViewModel
 
 @AndroidEntryPoint
 class NotificationsFragment : Fragment() {

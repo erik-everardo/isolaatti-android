@@ -1,4 +1,4 @@
-package com.isolaatti.posting.posts.viewer.ui
+package com.isolaatti.posting.viewer.ui
 
 import com.isolaatti.posting.comments.domain.model.Comment
 import com.isolaatti.posting.posts.domain.entity.Post

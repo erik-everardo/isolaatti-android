@@ -28,7 +28,7 @@ import com.isolaatti.common.CoilImageLoader.imageLoader
 import com.isolaatti.common.ErrorMessageViewModel
 import com.isolaatti.databinding.FragmentFeedBinding
 import com.isolaatti.home.presentation.FeedViewModel
-import com.isolaatti.posting.posts.presentation.CreatePostContract
+import com.isolaatti.posting.post_creator.presentation.CreatePostContract
 import com.isolaatti.posting.posts.ui.PostListingFragment
 import com.isolaatti.profile.ui.ProfileActivity
 import com.isolaatti.settings.ui.SettingsActivity

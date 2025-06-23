@@ -97,7 +97,7 @@ class Post(
                 liked = postDto.liked,
                 audio = if(postDto.post.hasAudio) Audio.fromDto(postDto) else null,
                 images = postDto.post.images.map { imageDto -> RemoteImage(imageDto.id) },
-                participants = postDto.participants.map { ProfileListItem.fromDto(it) }
+                participants = postDto.participants?.map { ProfileListItem.fromDto(it) } ?: emptyList()
             )
         }
 

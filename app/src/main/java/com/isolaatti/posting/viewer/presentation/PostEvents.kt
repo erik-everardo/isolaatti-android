@@ -1,6 +1,4 @@
-package com.isolaatti.posting
-
-import com.isolaatti.posting.comments.domain.model.Comment
+package com.isolaatti.posting.viewer.presentation
 
 sealed class PostEvents {
     data class CommentEdited(val position: Int) : PostEvents()
@@ -10,4 +8,6 @@ sealed class PostEvents {
     data class CommentPosted(val position: Int) : PostEvents()
     data object PostingComment : PostEvents()
     data object EditingComment : PostEvents()
+    data object PostDeleted : PostEvents()
+    data object ErrorDeletingPost : PostEvents()
 }
