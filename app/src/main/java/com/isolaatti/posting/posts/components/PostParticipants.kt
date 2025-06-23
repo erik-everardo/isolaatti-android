@@ -44,7 +44,7 @@ fun PostParticipants(participants: List<ProfileListItem>, onOpenProfile: (Profil
             ) {
                 Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                     AsyncImage(
-                        model = UrlGen.userProfileImage(profile.id, true),
+                        model = UrlGen.userProfileImage(profile.id),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
@@ -69,9 +69,8 @@ fun PostParticipants(participants: List<ProfileListItem>, onOpenProfile: (Profil
                             onClick = {
                                 onFollow(profile)
                             },
-                            contentPadding = PaddingValues(8.dp)
                         ) {
-                            Text(stringResource(R.string.follow), fontSize = 11.sp)
+                            Text(stringResource(R.string.follow))
                         }
                     }
                 }
@@ -96,7 +95,7 @@ fun PostParticipantsPreview() {
             ProfileListItem(
                 id = 2,
                 name = "Everardo",
-                following = true
+                following = false
             )
         ),
         onOpenProfile = { },

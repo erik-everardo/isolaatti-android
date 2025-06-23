@@ -31,7 +31,7 @@ class Post(
     liked: Boolean,
     val audio: Audio? = null,
     images: List<RemoteImage>,
-    val participants: List<ProfileListItem> = emptyList()
+    participants: List<ProfileListItem> = emptyList()
 ) : Ownable, Parcelable {
 
     var liked by mutableStateOf(liked)
@@ -40,9 +40,7 @@ class Post(
     var numberOfLikes by mutableIntStateOf(numberOfLikes)
     var numberOfComments by mutableStateOf(numberOfComments)
 
-    var playing by mutableStateOf(false)
-    var durationMs by mutableLongStateOf(0L)
-    var progressMs by mutableLongStateOf(0L)
+    var participants by mutableStateOf(participants)
 
     constructor(parcel: Parcel) : this(
         parcel.readLong(),

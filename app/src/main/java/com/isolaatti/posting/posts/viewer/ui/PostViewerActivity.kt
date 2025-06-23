@@ -567,8 +567,8 @@ class PostViewerActivity : IsolaattiBaseActivity() {
                                                 onOpenProfile = {
                                                     ProfileActivity.startActivity(this@PostViewerActivity, it.id)
                                                 },
-                                                onFollow = {
-
+                                                onFollow = { profile ->
+                                                    viewModel.toggleFollowParticipant(profile)
                                                 }
                                             )
                                         }

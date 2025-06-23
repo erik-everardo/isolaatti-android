@@ -8,7 +8,7 @@ import com.isolaatti.search.data.ProfileSearchDto
 
 
 
-class ProfileListItem(
+data class ProfileListItem(
     val id: Int,
     val name: String,
     var following: Boolean?

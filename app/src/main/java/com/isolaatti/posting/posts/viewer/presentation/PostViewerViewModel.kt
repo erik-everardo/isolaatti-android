@@ -319,12 +319,19 @@ class PostViewerViewModel @Inject constructor(
 
                         }
                         is Resource.Success -> {
-
+                            _state.value.post?.also {
+                                it.participants = it.participants.toMutableList().apply {
+                                    val index = indexOf(profile)
+                                    if(index != -1) {
+                                        set(index, profile.copy(following = false))
+                                    }
+                                }
+                            }
                         }
                     }
                 }.flowOn(Dispatchers.IO).launchIn(this)
             } else {
-                followersRepository.unfollowUser(profile.id).onEach { resource ->
+                followersRepository.followUser(profile.id).onEach { resource ->
                     when(resource) {
                         is Resource.Error -> {
 
@@ -333,7 +340,14 @@ class PostViewerViewModel @Inject constructor(
 
                         }
                         is Resource.Success -> {
-
+                            _state.value.post?.also {
+                                it.participants = it.participants.toMutableList().apply {
+                                    val index = indexOf(profile)
+                                    if(index != -1) {
+                                        set(index, profile.copy(following = true))
+                                    }
+                                }
+                            }
                         }
                     }
                 }.flowOn(Dispatchers.IO).launchIn(this)
