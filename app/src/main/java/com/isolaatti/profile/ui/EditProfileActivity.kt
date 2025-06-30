@@ -3,7 +3,11 @@ package com.isolaatti.profile.ui
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.core.widget.doOnTextChanged
 import com.isolaatti.common.IsolaattiBaseActivity
 import com.isolaatti.databinding.ActivityEditProfileBinding
@@ -19,6 +23,7 @@ class EditProfileActivity : IsolaattiBaseActivity() {
 
     private var inputProfile: UserProfile? = null
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         binding = ActivityEditProfileBinding.inflate(layoutInflater)
@@ -39,6 +44,11 @@ class EditProfileActivity : IsolaattiBaseActivity() {
             binding.description.editText?.setText(inputProfile!!.descriptionText)
         }
 
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
+            val padding = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            binding.appBarLayout.updatePadding(top = padding.top, left = padding.left, right = padding.right)
+            insets
+        }
     }
 
     private fun setupListeners() {

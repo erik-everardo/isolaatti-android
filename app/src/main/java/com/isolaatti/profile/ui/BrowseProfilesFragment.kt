@@ -4,6 +4,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
@@ -34,6 +37,15 @@ class BrowseProfilesFragment : Fragment() {
         (childFragmentManager.findFragmentById(R.id.post_list_fragment_container) as NavHostFragment)
             .navController.setGraph(R.navigation.profile_listing_navigation, Bundle().apply { putInt(
                 ProfileListingFragment.ARG_MODE, ProfileListingFragment.BROWSE_PROFILES) })
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+            val padding = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+
+            binding.toolbar.updatePadding(top = padding.top, left = padding.left, right = padding.right)
+
+
+            insets
+        }
 
     }
 }
