@@ -28,8 +28,8 @@ android {
         applicationId "com.isolaatti"
         minSdk 24
         targetSdk 35
-        versionCode 9
-        versionName "0.9-vc9"
+        versionCode 11
+        versionName "0.9.2-vc11"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -161,4 +161,6 @@ dependencies {
     implementation("com.google.accompanist:accompanist-permissions:0.36.0")
 
     implementation "androidx.work:work-runtime-ktx:2.10.0"
+
+    implementation "androidx.exifinterface:exifinterface:1.4.1"
 }
