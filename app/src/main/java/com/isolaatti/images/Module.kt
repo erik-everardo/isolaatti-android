@@ -6,8 +6,6 @@ import com.isolaatti.connectivity.RetrofitClient
 import com.isolaatti.database.AppDatabase
 import com.isolaatti.images.common.data.dao.ImagesDraftsDao
 import com.isolaatti.images.common.data.remote.ImagesApi
-import com.isolaatti.images.common.data.repository.ImagesRepositoryImpl
-import com.isolaatti.images.common.domain.repository.ImagesRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -30,10 +28,5 @@ class Module {
     @Provides
     fun provideImagesDraftDao(database: AppDatabase): ImagesDraftsDao {
         return database.imagesDraftsDao()
-    }
-
-    @Provides
-    fun provideImagesRepository(imagesApi: ImagesApi, imagesDraftsDao: ImagesDraftsDao, contentResolver: ContentResolver): ImagesRepository {
-        return ImagesRepositoryImpl(imagesApi, imagesDraftsDao, contentResolver)
     }
 }
