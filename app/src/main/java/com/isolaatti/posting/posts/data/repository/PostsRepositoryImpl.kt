@@ -3,10 +3,12 @@ package com.isolaatti.posting.posts.data.repository
 import android.content.ContentResolver
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.net.Uri
 import android.os.Build
 import android.util.Log
 import androidx.core.net.toFile
+import androidx.exifinterface.media.ExifInterface
 import com.google.gson.Gson
 import com.isolaatti.audio.common.data.AudiosApi
 import com.isolaatti.images.common.data.remote.DeleteImagesDto
@@ -103,7 +105,17 @@ class PostsRepositoryImpl @Inject constructor(
             var imageInputStream: InputStream? = null
             try {
                 imageInputStream = contentResolver.openInputStream(localImage.uri)
-                val bitmap = BitmapFactory.decodeStream(imageInputStream)
+
+                var rotationDegrees = 0
+                imageInputStream?.use {
+                    val exifInterface = ExifInterface(it)
+                    rotationDegrees = exifInterface.rotationDegrees
+                }
+
+                imageInputStream = contentResolver.openInputStream(localImage.uri)
+
+
+                var bitmap = BitmapFactory.decodeStream(imageInputStream)
 
                 if(bitmap == null) {
                     Log.e(LOG_TAG, "Error resolving image with content resolver")
@@ -111,6 +123,12 @@ class PostsRepositoryImpl @Inject constructor(
                 }
 
                 val outputStream = ByteArrayOutputStream()
+
+                if(rotationDegrees != 0) {
+                    val matrix = Matrix()
+                    matrix.postRotate(rotationDegrees.toFloat())
+                    bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+                }
 
                 if(Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
                     bitmap.compress(Bitmap.CompressFormat.WEBP, 50, outputStream)
@@ -220,30 +238,30 @@ class PostsRepositoryImpl @Inject constructor(
             val setIsDraftCall = postApi.setIsDraft(postId, false).awaitResponse()
 
             if(setIsDraftCall.isSuccessful) {
-                emit(ResourceWithSteps.Success(null, PostingSteps.Finished))
+                val completePost = postDto?.let {
+                    Post(
+                        id = postId,
+                        textContent = it.post.textContent,
+                        userId = it.post.userId,
+                        privacy = privacy,
+                        date = it.post.date,
+                        squadId = it.post.squadId,
+                        numberOfLikes = it.numberOfLikes,
+                        numberOfComments = it.numberOfComments,
+                        userName = it.userName,
+                        liked = it.liked,
+                        images = successfulImageUploads?.map { RemoteImage(it.id) } ?: emptyList()
+                    )
+                }
+
+                emit(ResourceWithSteps.Success(completePost, PostingSteps.Finished))
             } else {
                 val code = setIsDraftCall.code()
                 Log.e(LOG_TAG, "Could not set as \"not draft\"")
                 emit(ResourceWithSteps.Error(ResourceWithSteps.Error.mapErrorCode(code), "Could not set as \"not draft\""))
             }
 
-            val completePost = postDto?.let {
-                Post(
-                    id = postId,
-                    textContent = it.post.textContent,
-                    userId = it.post.userId,
-                    privacy = privacy,
-                    date = it.post.date,
-                    squadId = it.post.squadId,
-                    numberOfLikes = it.numberOfLikes,
-                    numberOfComments = it.numberOfComments,
-                    userName = it.userName,
-                    liked = it.liked,
-                    images = successfulImageUploads?.map { RemoteImage(it.id) } ?: emptyList()
-                )
-            }
 
-            emit(ResourceWithSteps.Success(completePost, PostingSteps.Finished))
             return@flow
         }
         emit(ResourceWithSteps.Error(ResourceWithSteps.Error.mapErrorCode(result.code())))
