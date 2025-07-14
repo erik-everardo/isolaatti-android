@@ -29,7 +29,7 @@ class RetrofitClient @Inject constructor(private val authenticationInterceptor: 
         .addInterceptor { chain ->
             chain.proceed(chain.request()
                 .newBuilder()
-                .header("User-Agent", "Isolaatti Android ${BuildConfig.VERSION_NAME}")
+                .header("User-Agent", "Sonvoc Android ${BuildConfig.VERSION_NAME}")
                 .build())
         }
         .connectTimeout(5, TimeUnit.MINUTES)
