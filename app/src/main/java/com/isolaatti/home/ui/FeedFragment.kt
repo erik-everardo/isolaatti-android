@@ -32,7 +32,9 @@ import com.isolaatti.posting.post_creator.presentation.CreatePostContract
 import com.isolaatti.posting.posts.ui.PostListingFragment
 import com.isolaatti.profile.ui.ProfileActivity
 import com.isolaatti.settings.ui.SettingsActivity
+import com.isolaatti.squads.ui.SquadsActivity
 import com.isolaatti.utils.UrlGen
+import com.isolaatti.video_streaming.ui.VideoStreamingActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -74,12 +76,20 @@ class FeedFragment : Fragment() {
 
         viewBinding.homeDrawer.setNavigationItemSelectedListener {
             when(it.itemId) {
+                R.id.squads_menu_item -> {
+                    startActivity(Intent(requireActivity(), SquadsActivity::class.java))
+                    true
+                }
                 R.id.settings_menu_item -> {
                     startActivity(Intent(requireActivity(), SettingsActivity::class.java))
                     true
                 }
                 R.id.about_menu_item -> {
                     startActivity(Intent(requireActivity(), AboutActivity::class.java))
+                    true
+                }
+                R.id.lives -> {
+                    startActivity(Intent(requireActivity(), VideoStreamingActivity::class.java))
                     true
                 }
                 else -> {true}

@@ -10,15 +10,6 @@ data class FeedDto(
     var moreContent: Boolean
 ) {
 
-    fun concatFeed(otherFeed: FeedDto?): FeedDto {
-        if(otherFeed != null) {
-            data.addAll(otherFeed.data)
-            moreContent = otherFeed.moreContent
-        }
-
-        return this
-    }
-
     data class PostDto(
         val post: Post,
         var numberOfLikes: Int,

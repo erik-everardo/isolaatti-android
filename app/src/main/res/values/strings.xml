@@ -256,6 +256,18 @@
     <string name="go_to_comment">Go to comment</string>
     <string name="post_deleted">Post deleted</string>
     <string name="error_deleting_post">Error deleting post</string>
+    <string name="create_squad">Create squad</string>
+    <string name="squad_name_placeholder">Give your squad a name</string>
+    <string name="squad_description_placeholder">Describe your squad</string>
+    <string name="new_squad">New squad</string>
+    <string name="squad_extended_description_placeholder">Write longer text, describing your squad, such as rules, indications, etc. You can use Markdown.</string>
+    <string name="what_is_a_squad">\"Squad\" is the cool name for \"community\" or \"group\". A spot where you can share ideas, quotes, images, audios and so on</string>
+    <string name="private_privacy">Private</string>
+    <string name="public_privacy">Public</string>
+    <string name="privacy">Privacy</string>
+    <string name="lives">Lives</string>
+    <string name="articles">Articles</string>
+    <string name="discover_squads">Discover squads</string>
     <string-array name="report_reasons">
         <item>Spam</item>
         <item>Explicit content</item>
