@@ -29,8 +29,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.isolaatti.posting.posts.data.remote.PostDto
 import com.isolaatti.posting.posts.components.PostComponent
+import com.isolaatti.posting.posts.data.remote.FeedDto
 import com.isolaatti.squads.presentation.SquadState
 import com.isolaatti.utils.UrlGen
 
@@ -40,13 +40,13 @@ fun SquadHome(
     state: SquadState,
     onRefresh: () -> Unit,
     onCreatePost: () -> Unit,
-    onPostClick: (post: PostDto) -> Unit,
-    onProfileClick: (post: PostDto) -> Unit,
-    onMoreClick: (post: PostDto) -> Unit,
-    onLike: (post: PostDto) -> Unit,
-    onDislike: (post: PostDto) -> Unit,
-    onImageClick: (post: PostDto, imageUrl: String) -> Unit,
-    onShareClick: (post: PostDto) -> Unit
+    onPostClick: (post: FeedDto.PostDto) -> Unit,
+    onProfileClick: (post: FeedDto.PostDto) -> Unit,
+    onMoreClick: (post: FeedDto.PostDto) -> Unit,
+    onLike: (post: FeedDto.PostDto) -> Unit,
+    onDislike: (post: FeedDto.PostDto) -> Unit,
+    onImageClick: (post: FeedDto.PostDto, imageUrl: String) -> Unit,
+    onShareClick: (post: FeedDto.PostDto) -> Unit
 ) {
 
 
