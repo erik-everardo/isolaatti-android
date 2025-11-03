@@ -377,7 +377,7 @@ class ProfileMainFragment : Fragment() {
                             ) {
                                 FloatingActionButton(
                                     onClick = {
-                                        createDiscussion.launch(Unit)
+                                        createDiscussion.launch(CreatePostContract.Input(null))
                                     }
                                 ) {
                                     Icon(Icons.Default.Add, stringResource(R.string.add_post_button_desc))

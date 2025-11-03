@@ -17,14 +17,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-data class SquadState(
-    val squad: SquadDto? = null,
-    val loadingSquad: Boolean = false,
-    val refreshing: Boolean = false,
-    val loadingPosts: Boolean = false,
-    val posts: List<Post> = emptyList(),
-    val moreContent: Boolean = false
-)
+
 
 @HiltViewModel
 class SquadViewModel @Inject constructor(
@@ -41,7 +34,24 @@ class SquadViewModel @Inject constructor(
         squadRepository.getSquad(id).onEach { resource ->
             when(resource) {
                 is Resource.Success -> {
-                    _state.update { it.copy(squad = resource.data, loadingSquad = false, refreshing = false) }
+                    _state.update {
+                        val squad = resource.data
+                        it.copy(
+                            squad = resource.data,
+                            loadingSquad = false,
+                            refreshing = false,
+                            tabs = buildList {
+                                // TODO add this tab conditionally if user is owner
+                                if(squad?.description?.isNotEmpty() == true) {
+                                    add(SquadTabs.Description)
+                                } else if(squad?.isOwned == true) {
+                                    add(SquadTabs.Description)
+                                }
+                                add(SquadTabs.Posts)
+                                add(SquadTabs.Members)
+                            }
+                        )
+                    }
                 }
                 is Resource.Error -> {
                     _state.value = SquadState(squad = null)

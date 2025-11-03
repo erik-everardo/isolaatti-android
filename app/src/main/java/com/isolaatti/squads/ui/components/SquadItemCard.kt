@@ -49,6 +49,7 @@ fun SquadItemCardPreview() {
         userId = 1,
         privacy = 1,
         creationTime = "2023-01-01T00:00:00Z",
-        imageId = ""
+        imageId = "",
+        isOwned = false
     ))
 }

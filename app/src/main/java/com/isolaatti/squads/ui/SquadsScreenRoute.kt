@@ -7,29 +7,19 @@ sealed interface SquadMainNavigation {
     data class Squad(val id: String) : SquadMainNavigation
     @Serializable
     data object SquadsHome : SquadMainNavigation
+
+    @Serializable
+    data class SquadsSettings(val id: String) : SquadMainNavigation
+
+    @Serializable
+    data class EditDescription(val id: String) : SquadMainNavigation
 }
 
 sealed interface SquadScreenRoute {
     @Serializable
-    data object Home: SquadScreenRoute
+    data object Readme: SquadScreenRoute
     @Serializable
     data object Members: SquadScreenRoute
     @Serializable
-    data object Settings: SquadScreenRoute
-    @Serializable
-    data object Invitations: SquadScreenRoute
-    @Serializable
-    data object Requests: SquadScreenRoute
-}
-
-@Serializable
-sealed interface SquadsScreenRoute {
-    @Serializable
-    data object SquadsHome : SquadsScreenRoute
-    @Serializable
-    data object MySquads : SquadsScreenRoute
-    @Serializable
-    data object Invitations : SquadsScreenRoute
-    @Serializable
-    data object Requests : SquadsScreenRoute
+    data object Posts: SquadScreenRoute
 }

@@ -7,8 +7,11 @@ import androidx.activity.result.contract.ActivityResultContract
 import com.isolaatti.posting.post_creator.ui.CreatePostActivity
 import com.isolaatti.posting.posts.domain.entity.Post
 
-class CreatePostContract : ActivityResultContract<Unit, Post?>() {
-    override fun createIntent(context: Context, input: Unit): Intent {
+class CreatePostContract : ActivityResultContract<CreatePostContract.Input, Post?>() {
+    data class Input(
+        val squadId: String?
+    )
+    override fun createIntent(context: Context, input: Input): Intent {
         return Intent(context, CreatePostActivity::class.java)
     }
 

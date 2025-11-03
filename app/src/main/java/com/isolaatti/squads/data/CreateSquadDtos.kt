@@ -21,7 +21,8 @@ data class SquadDto(
     @SerializedName("userId") val userId: Int,
     @SerializedName("privacy") val privacy: Int,
     @SerializedName("creationTime") val creationTime: String,
-    @SerializedName("imageId") val imageId: String?
+    @SerializedName("imageId") val imageId: String?,
+    @SerializedName("isOwned") val isOwned: Boolean
 )
 
 data class CreateSquadResponseDto(
