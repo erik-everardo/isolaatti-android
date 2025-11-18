@@ -61,6 +61,7 @@
         <activity android:name=".squads.ui.SquadsActivity" android:theme="@style/Theme.Isolaatti"/>
         <activity android:name=".video_streaming.ui.VideoStreamingActivity" android:theme="@style/Theme.Isolaatti"/>
         <activity android:name=".video_streaming.ui.StreamerActivity" android:theme="@style/Theme.Isolaatti"/>
+        <activity android:name=".squads.ui.EditExtendedDescriptionActivity" android:theme="@style/Theme.Isolaatti"/>
         <!-- End activities-->
 
         <provider

@@ -6,7 +6,6 @@ data class CreateSquadDto(
     @SerializedName("name") val name: String,
     @SerializedName("description") val description: String,
     @SerializedName("extendedDescription") val extendedDescription: String,
-    @SerializedName("privacy") val privacy: Int
 )
 
 data class SquadsDto(@SerializedName("squads") val squads: List<SquadDto>)

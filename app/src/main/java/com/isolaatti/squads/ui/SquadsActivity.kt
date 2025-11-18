@@ -30,6 +30,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.isolaatti.posting.post_creator.presentation.CreatePostContract
+import com.isolaatti.squads.presentation.EditExtendedDescriptionContract
 import com.isolaatti.squads.presentation.SquadViewModel
 import com.isolaatti.squads.ui.screens.SettingsScreen
 import com.isolaatti.squads.ui.squad.SquadScreen
@@ -41,6 +42,10 @@ import javax.inject.Inject
 class SquadsActivity : ComponentActivity() {
 
     private val createSquadPostLauncher = registerForActivityResult(CreatePostContract()) {
+
+    }
+
+    private val editExtendedDescriptionLauncher = registerForActivityResult(EditExtendedDescriptionContract()) {
 
     }
 
@@ -90,16 +95,13 @@ class SquadsActivity : ComponentActivity() {
                                     createSquadPostLauncher.launch(CreatePostContract.Input(squadId))
                                 },
                                 onNavigateToEditDescription = {
-
+                                    editExtendedDescriptionLauncher.launch(squadId)
                                 }
                             )
                         }
                         composable<SquadMainNavigation.SquadsSettings> {
                             val route = it.toRoute<SquadMainNavigation.SquadsSettings>()
                             SettingsScreen(route.id)
-                        }
-                        composable<SquadMainNavigation.EditDescription> {
-
                         }
                     }
 

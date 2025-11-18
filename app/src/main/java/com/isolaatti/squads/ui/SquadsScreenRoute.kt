@@ -10,9 +10,6 @@ sealed interface SquadMainNavigation {
 
     @Serializable
     data class SquadsSettings(val id: String) : SquadMainNavigation
-
-    @Serializable
-    data class EditDescription(val id: String) : SquadMainNavigation
 }
 
 sealed interface SquadScreenRoute {
