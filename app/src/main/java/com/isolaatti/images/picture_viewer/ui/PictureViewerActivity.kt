@@ -6,6 +6,7 @@ import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import com.isolaatti.databinding.ActivityPictureViewerBinding
+import com.isolaatti.images.common.domain.entity.Image
 import com.isolaatti.images.common.domain.entity.RemoteImage
 
 class PictureViewerActivity : AppCompatActivity() {
@@ -26,7 +27,7 @@ class PictureViewerActivity : AppCompatActivity() {
         const val EXTRA_IMAGES = "images"
         const val EXTRA_IMAGE_POSITiON = "position"
 
-        fun startActivityWithImages(context: Context, images: ArrayList<RemoteImage>, position: Int = 0) {
+        fun startActivityWithImages(context: Context, images: ArrayList<Image>, position: Int = 0) {
             if(images.isEmpty()) {
                 return
             }

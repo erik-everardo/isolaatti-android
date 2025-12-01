@@ -1,18 +1,12 @@
 package com.isolaatti.squads.presentation
 
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.isolaatti.squads.data.CreateSquadDto
 import com.isolaatti.squads.data.SquadDto
-import com.isolaatti.squads.data.SquadsRepositoryImpl
 import com.isolaatti.squads.domain.SquadsRepository
 import com.isolaatti.squads.ui.EditExtendedDescriptionActivity
-import com.isolaatti.squads.ui.SquadMainNavigation
 import com.isolaatti.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,7 +17,8 @@ import javax.inject.Inject
 
 data class EditExtendedDescriptionScreenState(
     val squad: SquadDto? = null,
-    val loading: Boolean = true
+    val loading: Boolean = true,
+    val isInPreview: Boolean = false
 )
 
 @HiltViewModel
@@ -32,10 +27,14 @@ class EditExtendedDescriptionScreenViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     private val _squad: MutableStateFlow<EditExtendedDescriptionScreenState> = MutableStateFlow(EditExtendedDescriptionScreenState())
-    val squad: StateFlow<EditExtendedDescriptionScreenState> = _squad
+    val state: StateFlow<EditExtendedDescriptionScreenState> = _squad
 
 
     private val squadId: String = savedStateHandle[EditExtendedDescriptionActivity.EXTRA_SQUAD_ID] ?: ""
+
+    private var originalText = ""
+
+    fun pendingChanges(): Boolean = originalText.trim() != state.value.squad?.extendedDescription?.trim()
 
     init {
         viewModelScope.launch {
@@ -48,6 +47,7 @@ class EditExtendedDescriptionScreenViewModel @Inject constructor(
                                 loading = false
                             )
                         }
+                        originalText = squad.data?.extendedDescription ?: ""
                     }
                     is Resource.Error -> {
                         _squad.update {
@@ -71,7 +71,9 @@ class EditExtendedDescriptionScreenViewModel @Inject constructor(
     }
 
     fun onUpdateDescription(description: String) {
-        
+        _squad.update {
+            it.copy(squad = it.squad?.copy(extendedDescription = description))
+        }
     }
 
 
@@ -88,6 +90,12 @@ class EditExtendedDescriptionScreenViewModel @Inject constructor(
                     is Resource.Success -> {}
                 }
             }
+        }
+    }
+
+    fun setIsInPreview(isPreview: Boolean) {
+        _squad.update {
+            it.copy(isInPreview = isPreview)
         }
     }
 

@@ -33,6 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.isolaatti.R
+import com.isolaatti.markdown.MarkdownComponent
 import com.isolaatti.squads.presentation.SquadState
 import com.isolaatti.squads.ui.LocalMarkwon
 
@@ -74,12 +75,10 @@ fun SquadReadme(
 
 
                 state.squad?.extendedDescription?.takeIf { it.isNotBlank() }?.let { extendedDescription ->
-                    AndroidView(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                        factory = { context -> TextView(context) },
-                        update = { textView ->
-                            markwon.setMarkdown(textView, extendedDescription)
-                        }
+                    MarkdownComponent(
+                        text = extendedDescription,
+                        markwon = markwon,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                     )
                 }
 

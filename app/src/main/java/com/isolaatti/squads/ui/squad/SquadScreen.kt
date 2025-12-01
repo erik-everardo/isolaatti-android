@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,11 +29,17 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarData
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -47,6 +54,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -56,9 +65,17 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil3.compose.AsyncImage
+import com.isolaatti.R
+import com.isolaatti.common.dialogs.BottomSheetOption
+import com.isolaatti.common.dialogs.OptionsBottomSheet
+import com.isolaatti.common.dialogs.rememberOptionsBottomSheetState
+import com.isolaatti.images.common.domain.entity.Image
 import com.isolaatti.posting.posts.components.PostComponent
 import com.isolaatti.posting.posts.ui.PostListingFragment
+import com.isolaatti.profile.ui.components.ProfilePictureBottomSheet
+import com.isolaatti.profile.ui.components.ProfilePictureState
 import com.isolaatti.squads.data.SquadDto
+import com.isolaatti.squads.domain.Squad
 import com.isolaatti.squads.presentation.SquadState
 import com.isolaatti.squads.presentation.SquadTabs
 import com.isolaatti.squads.presentation.SquadViewModel
@@ -75,12 +92,28 @@ fun SquadScreen(
     onNavigateToSettingsScreen: () -> Unit,
     onNavigateBack: () -> Unit,
     onRefresh: () -> Unit,
-    onClickImage: (imageId: String) -> Unit,
+    onClickImage: (image: Image?) -> Unit,
     onNavigateToAddPost: () -> Unit,
-    onNavigateToEditDescription: () -> Unit
+    onNavigateToEditDescription: () -> Unit,
+    onNavigateToSearch: () -> Unit,
+    onViewPicture: (image: Image, images: List<Image>) -> Unit,
+    onUploadFromGallery: () -> Unit,
+    onUploadFromCamera: () -> Unit,
+    onDismissImageDialog: () -> Unit
 ) {
 
     val navController = rememberNavController()
+    val snackBarHostState = remember { SnackbarHostState() }
+    val uploadingSquadPictureString = stringResource(R.string.uploading_photo)
+    LaunchedEffect(state.uploadingSquadPicture) {
+        if(state.uploadingSquadPicture) {
+            snackBarHostState.showSnackbar(uploadingSquadPictureString, duration = SnackbarDuration.Indefinite)
+        } else {
+            snackBarHostState.currentSnackbarData?.dismiss()
+        }
+
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -94,23 +127,24 @@ fun SquadScreen(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         AsyncImage(
-                            model = "",
+                            model = state.squad?.image?.thumbnailUri,
                             placeholder = ColorPainter(Color.Gray),
-                            error = ColorPainter(Color.Gray),
+                            fallback = painterResource(R.drawable.baseline_people_24),
+                            error = painterResource(R.drawable.baseline_people_24),
                             modifier = Modifier
                                 .padding(16.dp)
                                 .clip(CircleShape)
                                 .border(BorderStroke(2.dp, Color.White), shape = CircleShape)
                                 .size(50.dp)
                                 .clickable {
-                                    if(state.squad?.imageId != null) {
-                                        onClickImage(state.squad.imageId)
-                                    }
-
+                                    onClickImage(state.squad?.image)
                                 },
                             contentDescription = null,
                         )
-                        Column {
+                        Column(
+                            modifier = Modifier
+                                .clickable { onNavigateToSettingsScreen() }
+                        ) {
                             Text(state.squad?.name ?: "", modifier = Modifier.basicMarquee())
                             state.squad?.description?.let {
                                 Text(it, style = MaterialTheme.typography.titleSmall, modifier = Modifier.basicMarquee())
@@ -121,9 +155,6 @@ fun SquadScreen(
 
                 },
                 actions = {
-                    IconButton(onClick = onNavigateToSettingsScreen) {
-                        Icon(Icons.Default.Settings, contentDescription = null)
-                    }
                 }
             )
         },
@@ -145,7 +176,8 @@ fun SquadScreen(
             }
 
 
-        }
+        },
+        snackbarHost = { SnackbarHost(snackBarHostState) }
     ) { padding ->
 
         val tabs = state.tabs.map {
@@ -154,6 +186,54 @@ fun SquadScreen(
                 SquadTabs.Posts -> SquadTabItem("Posts", SquadScreenRoute.Posts)
                 SquadTabs.Members -> SquadTabItem("Members", SquadScreenRoute.Members)
             }
+        }
+
+        if(state.showImageDialog) {
+            val optionsModalState = rememberOptionsBottomSheetState(
+                title = "Squad image",
+                options = buildList {
+                    add(
+                        // index 0
+                        BottomSheetOption(
+                            title = "Change picture",
+                            icon = null,
+                            popUpOptions = listOf(
+                                BottomSheetOption.PopUpOption(stringResource(R.string.upload_photo)), // index 0
+                                BottomSheetOption.PopUpOption(stringResource(R.string.take_a_photo)) // index 1
+                            )
+                        )
+                    )
+
+                    if(state.squad?.image != null) {
+                        add(
+                            // index 1
+                            BottomSheetOption(
+                                title = stringResource(R.string.view_photo),
+                                icon = null,
+                            )
+                        )
+                    }
+                }
+            )
+            OptionsBottomSheet(
+                onDismissRequest = onDismissImageDialog,
+                sheetState = rememberModalBottomSheetState(),
+                state = optionsModalState,
+                onAction = {
+                    optionIndex, popUpOptionIndex ->
+                    when(optionIndex) {
+                        0 -> when(popUpOptionIndex) {
+                            0 -> { onUploadFromGallery() }
+                            1 -> { onUploadFromCamera() }
+                        }
+                        1 -> {
+                            onDismissImageDialog()
+                            state.squad?.image?.let {
+                                onViewPicture(it, listOf(it))
+                            }
+                        }
+                    }
+                })
         }
 
 
@@ -247,16 +327,11 @@ private fun SquadScreenPreview() {
     CompositionLocalProvider(LocalMarkwon provides Markwon.builder(LocalContext.current).build()) {
         SquadScreen(
             state = SquadState(
-                squad = SquadDto(
-                    id = "",
-                    name = "Squad Name",
-                    description = "Squad Description",
-                    extendedDescription = extendedDescriptionText,
-                    userId = 1,
-                    privacy = 1,
-                    creationTime = "",
-                    imageId = "",
-                    isOwned = true
+                squad = Squad(
+                    id = "squad-1",
+                    name = "Squad de prueba",
+                    description = extendedDescriptionText,
+                    image = null,
                 )
             ),
             onNavigateToSettingsScreen = {},
@@ -264,7 +339,12 @@ private fun SquadScreenPreview() {
             onNavigateBack = {},
             onClickImage = {},
             onNavigateToAddPost = {},
-            onNavigateToEditDescription = {}
+            onNavigateToEditDescription = {},
+            onNavigateToSearch = {},
+            onViewPicture = { _, _ -> },
+            onUploadFromGallery = {},
+            onUploadFromCamera = {},
+            onDismissImageDialog = {}
 
         )
     }

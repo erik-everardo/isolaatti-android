@@ -74,7 +74,6 @@ class MySquadsViewModel @Inject constructor(private val squadsRepository: Squads
                 name,
                 description,
                 extendedDescription,
-                privacy
             )
         )
             .onEach { resource ->

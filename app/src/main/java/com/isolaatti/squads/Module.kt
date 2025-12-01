@@ -1,6 +1,8 @@
 package com.isolaatti.squads
 
+import android.content.ContentResolver
 import com.isolaatti.connectivity.RetrofitClient
+import com.isolaatti.images.common.data.remote.ImagesApi
 import com.isolaatti.squads.data.SquadsApi
 import com.isolaatti.squads.data.SquadsRepositoryImpl
 import com.isolaatti.squads.domain.SquadsRepository
@@ -22,7 +24,7 @@ class Module {
 
     @Provides
     @Singleton
-    fun provideSquadsRepository(squadsApi: SquadsApi): SquadsRepository {
-        return SquadsRepositoryImpl(squadsApi)
+    fun provideSquadsRepository(squadsApi: SquadsApi, imagesApi: ImagesApi, contentResolver: ContentResolver): SquadsRepository {
+        return SquadsRepositoryImpl(squadsApi, imagesApi, contentResolver)
     }
 }

@@ -1,9 +1,13 @@
 package com.isolaatti.squads.presentation
 
+import android.net.Uri
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.isolaatti.images.common.domain.entity.LocalImage
 import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.squads.data.SquadDto
+import com.isolaatti.squads.domain.Squad
 import com.isolaatti.squads.domain.SquadsRepository
 import com.isolaatti.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,23 +25,33 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SquadViewModel @Inject constructor(
+    private val savedStateHandle: SavedStateHandle,
     private val squadRepository: SquadsRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow(SquadState())
     val state = _state.asStateFlow()
 
+    val squadId: String? = savedStateHandle["id"]
+
+    init {
+        getSquad()
+        getPosts()
+    }
+
+
     private var _lastId: Long? = null
 
-    var requested = false
-
-    fun getSquad(id: String, refresh: Boolean = false) {
-        squadRepository.getSquad(id).onEach { resource ->
+    fun getSquad(refresh: Boolean = false) {
+        if(squadId == null) {
+            return
+        }
+        squadRepository.getSquad(squadId).onEach { resource ->
             when(resource) {
                 is Resource.Success -> {
                     _state.update {
                         val squad = resource.data
                         it.copy(
-                            squad = resource.data,
+                            squad = resource.data?.let { squadDto -> Squad.fromDto(squadDto) },
                             loadingSquad = false,
                             refreshing = false,
                             tabs = buildList {
@@ -65,7 +79,11 @@ class SquadViewModel @Inject constructor(
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
     }
 
-    fun getPosts(squadId: String, refresh: Boolean = false) {
+    fun getPosts(refresh: Boolean = false) {
+        if(squadId == null) {
+            return
+        }
+
         if(refresh) {
             _lastId = null
         }
@@ -88,6 +106,44 @@ class SquadViewModel @Inject constructor(
                         }
                     }
                 }
+            }
+        }
+    }
+
+    fun onClickImage() {
+        _state.update { it.copy(showImageDialog = true) }
+    }
+
+    fun dismissImageDialog() {
+        _state.update { it.copy(showImageDialog = false) }
+    }
+
+    fun startUploadingImage(imageUri: Uri) {
+        if(squadId == null) {
+            return
+        }
+        viewModelScope.launch {
+            val prevImage = state.value.squad?.image
+            squadRepository.updateImage(squadId, LocalImage(imageUri)).collect { resource ->
+
+                when(resource) {
+                    is Resource.Error -> {
+                        _state.update { it.copy(
+                            squad = it.squad?.copy(image = prevImage),
+                            uploadingSquadPicture = false
+                        ) }
+                    }
+                    is Resource.Loading -> {
+                        _state.update { it.copy(uploadingSquadPicture = true) }
+                    }
+                    is Resource.Success -> {
+                        _state.update { it.copy(
+                            squad = it.squad?.copy(image = resource.data?.let { resource.data }),
+                            uploadingSquadPicture = false
+                        ) }
+                    }
+                }
+
             }
         }
     }

@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import coil3.load
 import com.isolaatti.common.CoilImageLoader.imageLoader
 import com.isolaatti.databinding.FragmentTouchImageViewWrapperBinding
+import com.isolaatti.images.common.domain.entity.Image
 import com.isolaatti.images.common.domain.entity.RemoteImage
 import com.ortiz.touchview.OnTouchImageViewListener
 
@@ -16,7 +17,7 @@ import com.ortiz.touchview.OnTouchImageViewListener
 class PictureViewerImageWrapperFragment : Fragment() {
 
     private lateinit var binding: FragmentTouchImageViewWrapperBinding
-    private var image: RemoteImage? = null
+    private var image: Image? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -45,13 +46,13 @@ class PictureViewerImageWrapperFragment : Fragment() {
 
 
         image?.let {
-            binding.touchImageView.load(it.imageUrl, imageLoader)
+            binding.touchImageView.load(it.defaultUri, imageLoader)
         }
     }
 
     companion object {
         const val ARGUMENT_IMAGE = "image"
-        fun getInstance(image: RemoteImage): PictureViewerImageWrapperFragment {
+        fun getInstance(image: Image): PictureViewerImageWrapperFragment {
             val fragment = PictureViewerImageWrapperFragment()
             fragment.arguments = Bundle().apply {
                 putParcelable(ARGUMENT_IMAGE, image)
