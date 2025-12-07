@@ -1,4 +1,4 @@
-package com.isolaatti.squads.ui
+package com.isolaatti.squads.ui.screens
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -72,14 +72,16 @@ fun MySquadsScreen(mySquadsViewModel: MySquadsViewModel, onSquadClick: (String) 
                 onDismissRequest = { mySquadsViewModel.hideNewSquadDialog() },
                 sheetState = sheetState
             ) {
-                NewSquadDialog(creating = state.creatingSquad, onCreated = { name, description, extendedDescription, type ->
-                    mySquadsViewModel.createSquad(
-                        name,
-                        description,
-                        extendedDescription,
-                        type.ordinal
-                    )
-                })
+                NewSquadDialog(
+                    creating = state.creatingSquad,
+                    onCreated = { name, description, extendedDescription, type ->
+                        mySquadsViewModel.createSquad(
+                            name,
+                            description,
+                            extendedDescription,
+                            type.ordinal
+                        )
+                    })
             }
         }
 

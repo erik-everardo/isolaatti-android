@@ -23,7 +23,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,6 +48,7 @@ import com.isolaatti.posting.post_creator.presentation.CreatePostContract
 import com.isolaatti.squads.presentation.EditExtendedDescriptionContract
 import com.isolaatti.squads.presentation.SquadSettingsViewModel
 import com.isolaatti.squads.presentation.SquadViewModel
+import com.isolaatti.squads.ui.screens.MySquadsScreen
 import com.isolaatti.squads.ui.screens.SettingsScreen
 import com.isolaatti.squads.ui.screens.SquadSearchScreen
 import com.isolaatti.squads.ui.squad.SquadScreen
@@ -230,7 +230,7 @@ fun SquadsScreenWithNavigation(onSquadClick: (String) -> Unit = {}) {
         }
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding)) {
-            MySquadsScreen( hiltViewModel(), onSquadClick = onSquadClick )
+            MySquadsScreen(hiltViewModel(), onSquadClick = onSquadClick)
         }
     }
 }
