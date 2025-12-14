@@ -1,14 +1,10 @@
 package com.isolaatti.squads.data
 
-import android.content.ContentResolver
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.os.Build
 import android.util.Log
+import com.isolaatti.images.ImageCompressor
 import com.isolaatti.images.common.data.remote.ImagesApi
 import com.isolaatti.images.common.domain.entity.LocalImage
 import com.isolaatti.images.common.domain.entity.RemoteImage
-import com.isolaatti.posting.posts.data.remote.FeedDto
 import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.squads.domain.SquadsRepository
 import com.isolaatti.utils.Resource
@@ -18,15 +14,16 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import retrofit2.awaitResponse
-import java.io.ByteArrayOutputStream
 import java.io.IOException
-import java.io.InputStream
 
 class SquadsRepositoryImpl(
     private val squadsApi: SquadsApi,
     private val imagesApi: ImagesApi,
-    private val contentResolver: ContentResolver
+    private val imageCompressor: ImageCompressor
 ) : SquadsRepository {
+    companion object {
+        const val LOG_TAG = "SquadsRepositoryImpl"
+    }
     override fun createSquad(squad: CreateSquadDto): Flow<Resource<CreateSquadResponseDto>> = flow {
         emit(Resource.Loading())
         try {
@@ -169,36 +166,27 @@ class SquadsRepositoryImpl(
         emit(Resource.Loading())
 
         try {
-            var imageInputStream: InputStream? = null
+            val outputStream = imageCompressor.compressImage(image.uri)
 
-            contentResolver.openInputStream(image.uri).use {
-                imageInputStream = it
+            if(outputStream == null) {
+                Log.e(LOG_TAG, "Could not compress image ${image.uri}")
+                emit(Resource.Error(Resource.Error.ErrorType.OtherError, "Could not compress image"))
+                return@flow
+            }
 
-                val bitmap = BitmapFactory.decodeStream(imageInputStream)
+            val result = imagesApi
+                .postImage(
+                    file = MultipartBody.Part.createFormData("file", "squad-${squadId}-${System.currentTimeMillis()}",outputStream.toByteArray().toRequestBody()),
+                    setAsProfile = true,
+                    squadId = MultipartBody.Part.createFormData("squadId", squadId)
+                )
+                .awaitResponse()
 
-                val outputStream = ByteArrayOutputStream()
-
-                if(Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
-                    bitmap.compress(Bitmap.CompressFormat.WEBP, 50, outputStream)
-                } else {
-                    bitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 50, outputStream)
-                }
-
-
-                val result = imagesApi
-                    .postImage(
-                        file = MultipartBody.Part.createFormData("file", "squad-${squadId}-${System.currentTimeMillis()}",outputStream.toByteArray().toRequestBody()),
-                        setAsProfile = true,
-                        squadId = MultipartBody.Part.createFormData("squadId", squadId)
-                    )
-                    .awaitResponse()
-
-                if(result.isSuccessful) {
-                    val imageDto = result.body()
-                    emit(Resource.Success(RemoteImage(imageDto!!.id)))
-                } else {
-                    emit(Resource.Error(Resource.Error.mapErrorCode(result.code())))
-                }
+            if(result.isSuccessful) {
+                val imageDto = result.body()
+                emit(Resource.Success(RemoteImage(imageDto!!.id)))
+            } else {
+                emit(Resource.Error(Resource.Error.mapErrorCode(result.code())))
             }
 
 

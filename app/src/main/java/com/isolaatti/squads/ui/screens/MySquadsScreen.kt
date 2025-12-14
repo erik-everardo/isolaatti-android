@@ -68,20 +68,16 @@ fun MySquadsScreen(mySquadsViewModel: MySquadsViewModel, onSquadClick: (String) 
         }
 
         if(state.showNewSquadDialog) {
+            val newSquadDialogState by mySquadsViewModel.newSquadState.collectAsState()
+
             ModalBottomSheet(
                 onDismissRequest = { mySquadsViewModel.hideNewSquadDialog() },
                 sheetState = sheetState
             ) {
                 NewSquadDialog(
-                    creating = state.creatingSquad,
-                    onCreated = { name, description, extendedDescription, type ->
-                        mySquadsViewModel.createSquad(
-                            name,
-                            description,
-                            extendedDescription,
-                            type.ordinal
-                        )
-                    })
+                    state = newSquadDialogState,
+                    onAction = { mySquadsViewModel.onNewSquadAction(it) }
+                )
             }
         }
 

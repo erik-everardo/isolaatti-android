@@ -10,10 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -28,22 +25,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.isolaatti.R
 import com.isolaatti.squads.domain.SquadType
-import com.isolaatti.squads.domain.stringValue
+import com.isolaatti.squads.presentation.NewSquadAction
+
+data class NewSquadDialogState(
+    val creating: Boolean = false,
+    val name: String = "",
+    val description: String = "",
+    val extendedDescription: String = "",
+) {
+    val isValid: Boolean
+        get() = name.isNotBlank() && description.isNotBlank()
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewSquadDialog(
     modifier: Modifier = Modifier,
-    onCreated: (name: String, description: String, extendedDescription: String, type: SquadType) -> Unit = { _, _, _, _ -> },
-    creating: Boolean = false
+    state: NewSquadDialogState = NewSquadDialogState(),
+    onAction: (NewSquadAction) -> Unit = {},
 ) {
-    var name by rememberSaveable { mutableStateOf("") }
-    var description by rememberSaveable { mutableStateOf("") }
-    var extendedDescription by rememberSaveable { mutableStateOf("") }
-    var expanded by rememberSaveable { mutableStateOf(false) }
-    var privacy by rememberSaveable { mutableStateOf(SquadType.Private) }
-
-    val options = listOf(SquadType.Private, SquadType.Public)
 
     Column(modifier = modifier
         .fillMaxWidth()
@@ -54,9 +54,12 @@ fun NewSquadDialog(
         Spacer(modifier = Modifier.height(8.dp))
 
         TextField(
-            value = name,
-            onValueChange = { name = it },
+            value = state.name,
+            onValueChange = { onAction(NewSquadAction.NameChanged(it)) },
             placeholder = { Text(stringResource(id = R.string.squad_name_placeholder)) },
+            supportingText = {
+                Text(stringResource(R.string.required))
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
@@ -64,11 +67,14 @@ fun NewSquadDialog(
         Spacer(modifier = Modifier.height(8.dp))
 
         TextField(
-            value = description,
-            onValueChange = { description = it },
+            value = state.description,
+            onValueChange = { onAction(NewSquadAction.DescriptionChanged(it)) },
             minLines = 2,
             maxLines = 3,
             placeholder = { Text(stringResource(id = R.string.squad_description_placeholder)) },
+            supportingText = {
+                Text(stringResource(R.string.required))
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
@@ -76,10 +82,13 @@ fun NewSquadDialog(
         Spacer(modifier = Modifier.height(8.dp))
 
         TextField(
-            value = extendedDescription,
-            onValueChange = { extendedDescription = it },
+            value = state.extendedDescription,
+            onValueChange = { onAction(NewSquadAction.ExtendedDescriptionChanged(it)) },
             placeholder = { Text(stringResource(id = R.string.squad_extended_description_placeholder)) },
             minLines = 4, maxLines = 5,
+            supportingText = {
+                Text(stringResource(R.string.optional))
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
@@ -87,47 +96,12 @@ fun NewSquadDialog(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = !expanded },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-        ) {
-            TextField(
-                modifier = Modifier
-                    .menuAnchor()
-                    .fillMaxWidth(),
-                readOnly = true,
-                value = privacy.stringValue(),
-                onValueChange = {},
-                label = { Text(stringResource(R.string.privacy))},
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                colors = ExposedDropdownMenuDefaults.textFieldColors(),
-            )
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-            ) {
-                options.forEach { selectionOption ->
-                    DropdownMenuItem(
-                        text = { Text(selectionOption.stringValue()) },
-                        onClick = {
-                            privacy = selectionOption
-                            expanded = false
-                        },
-                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
-                    )
-                }
-            }
-        }
-
         Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = { onCreated(name, description, extendedDescription, privacy) }, modifier = Modifier
+        Button(onClick = { onAction(NewSquadAction.Created) }, modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-            enabled = !creating) {
-            if(creating) {
+            enabled = !state.creating && state.isValid) {
+            if(state.creating) {
                 CircularProgressIndicator(Modifier.size(20.dp))
             } else {
                 Text(stringResource(R.string.create_squad))

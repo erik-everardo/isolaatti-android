@@ -11,6 +11,7 @@ import androidx.core.net.toFile
 import androidx.exifinterface.media.ExifInterface
 import com.google.gson.Gson
 import com.isolaatti.audio.common.data.AudiosApi
+import com.isolaatti.images.ImageCompressor
 import com.isolaatti.images.common.data.remote.DeleteImagesDto
 import com.isolaatti.images.common.data.remote.ImageDto
 import com.isolaatti.images.common.data.remote.ImagesApi
@@ -49,7 +50,7 @@ class PostsRepositoryImpl @Inject constructor(
     private val postApi: PostApi,
     private val imagesApi: ImagesApi,
     private val audiosApi: AudiosApi,
-    private val contentResolver: ContentResolver
+    private val imageCompressor: ImageCompressor
 ) : PostsRepository {
     companion object {
         const val LOG_TAG = "PostsRepositoryImpl"
@@ -102,41 +103,12 @@ class PostsRepositoryImpl @Inject constructor(
         val successfulImageUploads: MutableList<ImageDto> = mutableListOf()
 
         images.forEach { localImage ->
-            var imageInputStream: InputStream? = null
+            val outputStream = imageCompressor.compressImage(localImage.uri)
+            if(outputStream == null) {
+                Log.e(LOG_TAG, "Could not compress image ${localImage.uri}")
+                return@forEach
+            }
             try {
-                imageInputStream = contentResolver.openInputStream(localImage.uri)
-
-                var rotationDegrees = 0
-                imageInputStream?.use {
-                    val exifInterface = ExifInterface(it)
-                    rotationDegrees = exifInterface.rotationDegrees
-                }
-
-                imageInputStream = contentResolver.openInputStream(localImage.uri)
-
-
-                var bitmap = BitmapFactory.decodeStream(imageInputStream)
-
-                if(bitmap == null) {
-                    Log.e(LOG_TAG, "Error resolving image with content resolver")
-                    return@forEach
-                }
-
-                val outputStream = ByteArrayOutputStream()
-
-                if(rotationDegrees != 0) {
-                    val matrix = Matrix()
-                    matrix.postRotate(rotationDegrees.toFloat())
-                    bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-                }
-
-                if(Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
-                    bitmap.compress(Bitmap.CompressFormat.WEBP, 50, outputStream)
-                } else {
-                    bitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 50, outputStream)
-                }
-
-
                 val response = imagesApi.postImage(
                     MultipartBody.Part.createFormData("file", "$postId-${System.currentTimeMillis()}",outputStream.toByteArray().toRequestBody()),
                     MultipartBody.Part.createFormData("postId", postId.toString())
@@ -144,14 +116,10 @@ class PostsRepositoryImpl @Inject constructor(
 
                 if(response.isSuccessful) {
                     response.body()?.let { successfulImageUploads.add(it) }
-
                 }
 
             } catch(e: Exception) {
                 Log.e("ImagesRepository", e.toString())
-
-            } finally {
-                imageInputStream?.close()
             }
         }
 

@@ -59,7 +59,6 @@ class SquadViewModel @Inject constructor(
                             loadingSquad = false,
                             refreshing = false,
                             tabs = buildList {
-                                // TODO add this tab conditionally if user is owner
                                 if(squad?.description?.isNotEmpty() == true) {
                                     add(SquadTabs.Description)
                                 } else if(squad?.isOwned == true) {
@@ -91,13 +90,14 @@ class SquadViewModel @Inject constructor(
         _state.update { it.copy(showImageDialog = false) }
     }
 
-    fun startUploadingImage(imageUri: Uri) {
-        if(squadId == null) {
+    private fun startUploadingImage() {
+        val imageToUpload = _state.value.squadPictureToUpload
+        if(squadId == null || imageToUpload == null) {
             return
         }
         viewModelScope.launch {
             val prevImage = state.value.squad?.image
-            squadRepository.updateImage(squadId, LocalImage(imageUri)).collect { resource ->
+            squadRepository.updateImage(squadId, imageToUpload).collect { resource ->
 
                 when(resource) {
                     is Resource.Error -> {
@@ -112,7 +112,8 @@ class SquadViewModel @Inject constructor(
                     is Resource.Success -> {
                         _state.update { it.copy(
                             squad = it.squad?.copy(image = resource.data?.let { resource.data }),
-                            uploadingSquadPicture = false
+                            uploadingSquadPicture = false,
+                            showConfirmImageChange = false
                         ) }
                     }
                 }
@@ -126,6 +127,21 @@ class SquadViewModel @Inject constructor(
             when(action) {
                 is SquadAction.PostCreated -> {
                     addedPosts.send(action.post)
+                }
+                is SquadAction.ImageForSquadSelected -> {
+                    _state.update {
+                        it.copy(showConfirmImageChange = true, squadPictureToUpload = action.image)
+                    }
+                }
+                SquadAction.AcceptChangePictureDialog -> {
+                    startUploadingImage()
+                }
+
+                SquadAction.DismissConfirmChangePictureDialog -> {
+                    _state.update { it.copy(showConfirmImageChange = false) }
+                }
+                SquadAction.TakeSquadPictureFromCamera, SquadAction.UploadSquadPictureFromGallery -> {
+                    _state.update { it.copy(showImageDialog = false) }
                 }
                 else -> Unit
             }

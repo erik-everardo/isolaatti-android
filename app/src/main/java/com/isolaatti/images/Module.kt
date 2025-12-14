@@ -29,4 +29,9 @@ class Module {
     fun provideImagesDraftDao(database: AppDatabase): ImagesDraftsDao {
         return database.imagesDraftsDao()
     }
+
+    @Provides
+    fun provideImageCompressor(contentResolver: ContentResolver): ImageCompressor {
+        return ImageCompressor(contentResolver)
+    }
 }

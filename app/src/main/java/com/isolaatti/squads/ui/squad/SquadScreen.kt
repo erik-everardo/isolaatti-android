@@ -44,7 +44,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.fragment.compose.rememberFragmentState
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -55,7 +54,6 @@ import com.isolaatti.R
 import com.isolaatti.common.dialogs.BottomSheetOption
 import com.isolaatti.common.dialogs.OptionsBottomSheet
 import com.isolaatti.common.dialogs.rememberOptionsBottomSheetState
-import com.isolaatti.images.common.domain.entity.Image
 import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.profile.ui.components.ConfirmChangeProfilePictureBottomSheet
 import com.isolaatti.squads.SquadAction
@@ -77,7 +75,6 @@ fun SquadScreen(
     onAction: (SquadAction) -> Unit = {},
     onNavigateToSettingsScreen: () -> Unit,
     onNavigateBack: () -> Unit,
-    onRefresh: () -> Unit,
     onNavigateToEditDescription: () -> Unit,
     onNavigateToSearch: () -> Unit,
 ) {
@@ -166,7 +163,7 @@ fun SquadScreen(
                     add(
                         // index 0
                         BottomSheetOption(
-                            title = "Change picture",
+                            title = stringResource(R.string.change_photo),
                             icon = null,
                             popUpOptions = listOf(
                                 BottomSheetOption.PopUpOption(stringResource(R.string.upload_photo)), // index 0
@@ -215,7 +212,7 @@ fun SquadScreen(
                     onAction(SquadAction.DismissConfirmChangePictureDialog)
                 },
                 oldImage = state.squad?.image?.defaultUri,
-                newImage = state.squadPictureToUpload,
+                newImage = state.squadPictureToUpload?.defaultUri,
                 onAccept = {
                     onAction(SquadAction.AcceptChangePictureDialog)
                 },
@@ -271,7 +268,9 @@ fun SquadScreen(
                     composable<SquadScreenRoute.Readme> {
                         SquadReadme(
                             state,
-                            onRefresh = onRefresh
+                            onRefresh = {
+                                onAction(SquadAction.RefreshSquad)
+                            }
                         )
                     }
                     composable<SquadScreenRoute.Members> {
@@ -329,7 +328,6 @@ private fun SquadScreenPreview() {
                 showImageDialog = true
             ),
             onNavigateToSettingsScreen = {},
-            onRefresh = {},
             onNavigateBack = {},
             onNavigateToEditDescription = {},
             onNavigateToSearch = {},

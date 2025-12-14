@@ -268,9 +268,14 @@
     <string name="lives">Lives</string>
     <string name="articles">Articles</string>
     <string name="discover_squads">Discover squads</string>
-    <string name="camera_permission_rationale">Isolaatti needs your permission to use your camera</string>
+    <string name="camera_permission_rationale">In order to take pictures we need to access your camera. You can change this on your device settings. Otherwise, upload pictures from your device.</string>
     <string name="to">To: %s</string>
     <string name="undo">Undo</string>
+    <string name="change_photo">Change image</string>
+    <string name="saving">Saving</string>
+    <string name="camera_permission_denied">Camera permission denied, please change this on your device settings</string>
+    <string name="required">Required</string>
+    <string name="optional">Optional</string>
     <string-array name="report_reasons">
         <item>Spam</item>
         <item>Explicit content</item>

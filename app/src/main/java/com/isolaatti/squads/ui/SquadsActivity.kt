@@ -3,6 +3,7 @@ package com.isolaatti.squads.ui
 import android.Manifest
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -45,6 +46,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 import com.isolaatti.MyApplication
 import com.isolaatti.common.dialogs.CameraPermissionRationale
+import com.isolaatti.images.common.domain.entity.LocalImage
 import com.isolaatti.images.picture_viewer.ui.PictureViewerActivity
 import com.isolaatti.posting.post_creator.presentation.CreatePostContract
 import com.isolaatti.squads.SquadAction
@@ -81,20 +83,7 @@ class SquadsActivity : FragmentActivity() {
             CompositionLocalProvider(LocalMarkwon provides markwon) {
                 IsolaattiTheme { // Apply your app's theme
                     val navController = rememberNavController()
-                    val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
 
-                    var showCameraPermissionRationale by remember { mutableStateOf(false) }
-
-                    if(showCameraPermissionRationale) {
-                        CameraPermissionRationale(
-                            onContinue = {
-                                cameraPermissionState.launchPermissionRequest()
-                            },
-                            onDismiss = {
-                                showCameraPermissionRationale = false
-                            }
-                        )
-                    }
 
                     NavHost(navController, startDestination = SquadMainNavigation.SquadsHome, modifier = Modifier.fillMaxSize()) {
                         composable<SquadMainNavigation.SquadsHome> {
@@ -109,30 +98,63 @@ class SquadsActivity : FragmentActivity() {
 
                             val viewModel = hiltViewModel<SquadViewModel>()
 
+                            // This value is set before launching the camera.
+                            var imageUri: Uri by remember { mutableStateOf(Uri.EMPTY) }
+
+                            val takeSquadImageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { result ->
+                                if(result) {
+                                    viewModel.onAction(SquadAction.ImageForSquadSelected(LocalImage(imageUri)))
+                                } else {
+                                    imageUri = Uri.EMPTY
+                                }
+                            }
+
+                            val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA) { result ->
+                                if(result) {
+                                    val uri = makePhotoUri()
+                                    imageUri = uri
+
+                                    takeSquadImageLauncher.launch(uri)
+                                }
+
+                            }
+
+                            var showCameraPermissionRationale by remember { mutableStateOf(false) }
+
+                            if(showCameraPermissionRationale) {
+                                CameraPermissionRationale(
+                                    onContinue = {
+                                        cameraPermissionState.launchPermissionRequest()
+                                        showCameraPermissionRationale = false
+                                    },
+                                    onDismiss = {
+                                        showCameraPermissionRationale = false
+                                    }
+                                )
+                            }
+
                             val createSquadPostLauncher = rememberLauncherForActivityResult(CreatePostContract()) { post ->
                                 if(post != null) {
                                     viewModel.onAction(SquadAction.PostCreated(post))
                                 }
                             }
 
-                            val editExtendedDescriptionLauncher = rememberLauncherForActivityResult(EditExtendedDescriptionContract()) {
-
-                            }
-
-                            val chooseSquadImageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) {
-
-                            }
-
-                            var imageUri: Uri? by remember { mutableStateOf(null) }
-
-                            val takeSquadImageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { result ->
-                                if(result && imageUri != null) {
-                                    viewModel.startUploadingImage(imageUri!!)
-                                    imageUri = null
+                            val editExtendedDescriptionLauncher = rememberLauncherForActivityResult(EditExtendedDescriptionContract()) { result ->
+                                if(result != null) {
+                                    viewModel.onAction(SquadAction.ExtendedDescriptionEdited(result))
                                 }
 
-
                             }
+
+                            val chooseSquadImageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { result ->
+                                if(result != null) {
+                                    viewModel.onAction(SquadAction.ImageForSquadSelected(LocalImage(result)))
+                                }
+                            }
+
+
+
+
 
                             val state by viewModel.state.collectAsState()
                             SquadScreen(
@@ -140,9 +162,6 @@ class SquadsActivity : FragmentActivity() {
                                 addedPosts = viewModel.addedPosts,
                                 onNavigateToSettingsScreen = {
                                     navController.navigate(SquadMainNavigation.SquadsSettings(route.id))
-                                },
-                                onRefresh = {
-                                    viewModel.getSquad(refresh = true)
                                 },
                                 onNavigateBack = {
                                     navController.popBackStack()
@@ -153,16 +172,15 @@ class SquadsActivity : FragmentActivity() {
                                         SquadAction.ClickOnSquadImage -> {
                                             viewModel.onClickImage()
                                         }
-                                        SquadAction.AcceptChangePictureDialog -> TODO()
                                         SquadAction.DismissPictureDialog -> {
                                             viewModel.dismissImageDialog()
                                         }
-                                        SquadAction.DismissConfirmChangePictureDialog -> TODO()
-                                        SquadAction.LoadPostsNextPage -> TODO()
                                         SquadAction.NewPost -> {
                                             createSquadPostLauncher.launch(CreatePostContract.Input(viewModel.squadId, state.squad?.name))
                                         }
-                                        is SquadAction.OpenHashtag -> TODO()
+                                        is SquadAction.OpenHashtag -> {
+
+                                        }
                                         is SquadAction.OpenPictures -> {
                                             PictureViewerActivity
                                                 .startActivityWithImages(
@@ -171,12 +189,9 @@ class SquadsActivity : FragmentActivity() {
                                                     position = action.images.indexOf(action.image)
                                                 )
                                         }
-                                        is SquadAction.OpenPost -> {}
-                                        is SquadAction.OpenProfile -> {
-
+                                        SquadAction.RefreshSquad -> {
+                                            viewModel.getSquad(refresh = true)
                                         }
-                                        SquadAction.RefreshPosts -> TODO()
-                                        SquadAction.RefreshSquad -> TODO()
                                         SquadAction.TakeSquadPictureFromCamera -> {
                                             if(cameraPermissionState.status.isGranted) {
                                                 val uri = makePhotoUri()

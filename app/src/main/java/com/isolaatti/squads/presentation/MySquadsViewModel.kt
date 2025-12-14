@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.isolaatti.squads.data.CreateSquadDto
 import com.isolaatti.squads.data.SquadDto
 import com.isolaatti.squads.domain.SquadsRepository
+import com.isolaatti.squads.ui.screens.NewSquadDialogState
 import com.isolaatti.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +34,13 @@ sealed class MySquadsScreenEvent {
     data class Error(val error: String) : MySquadsScreenEvent()
 }
 
+sealed class NewSquadAction {
+    data class NameChanged(val name: String) : NewSquadAction()
+    data class DescriptionChanged(val description: String) : NewSquadAction()
+    data class ExtendedDescriptionChanged(val extendedDescription: String) : NewSquadAction()
+    object Created : NewSquadAction()
+}
+
 @HiltViewModel
 class MySquadsViewModel @Inject constructor(private val squadsRepository: SquadsRepository) : ViewModel() {
 
@@ -41,6 +49,10 @@ class MySquadsViewModel @Inject constructor(private val squadsRepository: Squads
 
     private val _events = Channel<MySquadsScreenEvent>()
     val events = _events.receiveAsFlow()
+
+    private val _newSquadState = MutableStateFlow(NewSquadDialogState())
+    val newSquadState = _newSquadState.asStateFlow()
+
 
     fun showNewSquadDialog() {
         _state.update { it.copy(showNewSquadDialog = true) }
@@ -68,12 +80,12 @@ class MySquadsViewModel @Inject constructor(private val squadsRepository: Squads
 
     }
 
-    fun createSquad(name: String, description: String, extendedDescription: String, privacy: Int) {
+    private fun createSquad() {
         squadsRepository.createSquad(
             CreateSquadDto(
-                name,
-                description,
-                extendedDescription,
+                _newSquadState.value.name,
+                _newSquadState.value.description,
+                _newSquadState.value.extendedDescription,
             )
         )
             .onEach { resource ->
@@ -88,6 +100,23 @@ class MySquadsViewModel @Inject constructor(private val squadsRepository: Squads
                     }
                 }
             }.launchIn(viewModelScope)
+    }
+
+    fun onNewSquadAction(action: NewSquadAction) {
+        when(action) {
+            is NewSquadAction.NameChanged -> {
+                _newSquadState.update { it.copy(name = action.name) }
+            }
+            is NewSquadAction.DescriptionChanged -> {
+                _newSquadState.update { it.copy(description = action.description) }
+            }
+            is NewSquadAction.ExtendedDescriptionChanged -> {
+                _newSquadState.update { it.copy(extendedDescription = action.extendedDescription) }
+            }
+            is NewSquadAction.Created -> {
+                createSquad()
+            }
+        }
     }
 
     init {

@@ -36,7 +36,7 @@ import com.isolaatti.R
 fun ConfirmChangeProfilePictureBottomSheet(
     onDismiss: () -> Unit,
     oldImage: Uri?,
-    newImage: Uri,
+    newImage: Uri?,
     onAccept: () -> Unit,
     loading: Boolean
 ) {

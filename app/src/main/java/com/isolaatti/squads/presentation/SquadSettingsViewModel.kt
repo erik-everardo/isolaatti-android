@@ -21,6 +21,7 @@ import javax.inject.Inject
 data class SquadSettingScreenState(
     val squad: Squad? = null,
     val loading: Boolean = false,
+    val updating: Boolean = false,
     val error: Boolean = false,
     val imageToUpload: LocalImage? = null,
     val uploadingPicture: Boolean = false

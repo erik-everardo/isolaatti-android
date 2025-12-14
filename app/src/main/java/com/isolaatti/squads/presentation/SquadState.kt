@@ -1,6 +1,7 @@
 package com.isolaatti.squads.presentation
 
 import android.net.Uri
+import com.isolaatti.images.common.domain.entity.LocalImage
 import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.squads.data.SquadDto
 import com.isolaatti.squads.domain.Squad
@@ -16,5 +17,5 @@ data class SquadState(
     val showImageDialog: Boolean = false,
     val uploadingSquadPicture: Boolean = false,
     val showConfirmImageChange: Boolean = false,
-    val squadPictureToUpload: Uri = Uri.EMPTY,
+    val squadPictureToUpload: LocalImage? = null,
 )

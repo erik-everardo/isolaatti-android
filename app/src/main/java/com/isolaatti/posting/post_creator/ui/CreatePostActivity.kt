@@ -1,11 +1,13 @@
 package com.isolaatti.posting.post_creator.ui
 
+import android.Manifest
 import android.content.ComponentName
 import android.content.Intent
 import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.PickVisualMediaRequest
@@ -55,6 +57,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
@@ -66,6 +70,10 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.shouldShowRationale
 import com.google.common.util.concurrent.ListenableFuture
 import com.isolaatti.MyApplication
 import com.isolaatti.R
@@ -74,7 +82,9 @@ import com.isolaatti.audio.common.components.AudioRecorder
 import com.isolaatti.audio.player.MediaService
 import com.isolaatti.common.IsolaattiBaseActivity
 import com.isolaatti.common.IsolaattiTheme
+import com.isolaatti.common.dialogs.CameraPermissionRationale
 import com.isolaatti.images.common.domain.entity.LocalImage
+import com.isolaatti.images.makePhotoUri
 import com.isolaatti.posting.post_creator.presentation.CreatePostEvents
 import com.isolaatti.posting.posts.components.PostAttachments
 import com.isolaatti.posting.posts.domain.PostingSteps
@@ -184,7 +194,7 @@ class CreatePostActivity : IsolaattiBaseActivity() {
         viewModel.audioToUpload = null
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
+    @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
@@ -471,6 +481,31 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                 )
                             }
 
+                            val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA) { result ->
+                                if(result) {
+                                    val uri = makePhotoUri()
+                                    cameraPhotoUri = uri
+
+                                    takePhotoLauncher.launch(uri)
+                                } else {
+                                    Toast.makeText(this@CreatePostActivity, getString(R.string.camera_permission_denied), Toast.LENGTH_SHORT).show()
+                                }
+                            }
+
+                            var showCameraPermissionRationale by rememberSaveable { mutableStateOf(false) }
+
+                            if(showCameraPermissionRationale) {
+                                CameraPermissionRationale(
+                                    onContinue = {
+                                        cameraPermissionState.launchPermissionRequest()
+                                        showCameraPermissionRationale = false
+                                    },
+                                    onDismiss = {
+                                        showCameraPermissionRationale = false
+                                    }
+                                )
+                            }
+
 
                             Column(
                                 modifier = Modifier.Companion
@@ -684,8 +719,16 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                                         viewModel.removePicture(it)
                                     },
                                     onTakePicture = {
-                                        cameraPhotoUri = makePhotoUri()
-                                        takePhotoLauncher.launch(cameraPhotoUri!!)
+                                        if(cameraPermissionState.status.isGranted) {
+                                            cameraPhotoUri = makePhotoUri()
+                                            takePhotoLauncher.launch(cameraPhotoUri!!)
+                                        } else {
+                                            if(cameraPermissionState.status.shouldShowRationale) {
+                                                showCameraPermissionRationale = true
+                                            } else {
+                                                cameraPermissionState.launchPermissionRequest()
+                                            }
+                                        }
                                     },
                                     onUploadPicture = {
                                         choosePictureLauncher.launch(
