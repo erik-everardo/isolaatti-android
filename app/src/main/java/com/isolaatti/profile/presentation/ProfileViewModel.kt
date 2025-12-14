@@ -160,7 +160,7 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    override fun getFeed(refresh: Boolean, hashtag: String?) {
+    override fun getFeed(refresh: Boolean) {
         viewModelScope.launch {
             if(refresh) {
                 posts.value = emptyList()
@@ -195,7 +195,7 @@ class ProfileViewModel @Inject constructor(
                         }
                         errorLoading.postValue(feedDtoResource.errorType)
                         toRetry.add {
-                            getFeed(refresh, hashtag)
+                            getFeed(refresh)
                         }
                     }
                 }

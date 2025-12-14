@@ -182,7 +182,7 @@ class ProfileMainFragment : Fragment() {
         userId?.let { profileId ->
             viewModel.profileId = profileId
             viewModel.getProfile()
-            viewModel.getFeed(true, null)
+            viewModel.getFeed(true)
         }
     }
 
@@ -639,7 +639,7 @@ class ProfileMainFragment : Fragment() {
                             isRefreshing,
                             onRefresh = {
                                 viewModel.getProfile()
-                                viewModel.getFeed(refresh = true, hashtag = null)
+                                viewModel.getFeed(refresh = true)
                             },
                             modifier = Modifier
                                 .padding(insets)
@@ -842,7 +842,7 @@ class ProfileMainFragment : Fragment() {
                                             Button(
                                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                                                 onClick = {
-                                                    viewModel.getFeed(false, null)
+                                                    viewModel.getFeed(false)
                                                 }
                                             ) {
                                                 Text(stringResource(R.string.load_more))

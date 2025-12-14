@@ -9,6 +9,7 @@ import com.isolaatti.images.common.data.remote.ImagesApi
 import com.isolaatti.images.common.domain.entity.LocalImage
 import com.isolaatti.images.common.domain.entity.RemoteImage
 import com.isolaatti.posting.posts.data.remote.FeedDto
+import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.squads.domain.SquadsRepository
 import com.isolaatti.utils.Resource
 import kotlinx.coroutines.flow.Flow
@@ -142,12 +143,12 @@ class SquadsRepositoryImpl(
         squadId: String,
         lastId: Long?,
         length: Int
-    ): Flow<Resource<FeedDto>> = flow {
+    ): Flow<Resource<List<Post>>> = flow {
         emit(Resource.Loading())
         try {
             val response = squadsApi.getPosts(squadId, lastId ?: -1, length).awaitResponse()
             if(response.isSuccessful) {
-                emit(Resource.Success(response.body()))
+                emit(Resource.Success(response.body()?.data?.map { Post.fromPostDto(it) }))
             } else {
                 emit(Resource.Error(Resource.Error.mapErrorCode(response.code())))
             }

@@ -3,6 +3,7 @@ package com.isolaatti.posting.post_creator.presentation
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.isolaatti.audio.common.components.AudioRecorderState
@@ -10,6 +11,7 @@ import com.isolaatti.audio.common.domain.Audio
 import com.isolaatti.images.common.domain.entity.Image
 import com.isolaatti.images.common.domain.entity.LocalImage
 import com.isolaatti.images.common.domain.entity.RemoteImage
+import com.isolaatti.posting.post_creator.ui.CreatePostActivity.Companion.EXTRA_INPUT
 import com.isolaatti.posting.posts.domain.PostPrivacy
 import com.isolaatti.posting.posts.domain.PostingSteps
 import com.isolaatti.posting.posts.domain.use_case.EditPost
@@ -22,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -34,12 +37,18 @@ import javax.inject.Inject
 class CreatePostViewModel @Inject constructor(
     private val makePost: MakePost,
     private val editPost: EditPost,
-    private val loadPost: LoadSinglePost
+    private val loadPost: LoadSinglePost,
+    saveStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     companion object {
         const val LOG_TAG = "CreatePostViewModel"
     }
+
+    private val input = saveStateHandle.get<CreatePostContract.Input>(EXTRA_INPUT)
+
+    private val _state = MutableStateFlow(CreatePostScreenState(squadName = input?.squadName))
+    val state = _state.asStateFlow()
 
     val error: MutableLiveData<ResourceWithSteps.Error.ErrorType?> = MutableLiveData()
     val sendingPost: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -59,6 +68,8 @@ class CreatePostViewModel @Inject constructor(
     val thereIsContent: Boolean get() {
         return true
     }
+
+
 
     private val _events = Channel<CreatePostEvents>()
     val events = _events.receiveAsFlow()
@@ -87,7 +98,7 @@ class CreatePostViewModel @Inject constructor(
                 content = liveContent.value ?: "",
                 images = photos.value.filterIsInstance<LocalImage>(),
                 audio = audioToUpload,
-                squadId = null
+                squadId = input?.squadId
             ).onEach {
                 when(it) {
                     is ResourceWithSteps.Success -> {

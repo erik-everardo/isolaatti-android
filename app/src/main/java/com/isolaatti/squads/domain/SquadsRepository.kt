@@ -3,6 +3,7 @@ package com.isolaatti.squads.domain
 import com.isolaatti.images.common.domain.entity.LocalImage
 import com.isolaatti.images.common.domain.entity.RemoteImage
 import com.isolaatti.posting.posts.data.remote.FeedDto
+import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.squads.data.CreateSquadDto
 import com.isolaatti.squads.data.CreateSquadResponseDto
 import com.isolaatti.squads.data.SquadDto
@@ -16,6 +17,6 @@ interface SquadsRepository {
     fun deleteSquad(squadId: String): Flow<Resource<Void>>
     fun updateSquad(squadId: String, squad: CreateSquadDto): Flow<Resource<Void>>
     fun updatePrivacy(squadId: String, privacy: Int): Flow<Resource<Void>>
-    fun getPosts(squadId: String, lastId: Long? = null, length: Int = 10): Flow<Resource<FeedDto>>
+    fun getPosts(squadId: String, lastId: Long? = null, length: Int = 10): Flow<Resource<List<Post>>>
     fun updateImage(squadId: String, image: LocalImage): Flow<Resource<RemoteImage>>
 }

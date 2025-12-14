@@ -1,26 +1,21 @@
 package com.isolaatti.squads.ui.squad
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -29,25 +24,16 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarData
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,9 +42,9 @@ import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.fragment.compose.rememberFragmentState
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -70,18 +56,16 @@ import com.isolaatti.common.dialogs.BottomSheetOption
 import com.isolaatti.common.dialogs.OptionsBottomSheet
 import com.isolaatti.common.dialogs.rememberOptionsBottomSheetState
 import com.isolaatti.images.common.domain.entity.Image
-import com.isolaatti.posting.posts.components.PostComponent
-import com.isolaatti.posting.posts.ui.PostListingFragment
-import com.isolaatti.profile.ui.components.ProfilePictureBottomSheet
-import com.isolaatti.profile.ui.components.ProfilePictureState
-import com.isolaatti.squads.data.SquadDto
+import com.isolaatti.posting.posts.domain.entity.Post
+import com.isolaatti.profile.ui.components.ConfirmChangeProfilePictureBottomSheet
+import com.isolaatti.squads.SquadAction
 import com.isolaatti.squads.domain.Squad
 import com.isolaatti.squads.presentation.SquadState
 import com.isolaatti.squads.presentation.SquadTabs
-import com.isolaatti.squads.presentation.SquadViewModel
 import com.isolaatti.squads.ui.LocalMarkwon
 import com.isolaatti.squads.ui.SquadScreenRoute
 import io.noties.markwon.Markwon
+import kotlinx.coroutines.channels.Channel
 
 data class SquadTabItem(val title: String, val route: SquadScreenRoute)
 
@@ -89,30 +73,17 @@ data class SquadTabItem(val title: String, val route: SquadScreenRoute)
 @Composable
 fun SquadScreen(
     state: SquadState,
+    addedPosts: Channel<Post>,
+    onAction: (SquadAction) -> Unit = {},
     onNavigateToSettingsScreen: () -> Unit,
     onNavigateBack: () -> Unit,
     onRefresh: () -> Unit,
-    onClickImage: (image: Image?) -> Unit,
-    onNavigateToAddPost: () -> Unit,
     onNavigateToEditDescription: () -> Unit,
     onNavigateToSearch: () -> Unit,
-    onViewPicture: (image: Image, images: List<Image>) -> Unit,
-    onUploadFromGallery: () -> Unit,
-    onUploadFromCamera: () -> Unit,
-    onDismissImageDialog: () -> Unit
 ) {
 
     val navController = rememberNavController()
     val snackBarHostState = remember { SnackbarHostState() }
-    val uploadingSquadPictureString = stringResource(R.string.uploading_photo)
-    LaunchedEffect(state.uploadingSquadPicture) {
-        if(state.uploadingSquadPicture) {
-            snackBarHostState.showSnackbar(uploadingSquadPictureString, duration = SnackbarDuration.Indefinite)
-        } else {
-            snackBarHostState.currentSnackbarData?.dismiss()
-        }
-
-    }
 
     Scaffold(
         topBar = {
@@ -137,7 +108,7 @@ fun SquadScreen(
                                 .border(BorderStroke(2.dp, Color.White), shape = CircleShape)
                                 .size(50.dp)
                                 .clickable {
-                                    onClickImage(state.squad?.image)
+                                    onAction(SquadAction.ClickOnSquadImage)
                                 },
                             contentDescription = null,
                         )
@@ -169,7 +140,7 @@ fun SquadScreen(
                     Text(text = "Edit")
                 }
             } else if(currentDestination?.route?.endsWith(SquadScreenRoute.Posts::class.simpleName ?: "", true) == true) {
-                ExtendedFloatingActionButton(onClick = onNavigateToAddPost) {
+                ExtendedFloatingActionButton(onClick = {onAction(SquadAction.NewPost)}) {
                     Icon(Icons.Default.Add, contentDescription = null)
                     Text(text = "Add")
                 }
@@ -216,24 +187,40 @@ fun SquadScreen(
                 }
             )
             OptionsBottomSheet(
-                onDismissRequest = onDismissImageDialog,
+                onDismissRequest = {
+                    onAction(SquadAction.DismissPictureDialog)
+                },
                 sheetState = rememberModalBottomSheetState(),
                 state = optionsModalState,
                 onAction = {
                     optionIndex, popUpOptionIndex ->
                     when(optionIndex) {
                         0 -> when(popUpOptionIndex) {
-                            0 -> { onUploadFromGallery() }
-                            1 -> { onUploadFromCamera() }
+                            0 -> { onAction(SquadAction.UploadSquadPictureFromGallery) }
+                            1 -> { onAction(SquadAction.TakeSquadPictureFromCamera) }
                         }
                         1 -> {
-                            onDismissImageDialog()
+                            onAction(SquadAction.DismissPictureDialog)
                             state.squad?.image?.let {
-                                onViewPicture(it, listOf(it))
+                                onAction(SquadAction.OpenPictures(it, listOf(it)))
                             }
                         }
                     }
                 })
+        }
+
+        if(state.showConfirmImageChange) {
+            ConfirmChangeProfilePictureBottomSheet(
+                onDismiss = {
+                    onAction(SquadAction.DismissConfirmChangePictureDialog)
+                },
+                oldImage = state.squad?.image?.defaultUri,
+                newImage = state.squadPictureToUpload,
+                onAccept = {
+                    onAction(SquadAction.AcceptChangePictureDialog)
+                },
+                loading = state.uploadingSquadPicture
+            )
         }
 
 
@@ -288,10 +275,15 @@ fun SquadScreen(
                         )
                     }
                     composable<SquadScreenRoute.Members> {
-                        SquadPostsScreen()
+                        SquadMembers()
                     }
                     composable<SquadScreenRoute.Posts> {
-                        SquadMembers()
+
+
+                        SquadPostsScreen(
+                            squadId = state.squad?.id ?: "",
+                            addedPosts = addedPosts
+                        )
                     }
                 }
             }
@@ -330,22 +322,18 @@ private fun SquadScreenPreview() {
                 squad = Squad(
                     id = "squad-1",
                     name = "Squad de prueba",
-                    description = extendedDescriptionText,
+                    description = "Prueba",
+                    extendedDescription = extendedDescriptionText,
                     image = null,
-                )
+                ),
+                showImageDialog = true
             ),
             onNavigateToSettingsScreen = {},
             onRefresh = {},
             onNavigateBack = {},
-            onClickImage = {},
-            onNavigateToAddPost = {},
             onNavigateToEditDescription = {},
             onNavigateToSearch = {},
-            onViewPicture = { _, _ -> },
-            onUploadFromGallery = {},
-            onUploadFromCamera = {},
-            onDismissImageDialog = {}
-
+            addedPosts = Channel()
         )
     }
 

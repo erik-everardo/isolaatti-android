@@ -1,14 +1,19 @@
 package com.isolaatti.squads.presentation
 
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.isolaatti.images.common.domain.entity.LocalImage
+import com.isolaatti.squads.data.CreateSquadDto
 import com.isolaatti.squads.domain.Squad
 import com.isolaatti.squads.domain.SquadsRepository
 import com.isolaatti.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -16,8 +21,14 @@ import javax.inject.Inject
 data class SquadSettingScreenState(
     val squad: Squad? = null,
     val loading: Boolean = false,
-    val error: Boolean = false
+    val error: Boolean = false,
+    val imageToUpload: LocalImage? = null,
+    val uploadingPicture: Boolean = false
 )
+
+sealed interface SquadSettingsEvent {
+    data class SquadUpdated(val squad: Squad) : SquadSettingsEvent
+}
 
 @HiltViewModel
 class SquadSettingsViewModel @Inject constructor(
@@ -26,9 +37,15 @@ class SquadSettingsViewModel @Inject constructor(
 ) : ViewModel() {
     private val _uiState: MutableStateFlow<SquadSettingScreenState> = MutableStateFlow(SquadSettingScreenState())
     val uiState = _uiState.asStateFlow()
+    val squadId: String? = savedStateHandle["id"]
+
+    private val _events: Channel<SquadSettingsEvent> = Channel()
+    val events = _events.receiveAsFlow()
+
+
 
     init {
-        val squadId: String? = savedStateHandle["id"]
+
         squadId?.let { getSquad(it) }
     }
 
@@ -61,6 +78,74 @@ class SquadSettingsViewModel @Inject constructor(
     fun onDescriptionChange(description: String) {
         _uiState.update {
             it.copy(squad = it.squad?.copy(description = description))
+        }
+    }
+
+    fun save() {
+        if(squadId == null) {
+            return
+        }
+        val squad = _uiState.value.squad ?: return
+        viewModelScope.launch {
+
+            val image = _uiState.value.imageToUpload
+            if(image != null) {
+                squadsRepository.updateImage(squadId, image).collect { resource ->
+                    when(resource) {
+                        is Resource.Error -> {
+
+                        }
+                        is Resource.Loading -> {
+                            _uiState.update {
+                                it.copy(uploadingPicture = true)
+                            }
+                        }
+                        is Resource.Success -> {
+                            _uiState.update {
+                                it.copy(uploadingPicture = false)
+                            }
+                        }
+
+                    }
+                }
+            }
+
+            squadsRepository.updateSquad(
+                squadId = squadId,
+                squad = CreateSquadDto(
+                    name = squad.name,
+                    description = squad.description,
+                    extendedDescription = squad.extendedDescription
+                )
+            ).collect { resource ->
+                when(resource) {
+                    is Resource.Error -> {
+
+                    }
+                    is Resource.Loading -> {
+
+                    }
+                    is Resource.Success -> {
+                        _uiState.update {
+                            it.copy(loading = false, error = false)
+                        }
+                        _events.send(SquadSettingsEvent.SquadUpdated(squad))
+                    }
+                }
+            }
+        }
+    }
+
+    fun undoImageSelected() {
+        _uiState.update {
+            it.copy(imageToUpload = null)
+        }
+
+    }
+
+    fun onImageSelected(image: LocalImage) {
+        _uiState.update {
+            it.copy(imageToUpload = image)
         }
     }
 

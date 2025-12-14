@@ -23,7 +23,7 @@ interface SquadsApi {
     fun deleteSquad(squadId: String): Call<Void>
 
     @POST("Squads/{squadId}/Update")
-    fun updateSquad(squadId: String, squad: CreateSquadDto): Call<Void>
+    fun updateSquad(@Path("squadId") squadId: String, @Body squad: CreateSquadDto): Call<Void>
 
     @POST("Squads/{squadId}/UpdatePrivacyTo/{privacy}")
     fun updatePrivacy(@Path("squadId") squadId: String, @Path("privacy") privacy: Int): Call<Void>

@@ -100,7 +100,7 @@ class FeedFragment : Fragment() {
         viewBinding.topAppBar.setOnMenuItemClickListener {
             when(it.itemId) {
                 R.id.menu_item_new_discussion -> {
-                    createDiscussion.launch(CreatePostContract.Input(null))
+                    createDiscussion.launch(CreatePostContract.Input(null, null))
                     true
                 }
                 else -> {

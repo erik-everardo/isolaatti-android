@@ -12,6 +12,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -32,6 +34,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -52,6 +55,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
@@ -101,6 +105,8 @@ class CreatePostActivity : IsolaattiBaseActivity() {
         const val EXTRA_KEY_POST_ID = "postId"
 
         const val EXTRA_KEY_POST_POSTED = "post"
+
+        const val EXTRA_INPUT = "input"
     }
 
     val viewModel: CreatePostViewModel by viewModels()
@@ -231,6 +237,9 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                 var showReplaceAudioConfirmationDialog by remember { mutableStateOf(false) }
                 val loading by viewModel.loading.collectAsState()
 
+                val state by viewModel.state.collectAsState()
+
+
                 LaunchedEffect(Unit) {
                     viewModel.events.collect { event ->
                         when(event) {
@@ -263,7 +272,18 @@ class CreatePostActivity : IsolaattiBaseActivity() {
                         Scaffold(
                             topBar = {
                                 CenterAlignedTopAppBar(
-                                    title = { Text(stringResource(if (editMode) R.string.edit else R.string.new_post)) },
+                                    title = {
+                                        Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Text(stringResource(if (editMode) R.string.edit else R.string.new_post))
+                                            state.squadName?.let {
+                                                Text(
+                                                    text = stringResource(R.string.to, it),
+                                                    style = MaterialTheme.typography.titleSmall,
+                                                    modifier = Modifier
+                                                )
+                                            }
+                                        }
+                                    },
                                     navigationIcon = {
                                         IconButton(
                                             onClick = {

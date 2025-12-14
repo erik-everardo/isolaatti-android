@@ -104,6 +104,7 @@ cameraView = "1.4.2"
 rootencoder = "2.4.5"
 
 desugarJdkLibs = "2.1.3"
+fragmentCompose = "1.8.9"
 
 [libraries]
 # Core
@@ -225,6 +226,7 @@ androidx-camera-view = { group = "androidx.camera", name = "camera-view", versio
 
 # RootEncoder
 github-rootencoder = { group = "com.github.pedroSG94.RootEncoder", name = "library", version.ref = "rootencoder" }
+androidx-fragment-compose = { group = "androidx.fragment", name = "fragment-compose", version.ref = "fragmentCompose" }
 
 
 [bundles]

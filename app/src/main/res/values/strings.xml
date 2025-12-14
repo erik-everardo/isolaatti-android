@@ -269,6 +269,8 @@
     <string name="articles">Articles</string>
     <string name="discover_squads">Discover squads</string>
     <string name="camera_permission_rationale">Isolaatti needs your permission to use your camera</string>
+    <string name="to">To: %s</string>
+    <string name="undo">Undo</string>
     <string-array name="report_reasons">
         <item>Spam</item>
         <item>Explicit content</item>

@@ -72,10 +72,9 @@ import kotlin.time.Duration.Companion.milliseconds
 class PostListingFragment : Fragment() {
     companion object {
         const val ARG_HASHTAG = "hashtag"
+        const val ARG_SQUAD_ID = "squad_id"
         const val LOG_TAG = "PostListingFragment"
     }
-
-    var hashtag: String? = null
 
     private val errorViewModel: ErrorMessageViewModel by activityViewModels()
     private val viewModel: PostListingViewModel by viewModels()
@@ -118,9 +117,7 @@ class PostListingFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d(LOG_TAG, "onCreate ; hashtag: $hashtag")
-        hashtag = arguments?.getString(ARG_HASHTAG)
-        viewModel.getFeed(false, hashtag)
+        viewModel.getFeed(false)
 
         viewModel.mediaControllerIsAvailable.value = false
         val sessionToken = SessionToken(requireContext(), ComponentName(requireContext(), MediaService::class.java))
@@ -150,7 +147,7 @@ class PostListingFragment : Fragment() {
                 }
 
                 IsolaattiTheme {
-                    PullToRefreshBox(isRefreshing, onRefresh = {viewModel.getFeed(true, null)}) {
+                    PullToRefreshBox(isRefreshing, onRefresh = {viewModel.getFeed(true)}) {
                         LazyColumn(flingBehavior = ScrollableDefaults.flingBehavior()) {
                             items(count = posts.size, key = {posts[it].id}) {
                                 val post = posts[it]
@@ -228,7 +225,7 @@ class PostListingFragment : Fragment() {
                                         Button(
                                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                                             onClick = {
-                                                viewModel.getFeed(false, null)
+                                                viewModel.getFeed(false)
                                             }
                                         ) {
                                             Text(stringResource(R.string.load_more))
@@ -334,6 +331,13 @@ class PostListingFragment : Fragment() {
                 }
             }
         }
+    }
+
+    /**
+     * Adds a post to the list. Use this function when a post was added to the feed externally
+     */
+    fun addPost(post: Post) {
+        viewModel.onPostAddedAtTheBeginning(post)
     }
 
 

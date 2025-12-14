@@ -6,12 +6,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.isolaatti.images.common.domain.entity.LocalImage
 import com.isolaatti.posting.posts.domain.entity.Post
+import com.isolaatti.squads.SquadAction
 import com.isolaatti.squads.data.SquadDto
 import com.isolaatti.squads.domain.Squad
 import com.isolaatti.squads.domain.SquadsRepository
 import com.isolaatti.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOn
@@ -31,11 +33,13 @@ class SquadViewModel @Inject constructor(
     private val _state = MutableStateFlow(SquadState())
     val state = _state.asStateFlow()
 
+    val addedPosts = Channel<Post>()
+
+
     val squadId: String? = savedStateHandle["id"]
 
     init {
         getSquad()
-        getPosts()
     }
 
 
@@ -79,37 +83,6 @@ class SquadViewModel @Inject constructor(
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
     }
 
-    fun getPosts(refresh: Boolean = false) {
-        if(squadId == null) {
-            return
-        }
-
-        if(refresh) {
-            _lastId = null
-        }
-        viewModelScope.launch {
-            squadRepository.getPosts(squadId, _lastId).collect { resource ->
-                when(resource) {
-                    is Resource.Error -> {
-                        _state.update { it.copy(loadingPosts = false) }
-                    }
-                    is Resource.Loading -> {
-                        _state.update { it.copy(loadingPosts = !refresh, refreshing = refresh) }
-                    }
-                    is Resource.Success -> {
-                        _state.update {
-                            it.copy(
-                                posts = resource.data?.data?.map { Post.fromPostDto(it) } ?: emptyList(),
-                                loadingPosts = false,
-                                moreContent = resource.data?.moreContent == true
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     fun onClickImage() {
         _state.update { it.copy(showImageDialog = true) }
     }
@@ -144,6 +117,17 @@ class SquadViewModel @Inject constructor(
                     }
                 }
 
+            }
+        }
+    }
+
+    fun onAction(action: SquadAction) {
+        viewModelScope.launch {
+            when(action) {
+                is SquadAction.PostCreated -> {
+                    addedPosts.send(action.post)
+                }
+                else -> Unit
             }
         }
     }

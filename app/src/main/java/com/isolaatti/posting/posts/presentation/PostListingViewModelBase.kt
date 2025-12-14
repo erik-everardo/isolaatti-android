@@ -51,14 +51,14 @@ abstract class PostListingViewModelBase : ViewModel() {
 
     val audioState = AudioPlaybackState()
 
-    fun getLastId(): Long = try { posts.value?.last()?.id ?: 0 } catch (e: NoSuchElementException) { 0 }
+    fun getLastId(): Long = try { posts.value?.last()?.id ?: -1 } catch (e: NoSuchElementException) { -1 }
 
     val audioRecorderState = AudioRecorderState()
     var uploadingAudio: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     var ended: Boolean = false
 
-    abstract fun getFeed(refresh: Boolean, hashtag: String?)
+    abstract fun getFeed(refresh: Boolean)
 
     fun likePost(postId: Long) {
         viewModelScope.launch {
