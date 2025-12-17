@@ -61,7 +61,7 @@ class SquadViewModel @Inject constructor(
                             tabs = buildList {
                                 if(squad?.description?.isNotEmpty() == true) {
                                     add(SquadTabs.Description)
-                                } else if(squad?.isOwned == true) {
+                                } else if(squad?.membership == SquadDto.Membership.Owner) {
                                     add(SquadTabs.Description)
                                 }
                                 add(SquadTabs.Posts)
@@ -122,6 +122,14 @@ class SquadViewModel @Inject constructor(
         }
     }
 
+    fun setSquad(squad: Squad) {
+        _state.update {
+            it.copy(
+                squad = squad
+            )
+        }
+    }
+
     fun onAction(action: SquadAction) {
         viewModelScope.launch {
             when(action) {
@@ -142,6 +150,11 @@ class SquadViewModel @Inject constructor(
                 }
                 SquadAction.TakeSquadPictureFromCamera, SquadAction.UploadSquadPictureFromGallery -> {
                     _state.update { it.copy(showImageDialog = false) }
+                }
+                is SquadAction.ExtendedDescriptionEdited -> {
+                    _state.update {
+                        it.copy(squad = it.squad?.copy(extendedDescription = action.description))
+                    }
                 }
                 else -> Unit
             }

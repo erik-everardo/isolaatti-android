@@ -1,5 +1,7 @@
 package com.isolaatti.posting.viewer.presentation
 
+import com.isolaatti.posting.comments.domain.model.Comment
+
 sealed class PostEvents {
     data class CommentEdited(val position: Int) : PostEvents()
     data object CommentEditError : PostEvents()

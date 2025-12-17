@@ -30,11 +30,13 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.SnackbarDuration
@@ -83,6 +85,7 @@ import com.isolaatti.common.options_bottom_sheet.presentation.BottomSheetPostOpt
 import com.isolaatti.common.options_bottom_sheet.ui.BottomSheetPostOptionsFragment
 import com.isolaatti.hashtags.ui.HashtagsPostsActivity
 import com.isolaatti.images.picture_viewer.ui.PictureViewerActivity
+import com.isolaatti.posting.comments.domain.model.Comment
 import com.isolaatti.posting.viewer.presentation.PostEvents
 import com.isolaatti.posting.comments.ui.components.CommentComponent
 import com.isolaatti.posting.posts.components.PostParticipants
@@ -95,8 +98,10 @@ import com.isolaatti.reports.ui.NewReportBottomSheetDialogFragment
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
+import kotlin.collections.flatten
 import kotlin.getValue
 import kotlin.time.Duration.Companion.milliseconds
+
 
 class PostViewerActivity : IsolaattiBaseActivity() {
     companion object {
@@ -295,7 +300,6 @@ class PostViewerActivity : IsolaattiBaseActivity() {
                     SheetValue.PartiallyExpanded -> 240.dp
                 }
 
-                var commentsPositionToHighlight: Int? by remember { mutableStateOf(null) }
 
                 LaunchedEffect(Unit) {
                     viewModel.events.collect {
@@ -317,7 +321,8 @@ class PostViewerActivity : IsolaattiBaseActivity() {
 
                                 if(snackbarResult == SnackbarResult.ActionPerformed) {
                                     commentsLazyListState.animateScrollToItem(event.position)
-                                    commentsPositionToHighlight = event.position
+
+                                    viewModel.setCommentToHighlight(event.position)
                                 }
                             }
                             PostEvents.CommentRemoveError -> {
@@ -339,7 +344,7 @@ class PostViewerActivity : IsolaattiBaseActivity() {
 
                                 if(snackbarResult == SnackbarResult.ActionPerformed) {
                                     commentsLazyListState.animateScrollToItem(event.position)
-                                    commentsPositionToHighlight = event.position
+                                    viewModel.setCommentToHighlight(event.position)
                                 }
 
                             }
@@ -404,7 +409,6 @@ class PostViewerActivity : IsolaattiBaseActivity() {
                                     style = MaterialTheme.typography.titleLarge
                                 )
 
-
                                 PullToRefreshBox(
                                     isRefreshing = state.refreshingComments,
                                     onRefresh = { viewModel.getComments(true) },
@@ -413,32 +417,48 @@ class PostViewerActivity : IsolaattiBaseActivity() {
 
                                     LazyColumn(state = commentsLazyListState) {
                                         if(state.comments.isNotEmpty()) {
-
-                                            items(count = state.comments.size, key = { state.comments[it].id }) { index ->
-                                                val comment = state.comments[index]
-                                                CommentComponent(
-                                                    comment = comment,
-                                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).animateItem(),
-                                                    onDelete = {
-                                                        viewModel.setCommentToDelete(comment)
-                                                    },
-                                                    onEdit = {
-                                                        viewModel.setCommentToEdit(comment)
-                                                    },
-                                                    onReport = {
-                                                        NewReportBottomSheetDialogFragment
-                                                            .newInstance(ContentType.Comment, comment.id.toString())
-                                                            .show(supportFragmentManager, NewReportBottomSheetDialogFragment.LOG_TAG)
-                                                    },
-                                                    onProfileClick = {
-                                                        ProfileActivity.startActivity(this@PostViewerActivity, comment.userId)
-                                                    },
-                                                    highligth = commentsPositionToHighlight == index,
-                                                    finishedHighlight = {
-                                                        commentsPositionToHighlight = null
+                                            items(count = state.comments.size, key = { state.comments[it].id}) { commentIndex ->
+                                                val comment = state.comments[commentIndex]
+                                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                    CommentComponent(
+                                                        comment = comment,
+                                                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).animateItem(),
+                                                        onDelete = {
+                                                            viewModel.setCommentToDelete(comment)
+                                                        },
+                                                        onEdit = {
+                                                            viewModel.setCommentToEdit(comment)
+                                                        },
+                                                        onReport = {
+                                                            NewReportBottomSheetDialogFragment
+                                                                .newInstance(ContentType.Comment, comment.id.toString())
+                                                                .show(supportFragmentManager, NewReportBottomSheetDialogFragment.LOG_TAG)
+                                                        },
+                                                        onProfileClick = {
+                                                            ProfileActivity.startActivity(this@PostViewerActivity, comment.userId)
+                                                        },
+                                                        highligth = state.commentPositionToHighlight == commentIndex,
+                                                        finishedHighlight = {
+                                                            viewModel.setCommentToHighlight(null)
+                                                        },
+                                                        onReply = {
+                                                            viewModel.setCommentToReply(comment)
+                                                        },
+                                                        onShowReplies = {
+                                                            viewModel.loadReplies(comment)
+                                                        },
+                                                        showActions = true,
+                                                        allowReply = comment.allowReplies,
+                                                        nestingLevel = comment.nestedLevel
+                                                    )
+                                                    if(comment.loadingReplies) {
+                                                        CircularProgressIndicator()
+                                                        Text(stringResource(R.string.loading_replies))
                                                     }
-                                                )
+                                                }
+
                                             }
+
                                             if(state.loadingComments) {
                                                 item {
                                                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
@@ -466,11 +486,37 @@ class PostViewerActivity : IsolaattiBaseActivity() {
                                     }
                                 }
 
-                                val commentText by viewModel.commentText.collectAsState()
-                                val commentInEdit by viewModel.commentInEdit.collectAsState()
 
+                                state.commentToReply?.let { commentToReply ->
+                                    OutlinedCard() {
+                                        Column(modifier = Modifier.padding(8.dp).fillMaxWidth()) {
+                                            Row(
+                                                modifier = Modifier.padding(horizontal = 4.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    text = stringResource(R.string.write_reply_to),
+                                                    modifier = Modifier.fillMaxWidth().weight(1f)
+                                                )
+                                                IconButton(onClick = {
+                                                    viewModel.setCommentToReply(null)
+                                                }) {
+                                                    Icon(Icons.Default.Close, stringResource(R.string.close))
+                                                }
+                                            }
+                                            CommentComponent(
+                                                comment = commentToReply,
+                                                modifier = Modifier.padding(8.dp),
+                                                highligth = false,
+                                                showActions = false,
+                                                finishedHighlight = {}
+                                            )
+                                        }
+                                    }
 
-                                AnimatedVisibility(commentInEdit) {
+                                }
+
+                                state.commentToEdit?.let { commentToEdit ->
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -494,23 +540,27 @@ class PostViewerActivity : IsolaattiBaseActivity() {
                                     }
                                 }
 
+
                                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                                     OutlinedTextField(
-                                        value = commentText,
+                                        value = state.commentBoxText,
                                         enabled = !state.uploadingComment,
                                         onValueChange = {
-                                            viewModel.commentText.value = it
+                                            viewModel.onCommentBoxTextChange(it)
                                         },
                                         label = { Text(stringResource(R.string.comment)) },
                                         modifier = Modifier.padding(16.dp).weight(1f),
                                     )
                                     IconButton(
                                         modifier = Modifier.padding(16.dp),
-                                        enabled = commentText.isNotBlank() && !state.uploadingComment,
+                                        enabled = state.commentBoxText.isNotBlank() && !state.uploadingComment,
                                         onClick = {
-                                            if(viewModel.commentInEdit.value) {
+                                            // TODO refactor: move this logic to view model
+                                            if(state.commentToEdit != null) {
                                                 viewModel.editComment()
-                                            } else {
+                                            } else if(state.commentToReply != null) {
+                                                viewModel.reply()
+                                            }else {
                                                 viewModel.postComment()
                                             }
 

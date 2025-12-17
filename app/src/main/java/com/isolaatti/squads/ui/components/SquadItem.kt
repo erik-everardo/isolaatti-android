@@ -57,6 +57,6 @@ fun SquadItemPreview() {
         privacy = 1,
         creationTime = "2023-01-01T00:00:00Z",
         imageId = "",
-        isOwned = false
+        membership = SquadDto.Membership.Owner
     ))
 }

@@ -14,5 +14,10 @@ data class PostViewerState(
     val uploadingComment: Boolean = false,
     val participantFollowStateInUpdate: ProfileListItem? = null,
     val showDeleteCommentDialog: Boolean = false,
-    val deletingComment: Boolean = false
+    val deletingComment: Boolean = false,
+    val showReplyCommentDialog: Boolean = true,
+    val commentToReply: Comment? = null,
+    val commentToEdit: Comment? = null,
+    val commentBoxText: String = "",
+    val commentPositionToHighlight: Int? = null
 )

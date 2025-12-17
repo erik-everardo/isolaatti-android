@@ -38,7 +38,7 @@ class EditExtendedDescriptionActivity : ComponentActivity() {
                         onSave = {
                             viewModel.saveDescription()
                             val resultIntent = Intent().apply {
-                                putExtra(EXTRA_DESCRIPTION_RESULT, viewModel.state.value.squad?.description)
+                                putExtra(EXTRA_DESCRIPTION_RESULT, viewModel.state.value.squad?.extendedDescription)
                             }
                             setResult(Activity.RESULT_OK, resultIntent)
                             finish()

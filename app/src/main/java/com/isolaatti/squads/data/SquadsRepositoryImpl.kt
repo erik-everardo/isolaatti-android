@@ -63,7 +63,7 @@ class SquadsRepositoryImpl(
         try {
             val response = squadsApi.getSquad(squadId).awaitResponse()
             if(response.isSuccessful) {
-                emit(Resource.Success(response.body()?.squad))
+                emit(Resource.Success(response.body()))
             } else {
                 emit(Resource.Error(Resource.Error.mapErrorCode(response.code())))
             }

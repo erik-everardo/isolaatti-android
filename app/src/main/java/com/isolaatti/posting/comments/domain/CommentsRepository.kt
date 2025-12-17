@@ -11,4 +11,6 @@ interface CommentsRepository {
     fun postComment(content: String, postId: Long): Flow<Resource<Comment>>
     fun editComment(commentId: Long, content: String): Flow<Resource<Comment>>
     fun deleteComment(commentId: Long): Flow<Resource<Boolean>>
+    fun replyToComment(commentId: Long, content: String): Flow<Resource<Comment>>
+    fun getReplies(commentId: Long, lastId: Long?): Flow<Resource<List<Comment>>>
 }

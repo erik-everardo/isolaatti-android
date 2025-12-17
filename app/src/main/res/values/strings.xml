@@ -276,6 +276,10 @@
     <string name="camera_permission_denied">Camera permission denied, please change this on your device settings</string>
     <string name="required">Required</string>
     <string name="optional">Optional</string>
+    <string name="replies_count">Replies: %d</string>
+    <string name="reply">Reply</string>
+    <string name="write_reply_to">Write reply to:</string>
+    <string name="loading_replies">Loading replies</string>
     <string-array name="report_reasons">
         <item>Spam</item>
         <item>Explicit content</item>

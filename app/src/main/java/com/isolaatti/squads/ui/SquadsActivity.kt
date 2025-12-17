@@ -50,6 +50,7 @@ import com.isolaatti.images.common.domain.entity.LocalImage
 import com.isolaatti.images.picture_viewer.ui.PictureViewerActivity
 import com.isolaatti.posting.post_creator.presentation.CreatePostContract
 import com.isolaatti.squads.SquadAction
+import com.isolaatti.squads.domain.Squad
 import com.isolaatti.squads.presentation.EditExtendedDescriptionContract
 import com.isolaatti.squads.presentation.SquadSettingsEvent
 import com.isolaatti.squads.presentation.SquadSettingsViewModel
@@ -60,9 +61,17 @@ import com.isolaatti.squads.ui.screens.SquadSearchScreen
 import com.isolaatti.squads.ui.squad.SquadScreen
 import dagger.hilt.android.AndroidEntryPoint
 import io.noties.markwon.Markwon
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import java.io.File
 import java.util.Calendar
 import javax.inject.Inject
+
+sealed class SquadEvents {
+    data class SquadModified(val squad: Squad) : SquadEvents()
+}
 
 @AndroidEntryPoint
 class SquadsActivity : FragmentActivity() {
@@ -71,6 +80,8 @@ class SquadsActivity : FragmentActivity() {
         val cacheFile = File(filesDir, "temp_picture_${Calendar.getInstance().timeInMillis}")
         return FileProvider.getUriForFile(this, "${MyApplication.Companion.myApp.packageName}.provider", cacheFile)
     }
+
+    private val globalEvents = Channel<SquadEvents>(capacity = 1)
 
 
 
@@ -153,7 +164,16 @@ class SquadsActivity : FragmentActivity() {
                             }
 
 
+                            LaunchedEffect(Unit) {
+                                globalEvents.receiveAsFlow().collect { event ->
+                                    when(event) {
+                                        is SquadEvents.SquadModified -> {
+                                            viewModel.setSquad(event.squad)
+                                        }
+                                    }
 
+                                }
+                            }
 
 
                             val state by viewModel.state.collectAsState()
@@ -232,7 +252,10 @@ class SquadsActivity : FragmentActivity() {
                                 viewModel.events.collect { event ->
                                     when(event) {
                                         is SquadSettingsEvent.SquadUpdated -> {
+                                            globalEvents.send(SquadEvents.SquadModified(event.squad))
                                             navController.popBackStack()
+
+
                                         }
                                     }
                                 }

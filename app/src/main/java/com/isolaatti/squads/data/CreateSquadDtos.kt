@@ -21,14 +21,19 @@ data class SquadDto(
     @SerializedName("privacy") val privacy: Int,
     @SerializedName("creationTime") val creationTime: String,
     @SerializedName("imageId") val imageId: String?,
-    @SerializedName("isOwned") val isOwned: Boolean
-)
+    @SerializedName("membership") val membership: Membership
+) {
+    enum class Membership {
+        @SerializedName("Outsider")
+        Outsider,
+        @SerializedName("User")
+        User,
+        @SerializedName("Owner")
+        Owner
+    }
+}
 
 data class CreateSquadResponseDto(
     @SerializedName("creationResult") val creationResult: Int,
     @SerializedName("squad") val squad: SquadDto
 )
-
-
-
-

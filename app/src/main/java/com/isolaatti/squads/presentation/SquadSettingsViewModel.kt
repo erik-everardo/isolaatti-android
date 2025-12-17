@@ -13,6 +13,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -41,7 +42,7 @@ class SquadSettingsViewModel @Inject constructor(
     val squadId: String? = savedStateHandle["id"]
 
     private val _events: Channel<SquadSettingsEvent> = Channel()
-    val events = _events.receiveAsFlow()
+    val events = _events.consumeAsFlow()
 
 
 
@@ -86,7 +87,7 @@ class SquadSettingsViewModel @Inject constructor(
         if(squadId == null) {
             return
         }
-        val squad = _uiState.value.squad ?: return
+        var squad = _uiState.value.squad ?: return
         viewModelScope.launch {
 
             val image = _uiState.value.imageToUpload
@@ -105,6 +106,7 @@ class SquadSettingsViewModel @Inject constructor(
                             _uiState.update {
                                 it.copy(uploadingPicture = false)
                             }
+                            squad = squad.copy(image = resource.data)
                         }
 
                     }

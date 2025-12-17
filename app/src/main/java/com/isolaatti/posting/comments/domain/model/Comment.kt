@@ -12,32 +12,40 @@ data class Comment(
     val postId: Long,
     val date: ZonedDateTime,
     val username: String,
-    val isFromUser: Boolean
+    val isFromUser: Boolean,
+    val repliesCount: Int,
+    val nestedLevel: Int = 0,
+    val parentCommentId: Long? = null,
+    val loadingReplies: Boolean = false,
+    val enableRepliesButton: Boolean = true,
+    val allowReplies: Boolean = true
 ) : Ownable {
     companion object {
         fun fromCommentsDto(dtoList: FeedCommentsDto): List<Comment> {
             return dtoList.data.map {
                 Comment(
-                    id = it.comment.id,
-                    textContent = it.comment.textContent,
-                    userId = it.comment.userId,
-                    postId = it.comment.postId,
-                    date = it.comment.date,
+                    id = it.id,
+                    textContent = it.textContent,
+                    userId = it.userId,
+                    postId = it.postId,
+                    date = it.date,
                     username = it.username,
-                    isFromUser = it.comment.isFromUser
+                    isFromUser = it.isFromUser,
+                    repliesCount = it.repliesCount
                 )
             }
         }
 
         fun fromCommentDto(dto: CommentDto): Comment {
             return Comment(
-                id = dto.comment.id,
-                textContent = dto.comment.textContent,
-                userId = dto.comment.userId,
-                postId = dto.comment.postId,
-                date = dto.comment.date,
+                id = dto.id,
+                textContent = dto.textContent,
+                userId = dto.userId,
+                postId = dto.postId,
+                date = dto.date,
                 username = dto.username,
-                isFromUser = dto.comment.isFromUser
+                isFromUser = dto.isFromUser,
+                repliesCount = dto.repliesCount
             )
         }
     }

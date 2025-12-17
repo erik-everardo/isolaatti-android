@@ -6,6 +6,7 @@ import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -17,12 +18,12 @@ interface SquadsApi {
     fun getMySquads(@Query("lastId") lastId: String? = null): Call<SquadsDto>
 
     @GET("Squads/{squadId}")
-    fun getSquad(@Path("squadId") squadId: String): Call<SquadWrapperDto>
+    fun getSquad(@Path("squadId") squadId: String): Call<SquadDto>
 
     @DELETE("Squads/{squadId}")
     fun deleteSquad(squadId: String): Call<Void>
 
-    @POST("Squads/{squadId}/Update")
+    @PUT("Squads/{squadId}")
     fun updateSquad(@Path("squadId") squadId: String, @Body squad: CreateSquadDto): Call<Void>
 
     @POST("Squads/{squadId}/UpdatePrivacyTo/{privacy}")
