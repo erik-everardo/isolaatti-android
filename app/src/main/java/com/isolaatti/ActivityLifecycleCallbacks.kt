@@ -3,7 +3,6 @@ package com.isolaatti
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
-import com.isolaatti.connectivity.SocketIO
 
 class ActivityLifecycleCallbacks : Application.ActivityLifecycleCallbacks {
 
@@ -35,9 +34,5 @@ class ActivityLifecycleCallbacks : Application.ActivityLifecycleCallbacks {
 
     override fun onActivityDestroyed(activity: Activity) {
         startedActivitiesCount--
-
-        if(startedActivitiesCount == 0) {
-            SocketIO.disconnect()
-        }
     }
 }

@@ -280,6 +280,11 @@
     <string name="reply">Reply</string>
     <string name="write_reply_to">Write reply to:</string>
     <string name="loading_replies">Loading replies</string>
+
+    <string name="authentication_required">Authentication required</string>
+    <string name="this_feature_requires_an_account">This feature requires an account. Please sign in or create one to continue.</string>
+    <string name="dont_have_an_account_create_one">Don\'t have an account? You can create one easily!</string>
+
     <string-array name="report_reasons">
         <item>Spam</item>
         <item>Explicit content</item>

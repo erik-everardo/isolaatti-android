@@ -1,9 +1,21 @@
 package com.isolaatti.connectivity
 
-import com.isolaatti.auth.domain.AuthRepository
+import com.isolaatti.auth.AuthStateStorage
+import kotlinx.coroutines.runBlocking
+import net.openid.appauth.AuthorizationException
+import net.openid.appauth.AuthorizationService
 import okhttp3.Interceptor
 import okhttp3.Response
-class AuthenticationInterceptor(private val authRepository: dagger.Lazy<AuthRepository>) : Interceptor {
+import javax.inject.Inject
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
+
+data class PerformActionWithFreshTokensResult(
+    val accessToken: String?,
+    val idToken: String?,
+    val ex: AuthorizationException?
+)
+class AuthenticationInterceptor @Inject constructor(private val authStateStorage: AuthStateStorage, private val authorizationService: AuthorizationService) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val url = chain.request().url
@@ -12,11 +24,18 @@ class AuthenticationInterceptor(private val authRepository: dagger.Lazy<AuthRepo
             return chain.proceed(chain.request())
         }
 
-        // Add auth header here
-        val tokenDto = authRepository.get().getCurrentToken()
-        tokenDto?.token?.let {
+        val performActionWithFreshTokensResult = runBlocking {
+            suspendCoroutine { continuation ->
+                authStateStorage.authState.performActionWithFreshTokens(authorizationService) { accessToken, idToken, ex ->
+
+                    continuation.resume(PerformActionWithFreshTokensResult(accessToken, idToken, ex))
+                }
+            }
+        }
+
+        if(performActionWithFreshTokensResult.accessToken != null) {
             val request = chain.request().newBuilder()
-                .addHeader("Authorization", it)
+                .addHeader("Authorization", "Bearer ${performActionWithFreshTokensResult.accessToken}")
                 .addHeader("client-id", ClientId.guid.toString())
                 .build()
             return chain.proceed(request)

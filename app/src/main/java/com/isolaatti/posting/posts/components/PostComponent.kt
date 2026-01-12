@@ -66,7 +66,6 @@ fun PostComponent(
     onHashtagClick: (hashtag: String) -> Unit = {},
 
     isCurrentlyPlaying: Boolean = false,
-    audioIsPlaying: Boolean = false,
     progress: Long = 0,
     duration: Long = 0,
     onPlay: () -> Unit =  {},
@@ -102,7 +101,7 @@ fun PostComponent(
             AudioPlayer(
                 modifier = Modifier.fillMaxWidth().height(80.dp),
                 positionMs = progress,
-                isPlaying = isCurrentlyPlaying && audioIsPlaying,
+                isPlaying = isCurrentlyPlaying,
                 durationMs = duration,
                 isLoading = false,
                 focused = isCurrentlyPlaying,

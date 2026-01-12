@@ -132,11 +132,8 @@ class PostListingFragment : Fragment() {
     ): View {
         return ComposeView(requireContext()).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            /*
             setContent {
-                val isRefreshing by viewModel.refreshing.collectAsState()
-                val posts by viewModel.posts.collectAsState(emptyList())
-                val noMoreContent by viewModel.noMoreContent.collectAsState()
-                val loading by viewModel.loadingPosts.collectAsState()
 
                 LaunchedEffect(viewModel.audioState.isPlaying) {
                     while(viewModel.audioState.isPlaying) {
@@ -239,6 +236,8 @@ class PostListingFragment : Fragment() {
                     }
                 }
             }
+
+             */
         }
     }
 
@@ -290,10 +289,6 @@ class PostListingFragment : Fragment() {
                 }
             }
 
-        }
-
-        viewModel.errorLoading.observe(viewLifecycleOwner) {
-            errorViewModel.error.postValue(it)
         }
 
         optionsViewModel.optionClicked.observe(viewLifecycleOwner, optionsObserver)

@@ -45,29 +45,23 @@ class BottomSheetPostOptionsViewModel @Inject constructor(private val userIdSett
                 _callerId = callerId
                 when(options) {
                     POST_OPTIONS -> {
-                        userIdSetting.getUserId().onEach { userId ->
-                            _options.postValue(
-                                Options.getPostsOptions(
-                                    userOwned = userId == payload?.userId,
-                                    savable = false,
-                                    snapshotAble = false)
-                            )
-                        }.flowOn(Dispatchers.IO).launchIn(this)
+                        _options.postValue(
+                            Options.getPostsOptions(
+                                userOwned = -1 == payload?.userId,
+                                savable = false,
+                                snapshotAble = false)
+                        )
                     }
                     COMMENT_OPTIONS -> {
-                        userIdSetting.getUserId().onEach { userId ->
-                            _options.postValue(
-                                Options.getCommentOptions(
-                                    userOwned = userId == payload?.userId,
-                                    savable = false,
-                                    snapshotAble = false)
-                            )
-                        }.flowOn(Dispatchers.IO).launchIn(this)
+                        _options.postValue(
+                            Options.getCommentOptions(
+                                userOwned = -1 == payload?.userId,
+                                savable = false,
+                                snapshotAble = false)
+                        )
                     }
                     PROFILE_PHOTO_OPTIONS -> {
-                        userIdSetting.getUserId().onEach { userId ->
-                            _options.postValue(Options.getProfilePhotoOptions(userOwned = userId == payload?.userId,))
-                        }.flowOn(Dispatchers.IO).launchIn(this)
+                        _options.postValue(Options.getProfilePhotoOptions(userOwned = -1 == payload?.userId,))
                     }
                     PROFILE_DESCRIPTION_OPTIONS -> {
                         _options.postValue(Options.getProfileDescriptionOptions())

@@ -12,10 +12,12 @@ import com.isolaatti.posting.likes.domain.repository.LikesRepository
 import com.isolaatti.posting.posts.data.remote.FeedDto
 import com.isolaatti.posting.posts.domain.entity.Post
 import com.isolaatti.posting.posts.domain.use_case.DeletePost
+import com.isolaatti.posting.posts.ui.PostListingScreenState
 import com.isolaatti.profile.domain.use_case.GetProfilePosts
 import com.isolaatti.utils.Resource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -36,22 +38,15 @@ abstract class PostListingViewModelBase : ViewModel() {
     @Inject
     lateinit var deletePostUseCase: DeletePost
 
-    val posts: MutableStateFlow<List<Post>> = MutableStateFlow(emptyList())
-
-    val loadingPosts = MutableStateFlow(false)
-
-    val refreshing = MutableStateFlow(false)
-
-    val noMoreContent = MutableStateFlow(true)
-
-    val errorLoading: MutableLiveData<Resource.Error.ErrorType?> = MutableLiveData()
+    protected val _postListingScreenState = MutableStateFlow(PostListingScreenState())
+    val postListingScreenState = _postListingScreenState.asStateFlow()
     var isLoadingFromScrolling = false
 
     val mediaControllerIsAvailable: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     val audioState = AudioPlaybackState()
 
-    fun getLastId(): Long = try { posts.value?.last()?.id ?: -1 } catch (e: NoSuchElementException) { -1 }
+    fun getLastId(): Long = try { _postListingScreenState.value.posts.lastOrNull()?.id ?: -1 } catch (e: NoSuchElementException) { -1 }
 
     val audioRecorderState = AudioRecorderState()
     var uploadingAudio: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -72,9 +67,18 @@ abstract class PostListingViewModelBase : ViewModel() {
                         Log.i(TAG, "Loading likePost($postId)")
                     }
                     is Resource.Success -> {
-                        val likedPost = posts.value?.find { post -> post.id == like.data?.postId }
-                        likedPost?.liked = true
-                        likedPost?.numberOfLikes = like.data!!.likesCount
+                        _postListingScreenState.update {
+                            it.copy(
+                                posts = it.posts.toMutableList().apply {
+                                    val index = indexOfFirst { post -> post.id == like.data?.postId }
+                                    if(index != -1) {
+                                        val post = get(index)
+                                        set(index, post.copy(liked = true, numberOfLikes = like.data!!.likesCount))
+                                    }
+
+                                }
+                            )
+                        }
                     }
                 }
 
@@ -95,9 +99,18 @@ abstract class PostListingViewModelBase : ViewModel() {
                         Log.i(TAG, "Loading unLikePost($postId)")
                     }
                     is Resource.Success -> {
-                        val likedPost = posts.value?.find { post -> post.id == like.data?.postId }
-                        likedPost?.liked = false
-                        likedPost?.numberOfLikes = like.data!!.likesCount
+                        _postListingScreenState.update {
+                            it.copy(
+                                posts = it.posts.toMutableList().apply {
+                                    val index = indexOfFirst { post -> post.id == like.data?.postId }
+                                    if(index != -1) {
+                                        val post = get(index)
+                                        set(index, post.copy(liked = true, numberOfLikes = like.data!!.likesCount))
+                                    }
+
+                                }
+                            )
+                        }
                     }
                 }
 
@@ -111,9 +124,14 @@ abstract class PostListingViewModelBase : ViewModel() {
             deletePostUseCase(postId).onEach { res ->
                 when(res) {
                     is Resource.Success -> {
-                        val postDeleted = posts.value?.find { post -> post.id == postId }
+                        val postDeleted = _postListingScreenState.value.posts.find { post -> post.id == postId }
                             ?: return@onEach
-                        posts.value = posts.value.toMutableList().apply { remove(postDeleted) }
+
+                        _postListingScreenState.update {
+                            it.copy(
+                                posts = it.posts.toMutableList().apply { remove(postDeleted) }
+                            )
+                        }
                     }
                     is Resource.Loading -> {}
                     is Resource.Error -> {}
@@ -125,18 +143,24 @@ abstract class PostListingViewModelBase : ViewModel() {
 
     fun onPostUpdate(post: Post) {
         viewModelScope.launch {
-            posts.update {
-                it.toMutableList().apply {
-                    val index = indexOfFirst { it.id == post.id }
-                    if(index != -1) {
-                        set(index, post)
+            _postListingScreenState.update {
+                it.copy(
+                    posts = it.posts.toMutableList().apply {
+                        val index = indexOfFirst { p -> p.id == post.id }
+                        if(index != -1) {
+                            set(index, post)
+                        }
                     }
-                }
+                )
             }
         }
     }
 
     fun onPostAddedAtTheBeginning(post: Post) {
-        posts.value = listOf(post) + posts.value
+        _postListingScreenState.update {
+            it.copy(
+                posts = listOf(post) + it.posts
+            )
+        }
     }
 }

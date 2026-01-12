@@ -14,13 +14,16 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class SettingsViewModel @Inject constructor(private val userInfoRepository: UserInfoRepository) : ViewModel() {
+class SettingsViewModel @Inject constructor() : ViewModel() {
     val userInfo: MutableLiveData<UserInfo> = MutableLiveData()
     fun getUserInfo() {
+        /*
         viewModelScope.launch {
             userInfoRepository.getCurrentUserInfo().onEach {
                 userInfo.postValue(it)
             }.flowOn(Dispatchers.IO).launchIn(this)
         }
+
+         */
     }
 }

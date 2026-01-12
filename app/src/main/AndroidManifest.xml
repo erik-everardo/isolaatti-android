@@ -43,7 +43,6 @@
             </intent-filter>
         </activity>
         <activity android:name=".home.ui.HomeActivity" android:theme="@style/Theme.Isolaatti" />
-        <activity android:name=".login.LogInActivity" android:theme="@style/Theme.Isolaatti" />
         <activity android:name=".profile.ui.ProfileActivity"
             android:theme="@style/Theme.Isolaatti"
             android:parentActivityName=".home.ui.HomeActivity"/>

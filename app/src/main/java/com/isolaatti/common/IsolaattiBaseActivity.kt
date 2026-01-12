@@ -14,7 +14,6 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.isolaatti.R
 import com.isolaatti.connectivity.NetworkStatus
-import com.isolaatti.login.LogInActivity
 import com.isolaatti.utils.Resource
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -32,7 +31,9 @@ abstract class IsolaattiBaseActivity : AppCompatActivity()  {
 
     private val errorObserver: Observer<Resource.Error.ErrorType?> = Observer {
         when(it) {
-            Resource.Error.ErrorType.AuthError -> showReAuthDialog()
+            Resource.Error.ErrorType.AuthError -> {
+            // TODO
+            }
             Resource.Error.ErrorType.NetworkError -> showNetworkErrorMessage()
             Resource.Error.ErrorType.NotFoundError -> showNotFoundErrorMessage()
             Resource.Error.ErrorType.ServerError -> showServerErrorMessage()
@@ -68,20 +69,6 @@ abstract class IsolaattiBaseActivity : AppCompatActivity()  {
                 errorViewModel.handleRetry()
             }
         }
-    }
-
-
-    private val onAcceptReAuthClick = DialogInterface.OnClickListener { _, _ ->
-        signInActivityResult.launch(Intent(this, LogInActivity::class.java))
-    }
-
-    private fun showReAuthDialog() {
-        MaterialAlertDialogBuilder(this)
-            .setMessage(R.string.need_reauth_message)
-            .setPositiveButton(R.string.accept, onAcceptReAuthClick)
-            .setNegativeButton(R.string.close, null)
-            .show()
-        errorViewModel.error.postValue(null)
     }
 
     private fun showNetworkErrorMessage() {

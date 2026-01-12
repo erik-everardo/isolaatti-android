@@ -232,10 +232,10 @@ class PostViewerViewModel @Inject constructor(
                     is Resource.Success -> {
                         _state.update {
                             it.copy(
-                                post = it.post?.apply {
-                                    liked = true
+                                post = it.post?.copy(
+                                    liked = true,
                                     numberOfLikes = like.data!!.likesCount
-                                }
+                                )
                             )
                         }
                     }
@@ -262,10 +262,10 @@ class PostViewerViewModel @Inject constructor(
                     is Resource.Success -> {
                         _state.update {
                             it.copy(
-                                post = it.post?.apply {
-                                    liked = false
+                                post = it.post?.copy(
+                                    liked = false,
                                     numberOfLikes = like.data!!.likesCount
-                                }
+                                )
                             )
                         }
                     }
@@ -444,13 +444,17 @@ class PostViewerViewModel @Inject constructor(
                         }
 
                         is Resource.Success -> {
-                            _state.value.post?.also {
-                                it.participants = it.participants.toMutableList().apply {
-                                    val index = indexOf(profile)
-                                    if (index != -1) {
-                                        set(index, profile.copy(following = false))
-                                    }
-                                }
+                            _state.update {
+                                it.copy(
+                                    post = it.post?.copy(
+                                        participants = it.post.participants.toMutableList().apply {
+                                            val index = indexOf(profile)
+                                            if (index != -1) {
+                                                set(index, profile.copy(following = false))
+                                            }
+                                        }
+                                    )
+                                )
                             }
                         }
                     }
@@ -467,13 +471,17 @@ class PostViewerViewModel @Inject constructor(
                         }
 
                         is Resource.Success -> {
-                            _state.value.post?.also {
-                                it.participants = it.participants.toMutableList().apply {
-                                    val index = indexOf(profile)
-                                    if (index != -1) {
-                                        set(index, profile.copy(following = true))
-                                    }
-                                }
+                            _state.update {
+                                it.copy(
+                                    post = it.post?.copy(
+                                        participants = it.post.participants.toMutableList().apply {
+                                            val index = indexOf(profile)
+                                            if (index != -1) {
+                                                set(index, profile.copy(following = true))
+                                            }
+                                        }
+                                    )
+                                )
                             }
                         }
                     }

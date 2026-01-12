@@ -253,7 +253,8 @@ class ProfileMainFragment : Fragment() {
                 val lazyColumState = rememberLazyListState()
                 val profile by viewModel.profile.collectAsState()
                 val followingState by viewModel.followingState.observeAsState()
-                val posts by viewModel.posts.collectAsState()
+                val state by viewModel.postListingScreenState.collectAsState()
+                val posts = state.posts
                 val loadingProfile by viewModel.loadingProfile.collectAsState()
 
                 // use this to show or hide all audio related UI
@@ -300,7 +301,7 @@ class ProfileMainFragment : Fragment() {
 
                 var showRemoveAudioDialog by remember { mutableStateOf(false) }
 
-                val noMoreContent by viewModel.noMoreContent.collectAsState()
+                val noMoreContent = state.noMoreContent
 
                 LaunchedEffect(profile) {
                     showAddPostButton = profile?.isUserItself == true
@@ -821,7 +822,6 @@ class ProfileMainFragment : Fragment() {
                                             )
                                         },
                                         isCurrentlyPlaying = post.audio == viewModel.audioState.currentAudio,
-                                        audioIsPlaying = viewModel.audioState.isPlaying,
                                         duration = if(viewModel.audioState.currentAudio == post.audio) viewModel.audioState.duration else viewModel.audioState.duration,
                                         progress = if(viewModel.audioState.currentAudio == post.audio) viewModel.audioState.progress else 0,
                                         onPlay = {

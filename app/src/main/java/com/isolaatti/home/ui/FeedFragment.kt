@@ -17,9 +17,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.fragment.findNavController
 import coil3.load
 import com.google.android.material.card.MaterialCardView
 import com.isolaatti.R
@@ -27,9 +25,8 @@ import com.isolaatti.about.AboutActivity
 import com.isolaatti.common.CoilImageLoader.imageLoader
 import com.isolaatti.common.ErrorMessageViewModel
 import com.isolaatti.databinding.FragmentFeedBinding
-import com.isolaatti.home.presentation.FeedViewModel
+import com.isolaatti.home.presentation.MainViewModel
 import com.isolaatti.posting.post_creator.presentation.CreatePostContract
-import com.isolaatti.posting.posts.ui.PostListingFragment
 import com.isolaatti.profile.ui.ProfileActivity
 import com.isolaatti.settings.ui.SettingsActivity
 import com.isolaatti.squads.ui.SquadsActivity
@@ -47,7 +44,7 @@ class FeedFragment : Fragment() {
     }
 
     private val errorViewModel: ErrorMessageViewModel by activityViewModels()
-    private val viewModel: FeedViewModel by activityViewModels()
+    private val viewModel: MainViewModel by activityViewModels()
 
     private var currentUserId = 0
 
@@ -135,16 +132,9 @@ class FeedFragment : Fragment() {
         }
 
 
-
-
-        viewModel.getProfile()
-
-
-
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 errorViewModel.retry.collect {
-                    viewModel.retry()
                     errorViewModel.handleRetry()
                 }
             }

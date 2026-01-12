@@ -58,7 +58,8 @@ class SignUpRepositoryImpl @Inject constructor(private val signUpApi: SignUpApi)
                 SignUpWithCodeDto(username, password, displayName, code)
             ).awaitResponse()
             if(response.isSuccessful){
-                response.body()?.let { emit(Resource.Success(SignUpResult(SignUpResultCode.valueOf(it.accountMakingResult), it.session)))}
+                // TODO ver que hacer cuando se complete el registro, seguramente redirigir a login
+                //response.body()?.let { emit(Resource.Success(SignUpResult(SignUpResultCode.valueOf(it.accountMakingResult), it.session)))}
             } else {
                 emit(Resource.Error(Resource.Error.mapErrorCode(response.code())))
             }

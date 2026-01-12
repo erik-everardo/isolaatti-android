@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.collections.emptyList
@@ -28,28 +29,44 @@ class PostListingViewModel @Inject constructor(
     override fun getFeed(refresh: Boolean) {
         viewModelScope.launch {
             if (refresh) {
-                posts.value = emptyList()
+                _postListingScreenState.update {
+                    it.copy(posts = emptyList())
+                }
             }
             if(squadId != null) {
                 squadRepository.getPosts(squadId, getLastId()).collect { resource ->
                     when (resource) {
                         is Resource.Success -> {
-                            loadingPosts.value = false
-                            refreshing.value = false
-                            posts.value += resource.data ?: emptyList()
+                            _postListingScreenState.update {
+                                it.copy(
+                                    loading = false,
+                                    isRefreshing = false,
+                                    posts = it.posts + (resource.data ?: emptyList()),
+                                    noMoreContent = (resource.data?.size == 0)
 
-                            noMoreContent.value = (resource.data?.size == 0)
+                                )
+                            }
                         }
 
                         is Resource.Loading -> {
-                            if(!refresh)
-                                loadingPosts.value = true
-                            else
-                                refreshing.value = true
+                            if(!refresh) {
+                                _postListingScreenState.update {
+                                    it.copy(loading = true)
+                                }
+                            }
+                            else {
+                                _postListingScreenState.update {
+                                    it.copy(isRefreshing = true)
+                                }
+                            }
+
+
                         }
 
                         is Resource.Error -> {
-                            errorLoading.postValue(resource.errorType)
+                            _postListingScreenState.update {
+                                it.copy(error = resource.errorType)
+                            }
                         }
 
                     }
@@ -57,25 +74,35 @@ class PostListingViewModel @Inject constructor(
 
                 }
             } else {
-                postsRepository.getFeed(getLastId(), hashtag).onEach { listResource ->
-                    when (listResource) {
+                postsRepository.getFeed(getLastId(), hashtag).onEach { resource ->
+                    when (resource) {
                         is Resource.Success -> {
-                            loadingPosts.value = false
-                            refreshing.value = false
-                            posts.value += listResource.data ?: emptyList()
-
-                            noMoreContent.value = (listResource.data?.size == 0)
+                            _postListingScreenState.update {
+                                it.copy(
+                                    loading = false,
+                                    isRefreshing = false,
+                                    posts = it.posts + (resource.data ?: emptyList()),
+                                    noMoreContent = (resource.data?.size == 0),
+                                    error = null
+                                )
+                            }
                         }
 
                         is Resource.Loading -> {
-                            if(!refresh)
-                                loadingPosts.value = true
-                            else
-                                refreshing.value = true
+                            _postListingScreenState.update {
+                                if(!refresh) {
+                                    it.copy(loading = true, error = null)
+                                }
+                                else {
+                                    it.copy(isRefreshing = true, error = null)
+                                }
+                            }
                         }
 
                         is Resource.Error -> {
-                            errorLoading.postValue(listResource.errorType)
+                            _postListingScreenState.update {
+                                it.copy(error = resource.errorType)
+                            }
                         }
 
                     }
@@ -84,5 +111,9 @@ class PostListingViewModel @Inject constructor(
             }
 
         }
+    }
+
+    init {
+        getFeed(true)
     }
 }

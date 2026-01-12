@@ -1,6 +1,5 @@
 package com.isolaatti.settings
 
-import com.isolaatti.auth.data.local.TokenStorage
 import com.isolaatti.connectivity.RetrofitClient
 import com.isolaatti.database.AppDatabase
 import com.isolaatti.settings.data.KeyValueDao

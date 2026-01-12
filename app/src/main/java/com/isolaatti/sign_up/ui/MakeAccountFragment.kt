@@ -126,7 +126,7 @@ class MakeAccountFragment : Fragment() {
                             viewModel.signUpResult.value = null
                         }
                         SignUpResultCode.Ok -> {
-                            resource.data.session?.let { viewModel.saveSession(it) }
+
                             viewModel.signUpResult.value = null
                         }
                         else -> showErrorMessage()

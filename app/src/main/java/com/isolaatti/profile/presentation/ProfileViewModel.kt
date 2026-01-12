@@ -83,7 +83,6 @@ class ProfileViewModel @Inject constructor(
                 when(it) {
                     is Resource.Error -> {
                         loadingProfile.value = false
-                        errorLoading.postValue(it.errorType)
                         toRetry.add {
                             getProfile()
                         }
@@ -163,26 +162,48 @@ class ProfileViewModel @Inject constructor(
     override fun getFeed(refresh: Boolean) {
         viewModelScope.launch {
             if(refresh) {
-                posts.value = emptyList()
+                _postListingScreenState.update {
+                    it.copy(posts = emptyList())
+                }
             }
             getProfilePostsUseCase(profileId, getLastId(), false, null).onEach { feedDtoResource ->
                 when (feedDtoResource) {
                     is Resource.Success -> {
                         if(refresh) {
                             isRefreshing.value = false
+                            _postListingScreenState.update {
+                                it.copy(
+                                    isRefreshing = false,
+                                    error = null
+                                )
+                            }
                         } else {
-                            loadingPosts.value = false
+                            _postListingScreenState.update {
+                                it.copy(
+                                    loading = false,
+                                    error = null
+                                )
+                            }
                         }
 
-                        posts.value += feedDtoResource.data ?: emptyList()
-                        noMoreContent.value = ((feedDtoResource.data?.size ?: 0) < FeedPageSize)
+                        _postListingScreenState.update {
+                            it.copy(
+                                posts = it.posts + (feedDtoResource.data ?: emptyList()),
+                                noMoreContent = ((feedDtoResource.data?.size ?: 0) < FeedPageSize)
+                            )
+                        }
                     }
 
                     is Resource.Loading -> {
                         if(refresh) {
                             isRefreshing.value = true
+                            _postListingScreenState.update {
+                                it.copy(isRefreshing = true)
+                            }
                         } else {
-                            loadingPosts.value = true
+                            _postListingScreenState.update {
+                                it.copy(loading = true)
+                            }
                         }
 
                     }
@@ -190,10 +211,14 @@ class ProfileViewModel @Inject constructor(
                     is Resource.Error -> {
                         if(refresh) {
                             isRefreshing.value = true
+                            _postListingScreenState.update {
+                                it.copy(isRefreshing = false)
+                            }
                         } else {
-                            loadingPosts.value = true
+                            _postListingScreenState.update {
+                                it.copy(loading = false, error = feedDtoResource.errorType)
+                            }
                         }
-                        errorLoading.postValue(feedDtoResource.errorType)
                         toRetry.add {
                             getFeed(refresh)
                         }

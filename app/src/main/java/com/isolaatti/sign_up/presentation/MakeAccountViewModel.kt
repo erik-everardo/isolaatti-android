@@ -3,8 +3,6 @@ package com.isolaatti.sign_up.presentation
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.isolaatti.auth.data.remote.AuthTokenDto
-import com.isolaatti.auth.domain.AuthRepository
 import com.isolaatti.sign_up.domain.SignUpRepository
 import com.isolaatti.sign_up.domain.entity.SignUpResult
 import com.isolaatti.utils.Resource
@@ -20,7 +18,6 @@ import javax.inject.Inject
 @HiltViewModel
 class MakeAccountViewModel @Inject constructor(
     private val signUpRepository: SignUpRepository,
-    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     val formIsValid: MutableLiveData<Boolean> = MutableLiveData(false)
@@ -82,15 +79,6 @@ class MakeAccountViewModel @Inject constructor(
             signUpRepository.signUpWithCode(username, displayName, password, code!!).onEach {
                 signUpResult.postValue(it)
             }.flowOn(Dispatchers.IO).launchIn(this)
-        }
-    }
-
-    fun saveSession(sessionDto: AuthTokenDto) {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                authRepository.setToken(sessionDto)
-                sessionSaved.postValue(true)
-            }
         }
     }
 }

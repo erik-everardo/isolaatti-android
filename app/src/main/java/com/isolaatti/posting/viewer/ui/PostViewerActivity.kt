@@ -669,8 +669,7 @@ class PostViewerActivity : IsolaattiBaseActivity() {
                                             onSeek = {
                                                 seekTo(it)
                                             },
-                                            isCurrentlyPlaying = post.audio == viewModel.audioState.currentAudio,
-                                            audioIsPlaying = viewModel.audioState.isPlaying,
+                                            isCurrentlyPlaying = viewModel.audioState.isPlaying && post.audio == viewModel.audioState.currentAudio,
                                             duration = if(viewModel.audioState.currentAudio == post.audio) viewModel.audioState.duration else viewModel.audioState.duration,
                                             progress = if(viewModel.audioState.currentAudio == post.audio) viewModel.audioState.progress else 0,
                                         )

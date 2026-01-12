@@ -3,6 +3,7 @@ package com.isolaatti.profile.domain.entity
 import com.isolaatti.audio.common.domain.Audio
 import com.isolaatti.common.Ownable
 import com.isolaatti.images.common.domain.entity.RemoteImage
+import com.isolaatti.profile.data.local.UserProfileEntity
 import com.isolaatti.profile.data.remote.UserProfileDto
 import com.isolaatti.utils.UrlGen
 import java.io.Serializable
@@ -45,6 +46,25 @@ data class UserProfile(
                 profileImageId = userProfileDto.profileImageId,
                 descriptionText = userProfileDto.descriptionText,
                 descriptionAudio = if(userProfileDto.hasAudio) Audio.fromDto(userProfileDto) else null
+            )
+        }
+        
+        fun fromEntity(userProfileEntity: UserProfileEntity): UserProfile {
+            return UserProfile(
+                userId = userProfileEntity.id.toInt(),
+                uniqueUsername = userProfileEntity.uniqueUsername,
+                name = userProfileEntity.name,
+                email = "",
+                numberOfFollowers = userProfileEntity.numberOfFollowers,
+                numberOfFollowing = userProfileEntity.numberOfFollowing,
+                numberOfLikes = userProfileEntity.numberOfLikes,
+                numberOfPosts = userProfileEntity.numberOfPosts,
+                isUserItself = userProfileEntity.isUserItself,
+                followingThisUser = userProfileEntity.followingThisUser,
+                thisUserIsFollowingMe = userProfileEntity.thisUserIsFollowingMe,
+                profileImageId = userProfileEntity.profileImageId,
+                descriptionText = userProfileEntity.descriptionText,
+                descriptionAudio = null //if(userProfileEntity.hasAudio) Audio.fromEntity(userProfileEntity) else null
             )
         }
     }

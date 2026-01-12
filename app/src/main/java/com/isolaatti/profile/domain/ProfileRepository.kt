@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.Flow
 interface ProfileRepository {
     fun getProfile(userId: Int): Flow<Resource<UserProfile>>
 
+    fun getMyProfile(): Flow<Resource<UserProfile>>
+
     fun setProfileImage(image: LocalImage): Flow<Resource<RemoteImage>>
 
     fun updateProfile(newDisplayName: String, newDescription: String): Flow<Resource<Boolean>>

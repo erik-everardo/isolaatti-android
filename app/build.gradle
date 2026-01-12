@@ -13,6 +13,10 @@ plugins {
     alias(libs.plugins.kotlin.parcelize)
 }
 
+android.defaultConfig.manifestPlaceholders = [
+        'appAuthRedirectScheme': 'com.isolaatti'
+]
+
 android {
     namespace 'com.isolaatti'
     compileSdk = 36
@@ -107,6 +111,9 @@ dependencies {
 
     // Customtabs
     implementation libs.androidx.browser
+
+    // AppAuth
+    implementation libs.openid.appauth
 
     // Coil
     implementation libs.coil
