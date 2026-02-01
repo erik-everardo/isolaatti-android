@@ -18,6 +18,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.isolaatti.R
 import com.isolaatti.home.presentation.MainViewModel
+import com.isolaatti.notifications.presentation.NotificationsViewModel
+import com.isolaatti.notifications.ui.NotificationsScreen
 import com.isolaatti.search.presentation.SearchViewModel
 import com.isolaatti.search.ui.SearchScreen
 import kotlinx.serialization.Serializable
@@ -92,17 +94,26 @@ fun MainScreen(viewModel: MainViewModel) {
 
                     },
                     onNavigateToHashtagPosts = {
-                        
+
                     }
                 )
 
 
             }
             composable<NotificationsRoute> {
-                // Placeholder for Notifications screen
-                Box(modifier = Modifier.fillMaxSize()) {
-                    Text(text = "Notifications Content")
-                }
+                val notificationsViewModel = hiltViewModel<NotificationsViewModel>()
+                NotificationsScreen(
+                    viewModel = notificationsViewModel,
+                    onNotificationClick = {
+
+                    },
+                    onDeleteNotification = {
+
+                    },
+                    onRefresh = {
+
+                    }
+                )
             }
         }
     }
