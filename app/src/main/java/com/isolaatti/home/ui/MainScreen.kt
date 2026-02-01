@@ -1,5 +1,6 @@
 package com.isolaatti.home.ui
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.*
@@ -7,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -16,6 +18,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.isolaatti.R
 import com.isolaatti.home.presentation.MainViewModel
+import com.isolaatti.search.presentation.SearchViewModel
+import com.isolaatti.search.ui.SearchScreen
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -29,6 +33,7 @@ object NotificationsRoute
 
 data class TopLevelRoute<T : Any>(val name: String, val route: T, val icon: Int)
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun MainScreen(viewModel: MainViewModel) {
     val navController = rememberNavController()
@@ -71,10 +76,27 @@ fun MainScreen(viewModel: MainViewModel) {
                 FeedScreen()
             }
             composable<SearchRoute> {
-                // Placeholder for Search screen
-                Box(modifier = Modifier.fillMaxSize()) {
-                    Text(text = "Search Content")
-                }
+                val searchViewModel = hiltViewModel<SearchViewModel>()
+                SearchScreen(
+                    viewModel = searchViewModel,
+                    onNavigateToHashtags = {
+
+                    },
+                    onNavigateToBrowseProfiles = {
+
+                    },
+                    onNavigateToProfile = {
+
+                    },
+                    onNavigateToPost = {
+
+                    },
+                    onNavigateToHashtagPosts = {
+                        
+                    }
+                )
+
+
             }
             composable<NotificationsRoute> {
                 // Placeholder for Notifications screen
