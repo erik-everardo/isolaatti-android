@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 
-class RetrofitClient @Inject constructor(private val authenticationInterceptor: AuthenticationInterceptor) {
+class RetrofitClient(private val okHttpClient: OkHttpClient) {
 
     companion object {
         // These urls don't need auth header
@@ -24,18 +24,6 @@ class RetrofitClient @Inject constructor(private val authenticationInterceptor: 
         const val BASE_URL = "${BuildConfig.backend}/api/"
     }
 
-    private val okHttpClient get() = OkHttpClient.Builder()
-        .addInterceptor(authenticationInterceptor)
-        .addInterceptor { chain ->
-            chain.proceed(chain.request()
-                .newBuilder()
-                .header("User-Agent", "Sonvoc Android ${BuildConfig.VERSION_NAME}")
-                .build())
-        }
-        .connectTimeout(5, TimeUnit.MINUTES)
-        .writeTimeout(5, TimeUnit.MINUTES)
-        .readTimeout(5, TimeUnit.MINUTES)
-        .build()
 
     private val gson = GsonBuilder()
         .registerTypeAdapter(ZonedDateTime::class.java, LocalDateTimeAdapter())
@@ -46,5 +34,6 @@ class RetrofitClient @Inject constructor(private val authenticationInterceptor: 
         .baseUrl(BASE_URL)
         .client(okHttpClient)
         .addConverterFactory(GsonConverterFactory.create(gson))
+
         .build()
 }

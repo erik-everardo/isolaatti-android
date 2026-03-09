@@ -4,6 +4,7 @@
 agp = "8.13.1"
 kotlin = "2.3.0"
 ksp = "2.3.0"
+richeditorAndroid = "2.0.0"
 secrets = "2.0.1"
 navSafeargs = "2.7.7"
 googleServices = "4.4.2"
@@ -51,7 +52,7 @@ kotlinxSerializationJson = "1.6.3"
 splashscreen = "1.0.1"
 
 # Security
-securityCrypto = "1.0.0"
+securityCrypto = "1.1.0-alpha06"
 
 # Markwon
 markwon = "4.6.2"
@@ -120,6 +121,7 @@ androidx-legacy-support-v4 = { group = "androidx.legacy", name = "legacy-support
 androidx-lifecycle-livedata-ktx = { group = "androidx.lifecycle", name = "lifecycle-livedata-ktx", version.ref = "lifecycle" }
 androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
 google-gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+richeditor-android = { module = "jp.wasabeef:richeditor-android", version.ref = "richeditorAndroid" }
 squareup-retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofitConverterGson" }
 androidx-preference-ktx = { group = "androidx.preference", name = "preference-ktx", version.ref = "preferenceKtx" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }

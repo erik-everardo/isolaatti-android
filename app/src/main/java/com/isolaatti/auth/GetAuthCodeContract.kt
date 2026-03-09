@@ -13,13 +13,12 @@ data class AuthorizationResponseWrapper(
     val exception: AuthorizationException?
 )
 
-class GetAuthCodeContract() : ActivityResultContract<AuthorizationRequest, AuthorizationResponseWrapper>() {
+class GetAuthCodeContract() : ActivityResultContract<Intent, AuthorizationResponseWrapper>() {
     override fun createIntent(
         context: Context,
-        input: AuthorizationRequest
+        input: Intent
     ): Intent {
-        val authorizationService = AuthorizationService(context)
-        return authorizationService.getAuthorizationRequestIntent(input)
+        return input
     }
 
     override fun parseResult(

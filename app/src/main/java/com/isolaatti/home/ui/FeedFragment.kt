@@ -110,26 +110,6 @@ class FeedFragment : Fragment() {
 
         (childFragmentManager.findFragmentById(R.id.post_list_fragment_container) as NavHostFragment).navController.setGraph(R.navigation.post_listing_navigation)
 
-        viewModel.userProfile.observe(viewLifecycleOwner) {
-            val header = viewBinding.homeDrawer.getHeaderView(0) as? ConstraintLayout
-
-            val image: ImageView? = header?.findViewById(R.id.profileImageView)
-            val textViewName: TextView? = header?.findViewById(R.id.textViewName)
-            val textViewEmail: TextView? = header?.findViewById(R.id.textViewEmail)
-            val textViewUsername: TextView? = header?.findViewById(R.id.textViewUsername)
-
-            image?.load(UrlGen.userProfileImage(it.userId), imageLoader)
-
-            val card: MaterialCardView? = header?.findViewById(R.id.drawer_header_card)
-            card?.setOnClickListener {
-                ProfileActivity.startActivity(requireContext(), currentUserId)
-            }
-
-            textViewName?.text = it.name
-            textViewEmail?.text = it.email
-            textViewUsername?.text = "@${it.uniqueUsername}"
-            currentUserId = it.userId
-        }
 
 
         viewLifecycleOwner.lifecycleScope.launch {

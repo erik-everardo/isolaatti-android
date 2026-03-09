@@ -10,7 +10,6 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
-import com.isolaatti.auth.AuthStateStorage
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -19,8 +18,6 @@ class MediaService : MediaSessionService() {
 
     private var mediaSession: MediaSession? = null
 
-    @Inject
-    lateinit var authStateStorage: AuthStateStorage
 
     @OptIn(UnstableApi::class)
     override fun onCreate() {
@@ -37,9 +34,12 @@ class MediaService : MediaSessionService() {
                                     .Factory()
                                     .setDefaultRequestProperties(
                                         buildMap {
+                                            /*
                                             authStateStorage.authState.accessToken?.let {
                                                 put("Authorization", "Bearer $it")
                                             }
+
+                                             */
                                         }
 
                                     )

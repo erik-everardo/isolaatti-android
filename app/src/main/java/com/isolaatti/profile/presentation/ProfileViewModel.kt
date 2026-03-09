@@ -5,6 +5,8 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.isolaatti.auth.domain.AuthRepository
+import com.isolaatti.auth.presentation.AuthViewModelHelper
 import com.isolaatti.followers.domain.FollowingState
 import com.isolaatti.images.common.domain.entity.LocalImage
 import com.isolaatti.images.common.domain.entity.RemoteImage
@@ -38,8 +40,12 @@ class ProfileViewModel @Inject constructor(
     private val followUserUC: FollowUser,
     private val removeProfilePictureUC: RemoveProfilePicture,
     private val setProfileAudio: SetProfileAudio,
-    private val deleteProfileAudio: DeleteProfileAudio
+    private val deleteProfileAudio: DeleteProfileAudio,
+    authRepository: AuthRepository
 ) : PostListingViewModelBase() {
+
+    val authViewModelHelper: AuthViewModelHelper = AuthViewModelHelper(authRepository, viewModelScope)
+
     private val _profile = MutableStateFlow<UserProfile?>(null)
     val profile: StateFlow<UserProfile?> get() = _profile
     val loadingProfile: MutableStateFlow<Boolean> = MutableStateFlow(true)

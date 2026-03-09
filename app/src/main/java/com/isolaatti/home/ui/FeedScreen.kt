@@ -1,13 +1,16 @@
 package com.isolaatti.home.ui
 
+import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PostAdd
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,7 +30,11 @@ import androidx.compose.ui.text.font.SystemFontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil3.compose.AsyncImage
 import com.isolaatti.R
+import com.isolaatti.about.AboutActivity
+import com.isolaatti.articles.ui.ArticlesActivity
+import com.isolaatti.auth.domain.AuthenticationState
 import com.isolaatti.auth.ui.AuthDialog
 import com.isolaatti.auth.ui.AuthenticationRequiredDialog
 import com.isolaatti.auth.ui.LocalAuth
@@ -37,7 +44,11 @@ import com.isolaatti.posting.posts.ui.PostListingScreen
 import com.isolaatti.posting.posts.ui.PostListingScreenEvent
 import com.isolaatti.posting.viewer.ui.PostViewerActivity
 import com.isolaatti.profile.domain.entity.UserProfile
+import com.isolaatti.profile.ui.ProfileActivity
+import com.isolaatti.settings.ui.SettingsActivity
 import com.isolaatti.sign_up.ui.SignUpActivity
+import com.isolaatti.squads.ui.SquadsActivity
+import com.isolaatti.video_streaming.ui.VideoStreamingActivity
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,67 +67,7 @@ fun FeedScreen(postListingViewModel: PostListingViewModel = hiltViewModel()) {
         }
     }
 
-    var showAuthDialog by remember { mutableStateOf(false) }
-
-    var showAuthRequiredDialog by remember { mutableStateOf(false) }
-
     val coroutineScope = rememberCoroutineScope()
-
-    if(showAuthDialog) {
-        val sheetState = rememberModalBottomSheetState()
-        ModalBottomSheet(
-            sheetState = sheetState,
-            onDismissRequest = {
-                coroutineScope.launch {
-                    sheetState.hide()
-                    showAuthDialog = false
-                }
-
-            }
-        ) {
-            AuthDialog(
-                onContinue = {
-                    auth.doAuth()
-                },
-                onDismiss = {
-                    coroutineScope.launch {
-                        sheetState.hide()
-                        showAuthDialog = false
-                    }
-                },
-                onCreateAccount = {}
-            )
-        }
-    }
-
-    if(showAuthRequiredDialog) {
-        val sheetState = rememberModalBottomSheetState()
-        ModalBottomSheet(
-            sheetState = sheetState,
-            onDismissRequest = {
-                coroutineScope.launch {
-                    sheetState.hide()
-                    showAuthRequiredDialog = false
-                }
-            }
-        ) {
-            AuthenticationRequiredDialog(
-                onContinue = {
-                    auth.doAuth()
-                },
-                onDismiss = {
-                    coroutineScope.launch {
-                        sheetState.hide()
-                        showAuthRequiredDialog = false
-                    }
-                },
-                onCreateAccount = {
-                    SignUpActivity.startActivity(context)
-                }
-            )
-        }
-    }
-
 
 
     val makePostLauncher = rememberLauncherForActivityResult(CreatePostContract()) {
@@ -130,12 +81,15 @@ fun FeedScreen(postListingViewModel: PostListingViewModel = hiltViewModel()) {
         drawerContent = {
             ModalDrawerSheet {
                 DrawerHeader(
-                    isSignedIn = auth.isAuthenticated,
+                    authenticationState = auth.authState,
                     onSignIn = {
                         coroutineScope.launch {
                             drawerState.close()
-                            showAuthDialog = true
+                            auth.showAuthDialog()
                         }
+                    },
+                    onClickProfile = {
+                        ProfileActivity.startActivity(context, it.userId)
                     }
                 )
                 Spacer(Modifier.height(12.dp))
@@ -143,31 +97,41 @@ fun FeedScreen(postListingViewModel: PostListingViewModel = hiltViewModel()) {
                     icon = { Icon(painterResource(R.drawable.baseline_people_24), contentDescription = null) },
                     label = { Text(stringResource(R.string.squads)) },
                     selected = false,
-                    onClick = { /* Handle squads click */ }
+                    onClick = {
+                        context.startActivity(Intent(context, SquadsActivity::class.java))
+                    }
                 )
                 NavigationDrawerItem(
                     icon = { Icon(painterResource(R.drawable.outline_live_tv_24), contentDescription = null) },
                     label = { Text(stringResource(R.string.lives)) },
                     selected = false,
-                    onClick = { /* Handle lives click */ }
+                    onClick = {
+                        context.startActivity(Intent(context, VideoStreamingActivity::class.java))
+                    }
                 )
                 NavigationDrawerItem(
                     icon = { Icon(painterResource(R.drawable.baseline_article_24), contentDescription = null) },
                     label = { Text(stringResource(R.string.articles)) },
                     selected = false,
-                    onClick = { /* Handle articles click */ }
+                    onClick = {
+                        context.startActivity(Intent(context, ArticlesActivity::class.java))
+                    }
                 )
                 NavigationDrawerItem(
                     icon = { Icon(painterResource(R.drawable.baseline_settings_24), contentDescription = null) },
                     label = { Text(stringResource(R.string.settings)) },
                     selected = false,
-                    onClick = { /* Handle settings click */ }
+                    onClick = {
+                        context.startActivity(Intent(context, SettingsActivity::class.java))
+                    }
                 )
                 NavigationDrawerItem(
                     icon = { Icon(painterResource(R.drawable.baseline_info_24), contentDescription = null) },
                     label = { Text(stringResource(R.string.about)) },
                     selected = false,
-                    onClick = { /* Handle about click */ }
+                    onClick = {
+                        context.startActivity(Intent(context, AboutActivity::class.java))
+                    }
                 )
             }
         }
@@ -193,19 +157,30 @@ fun FeedScreen(postListingViewModel: PostListingViewModel = hiltViewModel()) {
                                 drawerState.open()
                             }
                         }) {
-                            Icon(
-                                painter = painterResource(R.drawable.baseline_menu_24),
-                                contentDescription = "Menu"
-                            )
+                            if(auth.authState is AuthenticationState.Authenticated) {
+                                val image = auth.authState.userInfo?.profileImage
+                                if(image != null) {
+                                    AsyncImage(image.imageUrl, null)
+                                } else {
+                                    Icon(
+                                        Icons.Default.Person,
+                                        contentDescription = "Menu"
+                                    )
+                                }
+                            } else {
+                                Icon(
+                                    Icons.Default.Person,
+                                    contentDescription = "Menu"
+                                )
+                            }
+
                         }
                     },
                     actions = {
                         IconButton(
                             onClick = {
-                                if(auth.isAuthenticated) {
+                                auth.withAuth {
                                     makePostLauncher.launch(CreatePostContract.Input(null, null))
-                                } else {
-                                    showAuthRequiredDialog = true
                                 }
                             }
                         ) {
@@ -230,10 +205,8 @@ fun FeedScreen(postListingViewModel: PostListingViewModel = hiltViewModel()) {
                             PostViewerActivity.startActivity(context, event.post.id, true)
                         }
                         is PostListingScreenEvent.PostDislikeClicked -> {
-                            if(auth.isAuthenticated) {
+                            auth.withAuth {
                                 postListingViewModel.unLikePost(event.post.id)
-                            } else {
-                                showAuthRequiredDialog = true
                             }
                         }
                         is PostListingScreenEvent.PostHashtagClicked -> {
@@ -246,10 +219,8 @@ fun FeedScreen(postListingViewModel: PostListingViewModel = hiltViewModel()) {
 
                         }
                         is PostListingScreenEvent.PostLikeClicked -> {
-                            if(auth.isAuthenticated) {
+                            auth.withAuth {
                                 postListingViewModel.likePost(event.post.id)
-                            } else {
-                                showAuthRequiredDialog = true
                             }
                         }
                         is PostListingScreenEvent.PostOptionsClicked -> {
@@ -281,8 +252,10 @@ fun FeedScreen(postListingViewModel: PostListingViewModel = hiltViewModel()) {
     }
 }
 
+
+
 @Composable
-private fun DrawerHeader(isSignedIn: Boolean = false, userProfile: UserProfile? = null, onSignIn: () -> Unit) {
+private fun DrawerHeader(authenticationState: AuthenticationState<UserProfile>, onSignIn: () -> Unit, onClickProfile: (UserProfile) -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -291,6 +264,13 @@ private fun DrawerHeader(isSignedIn: Boolean = false, userProfile: UserProfile? 
     ) {
         OutlinedCard(
             modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                if(authenticationState is AuthenticationState.Authenticated) {
+                    authenticationState.userInfo?.let {
+                        onClickProfile(it)
+                    }
+                }
+            },
             colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Row(
@@ -301,7 +281,7 @@ private fun DrawerHeader(isSignedIn: Boolean = false, userProfile: UserProfile? 
                 horizontalArrangement = Arrangement.Center
             ) {
 
-                if(isSignedIn) {
+                if(authenticationState is AuthenticationState.Authenticated) {
                     // Profile Image Placeholder
                     Box(
                         modifier = Modifier
@@ -314,19 +294,14 @@ private fun DrawerHeader(isSignedIn: Boolean = false, userProfile: UserProfile? 
 
                     Column {
                         Text(
-                            text = "Name",
+                            text = authenticationState.userInfo?.name ?: "",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "@username",
+                            text = "@${authenticationState.userInfo?.uniqueUsername ?: ""}",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "example@example.com",
-                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }

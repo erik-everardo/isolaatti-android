@@ -11,7 +11,7 @@ import com.isolaatti.search.data.SearchHistoryEntity
 import com.isolaatti.settings.data.KeyValueDao
 import com.isolaatti.settings.data.KeyValueEntity
 
-@Database(entities = [KeyValueEntity::class, SearchHistoryEntity::class, ImageDraftEntity::class, UserProfileEntity::class], version = 10)
+@Database(entities = [KeyValueEntity::class, SearchHistoryEntity::class, ImageDraftEntity::class, UserProfileEntity::class], version = 10, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun keyValueDao(): KeyValueDao
     abstract fun searchHistoryDao(): SearchDao

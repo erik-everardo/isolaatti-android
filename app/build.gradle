@@ -173,4 +173,6 @@ dependencies {
     implementation libs.bundles.cameraX
 
     implementation libs.github.rootencoder
+
+    implementation libs.richeditor.android
 }

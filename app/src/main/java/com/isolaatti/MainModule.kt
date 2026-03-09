@@ -3,9 +3,8 @@ package com.isolaatti
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import com.isolaatti.auth.AuthStateStorage
-import com.isolaatti.auth.AuthStateStorageImpl
-import com.isolaatti.connectivity.AuthenticationInterceptor
+import coil3.intercept.Interceptor
+import com.isolaatti.connectivity.AuthInterceptor
 import com.isolaatti.connectivity.RetrofitClient
 import dagger.Module
 import dagger.Provides
@@ -14,6 +13,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import net.openid.appauth.AppAuthConfiguration
 import net.openid.appauth.AuthorizationService
+import okhttp3.OkHttpClient
+import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
 @Module
@@ -26,13 +27,25 @@ class MainModule {
 
     @Provides
     @Singleton
-    fun provideAuthStateStorage(dataStore: DataStore<Preferences>): AuthStateStorage {
-        return AuthStateStorageImpl(dataStore)
+    fun provideOkHttp(authenticationInterceptor: AuthInterceptor): OkHttpClient {
+        return OkHttpClient.Builder()
+            .addInterceptor(authenticationInterceptor)
+            .addInterceptor { chain ->
+                chain.proceed(chain.request()
+                    .newBuilder()
+                    .header("User-Agent", "Isolaatti Android ${BuildConfig.VERSION_NAME}")
+                    .build())
+            }
+            .connectTimeout(5, TimeUnit.MINUTES)
+            .writeTimeout(5, TimeUnit.MINUTES)
+            .readTimeout(5, TimeUnit.MINUTES)
+            .build()
     }
 
     @Provides
-    fun provideRetrofitClient(authenticationInterceptor: AuthenticationInterceptor) : RetrofitClient {
-        return RetrofitClient(authenticationInterceptor)
+    @Singleton
+    fun provideRetrofitClient(okHttpClient: OkHttpClient) : RetrofitClient {
+        return RetrofitClient(okHttpClient)
     }
 
     @Provides
