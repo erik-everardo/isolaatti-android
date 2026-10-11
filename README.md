@@ -3,8 +3,6 @@
 
 Se trata de una aplicación para dispositivos Android que implementa características de red social, tales como publicaciones, comentarios, imagenes, likes, perfiles, y audios.
 
-Se conecta con el backend https://isolaatti.com
-
 ## Estructura del código
 * Se siguen principios de clean architecture para el desarrollo de esta app.
 * Se utilizan views (XML)
