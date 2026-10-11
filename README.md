@@ -1,6 +1,5 @@
 # Isolaatti Android
 
-![Slide1](https://github.com/Isolaatti-Software/isolaatti-android/assets/43968631/678b6b68-dcdb-4097-aa24-2974225cceeb)
 
 Se trata de una aplicación para dispositivos Android que implementa características de red social, tales como publicaciones, comentarios, imagenes, likes, perfiles, y audios.
 
